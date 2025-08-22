@@ -51,25 +51,30 @@ class YouTubeSubtitleOverlay {
       position: 'fixed',
       zIndex: '2147483647',
       display: 'none',
+      // 背景按内容宽度自适应
+      width: 'auto',
+      minWidth: '200px',
       maxWidth: '80%',
-      padding: '8px 16px',
-      borderRadius: '4px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      padding: '12px 20px',  // 左右增加填充
+      borderRadius: '6px',   // 轻微圆角
       textAlign: 'center',
       whiteSpace: 'pre-wrap',
       wordWrap: 'break-word',
       pointerEvents: 'none',
       userSelect: 'none',
-      // 字体样式
-      fontFamily: 'Arial, sans-serif',
-      fontSize: this.settings.fontSize + 'px',
-      fontWeight: 'bold',
-      color: this.settings.color,
+      // 字体样式 - 更大更粗
+      fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+      fontSize: (this.settings.fontSize + 8) + 'px',  // 大幅增加字体
+      fontWeight: '600',  // 半粗体
+      color: '#ffffff',
       lineHeight: '1.3',
-      // 视觉效果
-      background: this.settings.backgroundColor,
-      textShadow: '0 0 2px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.7)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-      border: '1px solid rgba(255,255,255,0.2)'
+      // 背景样式 - 更淡的背景
+      background: 'rgba(0, 0, 0, 0.5)',  // 50%不透明度，更淡
+      border: 'none',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',  // 轻微阴影
+      textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)'  // 增强文字阴影
     };
 
     Object.assign(this.overlayElement.style, styles);
@@ -232,48 +237,54 @@ class YouTubeSubtitleOverlay {
     const isMiniPlayer = document.querySelector('.ytp-miniplayer-active') !== null;
     
     if (isFullscreen) {
-      // 全屏模式：使用fixed定位，相对于屏幕
+      // 全屏模式：居中显示，背景自适应
       this.overlayElement.style.position = 'fixed';
       this.overlayElement.style.left = '50%';
       this.overlayElement.style.transform = 'translateX(-50%)';
-      this.overlayElement.style.bottom = '8%';
-      this.overlayElement.style.top = 'auto';
-      this.overlayElement.style.maxWidth = '80%';
-      this.overlayElement.style.fontSize = (this.settings.fontSize * 1.2) + 'px';
+      this.overlayElement.style.bottom = '80px';
+      this.overlayElement.style.fontSize = (this.settings.fontSize + 12) + 'px';  // 全屏更大
+      this.overlayElement.style.maxWidth = '90%';
     } else if (isMiniPlayer) {
       // 迷你播放器：隐藏字幕
       this.overlayElement.style.display = 'none';
       return;
     } else {
-      // 非全屏模式：相对于视频播放器定位
+      // 非全屏模式：相对于视频播放器居中定位
       this.overlayElement.style.position = 'fixed';
-      this.overlayElement.style.left = videoRect.left + videoRect.width / 2 + 'px';
+      // 字幕水平居中于视频播放器
+      this.overlayElement.style.left = (videoRect.left + videoRect.width / 2) + 'px';
       this.overlayElement.style.transform = 'translateX(-50%)';
       
-      // 根据模式调整位置
-      let bottomOffset = 20;
-      let fontSize = this.settings.fontSize;
+      // 根据模式调整位置和字体
+      let bottomOffset = 100;  // 距离视频底部距离
+      let fontSize = this.settings.fontSize + 8;
       
       if (isTheaterMode) {
-        bottomOffset = 40;
-        fontSize = this.settings.fontSize * 1.1;
+        bottomOffset = 120;
+        fontSize = this.settings.fontSize + 10;
       }
       
       this.overlayElement.style.bottom = (window.innerHeight - videoRect.bottom + bottomOffset) + 'px';
-      this.overlayElement.style.top = 'auto';
       this.overlayElement.style.fontSize = fontSize + 'px';
       
-      // 限制字幕最大宽度不超过视频宽度的90%
-      this.overlayElement.style.maxWidth = Math.min(videoRect.width * 0.9, 800) + 'px';
+      // 限制最大宽度为视频宽度的85%
+      this.overlayElement.style.maxWidth = Math.min(videoRect.width * 0.85, 1000) + 'px';
     }
     
     console.log('字幕位置已调整:', {
       fullscreen: isFullscreen,
       theater: isTheaterMode,
       mini: isMiniPlayer,
+      fontSize: this.overlayElement.style.fontSize,
+      position: {
+        left: this.overlayElement.style.left,
+        bottom: this.overlayElement.style.bottom,
+        transform: this.overlayElement.style.transform
+      },
       videoRect: {
+        left: Math.round(videoRect.left),
         width: Math.round(videoRect.width),
-        height: Math.round(videoRect.height),
+        centerX: Math.round(videoRect.left + videoRect.width / 2),
         bottom: Math.round(videoRect.bottom)
       }
     });
@@ -311,7 +322,7 @@ class YouTubeSubtitleOverlay {
     this.overlayElement.textContent = text;
     this.overlayElement.style.display = 'block';
     
-    // 确保样式正确应用（解决被覆盖的问题）
+    // 确保样式正确应用
     this.overlayElement.style.position = 'fixed';
     this.overlayElement.style.zIndex = '2147483647';
     this.overlayElement.style.visibility = 'visible';
