@@ -1,0 +1,100 @@
+/* YouTube本地字幕样式 */
+.subtitle-overlay-container {
+  position: absolute !important;
+  bottom: 80px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  font-family: 'Helvetica Neue', Arial, sans-serif !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  color: white !important;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
+  background-color: rgba(0,0,0,0.7) !important;
+  padding: 8px 16px !important;
+  border-radius: 4px !important;
+  max-width: 80% !important;
+  text-align: center !important;
+  display: none !important;
+  word-wrap: break-word !important;
+  line-height: 1.4 !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  backdrop-filter: blur(4px) !important;
+  transition: opacity 0.3s ease-in-out !important;
+}
+
+/* 自适应字体大小 */
+@media (max-width: 768px) {
+  .subtitle-overlay-container {
+    font-size: 14px !important;
+    bottom: 60px !important;
+    max-width: 90% !important;
+    padding: 6px 12px !important;
+  }
+}
+
+@media (min-width: 1920px) {
+  .subtitle-overlay-container {
+    font-size: 22px !important;
+    bottom: 100px !important;
+  }
+}
+
+/* 全屏模式下的样式调整 */
+.ytp-fullscreen .subtitle-overlay-container {
+  bottom: 120px !important;
+  font-size: 24px !important;
+}
+
+/* 剧场模式下的样式调整 */
+.ytp-big-mode .subtitle-overlay-container {
+  bottom: 100px !important;
+  font-size: 20px !important;
+}
+
+/* 不同主题的适配 */
+.subtitle-overlay-container.light-theme {
+  color: black !important;
+  background-color: rgba(255,255,255,0.9) !important;
+  text-shadow: 1px 1px 2px rgba(255,255,255,0.8) !important;
+  border: 1px solid rgba(0,0,0,0.2) !important;
+}
+
+.subtitle-overlay-container.high-contrast {
+  color: yellow !important;
+  background-color: rgba(0,0,0,0.9) !important;
+  text-shadow: 2px 2px 4px rgba(0,0,0,1) !important;
+  border: 2px solid yellow !important;
+}
+
+/* 动画效果 */
+.subtitle-overlay-container.fade-in {
+  animation: subtitleFadeIn 0.3s ease-in-out !important;
+}
+
+.subtitle-overlay-container.fade-out {
+  animation: subtitleFadeOut 0.3s ease-in-out !important;
+}
+
+@keyframes subtitleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes subtitleFadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube本地字幕</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>YouTube本地字幕</h1>
+            <div class="version">v1.0.0</div>
+        </div>
+
+        <div class="main-content">
+            <!-- 字幕开关 -->
+            <div class="control-section">
+                <div class="toggle-container">
+                    <label class="switch">
+                        <input type="checkbox" id="subtitleToggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label">启用字幕显示</span>
+                </div>
+            </div>
+
+            <!-- 文件上传区域 -->
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">
+                        <strong>选择字幕文件</strong>
+                        <p>支持 SRT、VTT 格式</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".srt,.vtt" hidden>
+                </div>
+                <button class="browse-button" id="browseButton">浏览文件</button>
+            </div>
+
+            <!-- 字幕信息 -->
+            <div class="info-section" id="infoSection">
+                <div class="subtitle-info">
+                    <div class="info-item">
+                        <span class="info-label">已加载字幕:</span>
+                        <span class="info-value" id="subtitleCount">0 条</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">文件名:</span>
+                        <span class="info-value" id="fileName">未选择</span>
+                    </div>
+                </div>
+                <button class="clear-button" id="clearButton">清除字幕</button>
+            </div>
+
+            <!-- 设置区域 -->
+            <div class="settings-section">
+                <button class="settings-toggle" id="settingsToggle">
+                    <span>显示设置</span>
+                    <span class="arrow">▼</span>
+                </button>
+                
+                <div class="settings-panel" id="settingsPanel">
+                    <div class="setting-group">
+                        <label for="fontSize">字体大小:</label>
+                        <input type="range" id="fontSize" min="12" max="32" value="18">
+                        <span class="setting-value" id="fontSizeValue">18px</span>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="fontColor">字体颜色:</label>
+                        <input type="color" id="fontColor" value="#ffffff">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="bgOpacity">背景透明度:</label>
+                        <input type="range" id="bgOpacity" min="0" max="100" value="70">
+                        <span class="setting-value" id="bgOpacityValue">70%</span>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="subtitlePosition">字幕位置:</label>
+                        <select id="subtitlePosition">
+                            <option value="bottom">底部</option>
+                            <option value="top">顶部</option>
+                            <option value="center">中央</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 状态提示 -->
+            <div class="status-section" id="statusSection">
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+        </div>
+
+        <!-- 帮助链接 -->
+        <div class="footer">
+            <a href="#" id="helpLink">使用帮助</a>
+            <span>|</span>
+            <a href="#" id="feedbackLink">反馈问题</a>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
