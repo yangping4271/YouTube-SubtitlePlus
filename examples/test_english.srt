@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:03,000
+Hello and welcome to our test
+
+2
+00:00:03,000 --> 00:00:06,000
+This is a sample English subtitle
+
+3
+00:00:06,000 --> 00:00:09,000
+Testing bilingual subtitle display
+
+4
+00:00:09,000 --> 00:00:12,000
+The subtitle should appear above
+
+5
+00:00:12,000 --> 00:00:15,000
+And the Chinese below it

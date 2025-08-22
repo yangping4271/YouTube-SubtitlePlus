@@ -1,7 +1,11 @@
 class PopupController {
   constructor() {
     this.subtitleData = [];
+    this.englishSubtitles = [];
+    this.chineseSubtitles = [];
     this.currentFileName = '';
+    this.englishFileName = '';
+    this.chineseFileName = '';
     this.init();
   }
 
@@ -17,33 +21,11 @@ class PopupController {
       this.toggleSubtitle(e.target.checked);
     });
 
-    // 文件上传区域
-    const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('fileInput');
-    const browseButton = document.getElementById('browseButton');
-
-    uploadArea.addEventListener('click', () => fileInput.click());
-    browseButton.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-
-    // 拖拽上传
-    uploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadArea.classList.add('dragover');
-    });
-
-    uploadArea.addEventListener('dragleave', () => {
-      uploadArea.classList.remove('dragover');
-    });
-
-    uploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadArea.classList.remove('dragover');
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        this.processFile(files[0]);
-      }
-    });
+    // 英文字幕上传
+    this.bindFileUploadEvents('english', 'englishUploadArea', 'englishFileInput', 'englishBrowseButton');
+    
+    // 中文字幕上传  
+    this.bindFileUploadEvents('chinese', 'chineseUploadArea', 'chineseFileInput', 'chineseBrowseButton');
 
     // 清除按钮
     const clearButton = document.getElementById('clearButton');
@@ -79,6 +61,35 @@ class PopupController {
     });
   }
 
+  bindFileUploadEvents(language, uploadAreaId, fileInputId, browseButtonId) {
+    const uploadArea = document.getElementById(uploadAreaId);
+    const fileInput = document.getElementById(fileInputId);
+    const browseButton = document.getElementById(browseButtonId);
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    browseButton.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => this.handleFileSelect(e, language));
+
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        this.processFile(files[0], language);
+      }
+    });
+  }
+
   bindSettingsEvents() {
     // 字体大小
     const fontSize = document.getElementById('fontSize');
@@ -111,13 +122,27 @@ class PopupController {
 
   async loadCurrentState() {
     try {
-      const response = await chrome.runtime.sendMessage({ action: 'getSubtitleData' });
+      const response = await chrome.runtime.sendMessage({ action: 'getBilingualSubtitleData' });
       if (response.success) {
-        const { subtitleData, subtitleEnabled, subtitleSettings } = response.data;
+        const { 
+          subtitleData, 
+          englishSubtitles, 
+          chineseSubtitles, 
+          subtitleEnabled, 
+          subtitleSettings,
+          englishFileName,
+          chineseFileName
+        } = response.data;
         
         // 更新UI状态
         document.getElementById('subtitleToggle').checked = subtitleEnabled;
+        
         this.subtitleData = subtitleData || [];
+        this.englishSubtitles = englishSubtitles || [];
+        this.chineseSubtitles = chineseSubtitles || [];
+        this.englishFileName = englishFileName || '';
+        this.chineseFileName = chineseFileName || '';
+        
         this.updateSubtitleInfo();
         
         // 更新设置UI
@@ -171,21 +196,21 @@ class PopupController {
     }
   }
 
-  handleFileSelect(event) {
+  handleFileSelect(event, language) {
     const file = event.target.files[0];
     if (file) {
-      this.processFile(file);
+      this.processFile(file, language);
     }
   }
 
-  async processFile(file) {
+  async processFile(file, language) {
     try {
       // 验证文件类型
       if (!this.isValidSubtitleFile(file)) {
         throw new Error('不支持的文件格式，请选择 SRT 或 VTT 文件');
       }
 
-      this.showStatus('正在解析字幕文件...', 'info');
+      this.showStatus(`正在解析${language === 'english' ? '英文' : '中文'}字幕文件...`, 'info');
 
       // 读取文件内容
       const content = await this.readFileAsText(file);
@@ -198,16 +223,32 @@ class PopupController {
       }
 
       // 保存字幕数据
-      const response = await chrome.runtime.sendMessage({
-        action: 'saveSubtitleData',
-        data: subtitleData
-      });
+      let response;
+      if (language === 'english') {
+        this.englishSubtitles = subtitleData;
+        this.englishFileName = file.name;
+        response = await chrome.runtime.sendMessage({
+          action: 'saveBilingualSubtitles',
+          englishSubtitles: this.englishSubtitles,
+          chineseSubtitles: this.chineseSubtitles,
+          englishFileName: this.englishFileName,
+          chineseFileName: this.chineseFileName
+        });
+      } else {
+        this.chineseSubtitles = subtitleData;
+        this.chineseFileName = file.name;
+        response = await chrome.runtime.sendMessage({
+          action: 'saveBilingualSubtitles',
+          englishSubtitles: this.englishSubtitles,
+          chineseSubtitles: this.chineseSubtitles,
+          englishFileName: this.englishFileName,
+          chineseFileName: this.chineseFileName
+        });
+      }
 
       if (response.success) {
-        this.subtitleData = subtitleData;
-        this.currentFileName = file.name;
         this.updateSubtitleInfo();
-        this.showStatus(`成功加载 ${subtitleData.length} 条字幕`, 'success');
+        this.showStatus(`成功加载 ${subtitleData.length} 条${language === 'english' ? '英文' : '中文'}字幕`, 'success');
         
         // 自动启用字幕显示
         if (!document.getElementById('subtitleToggle').checked) {
@@ -318,8 +359,10 @@ class PopupController {
   }
 
   updateSubtitleInfo() {
-    document.getElementById('subtitleCount').textContent = `${this.subtitleData.length} 条`;
-    document.getElementById('fileName').textContent = this.currentFileName || '未选择';
+    document.getElementById('englishSubtitleCount').textContent = `${this.englishSubtitles.length} 条`;
+    document.getElementById('chineseSubtitleCount').textContent = `${this.chineseSubtitles.length} 条`;
+    document.getElementById('englishFileName').textContent = this.englishFileName || '未选择';
+    document.getElementById('chineseFileName').textContent = this.chineseFileName || '未选择';
   }
 
   async clearSubtitle() {
@@ -327,7 +370,11 @@ class PopupController {
       const response = await chrome.runtime.sendMessage({ action: 'clearSubtitleData' });
       if (response.success) {
         this.subtitleData = [];
+        this.englishSubtitles = [];
+        this.chineseSubtitles = [];
         this.currentFileName = '';
+        this.englishFileName = '';
+        this.chineseFileName = '';
         this.updateSubtitleInfo();
         document.getElementById('subtitleToggle').checked = false;
         this.showStatus('字幕数据已清除', 'success');
@@ -361,7 +408,7 @@ class PopupController {
   }
 
   showHelp() {
-    this.showStatus('使用方法：选择SRT或VTT字幕文件，在YouTube视频页面启用显示', 'info');
+    this.showStatus('使用方法：分别选择英文和中文SRT/VTT字幕文件，在YouTube视频页面启用双语显示', 'info');
   }
 
   showFeedback() {

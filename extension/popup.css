@@ -114,10 +114,26 @@ input:checked + .slider:before {
   margin-bottom: 20px;
 }
 
+.upload-group {
+  margin-bottom: 16px;
+}
+
+.upload-group:last-child {
+  margin-bottom: 0;
+}
+
+.upload-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
 .upload-area {
   border: 2px dashed #ddd;
   border-radius: 8px;
-  padding: 20px;
+  padding: 16px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -135,31 +151,32 @@ input:checked + .slider:before {
 }
 
 .upload-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
+  font-size: 24px;
+  margin-bottom: 6px;
 }
 
 .upload-text strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   color: #333;
+  font-size: 13px;
 }
 
 .upload-text p {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
 }
 
 .browse-button {
   width: 100%;
-  padding: 10px;
-  margin-top: 12px;
+  padding: 8px;
+  margin-top: 8px;
   background: #667eea;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   transition: background 0.3s ease;
 }

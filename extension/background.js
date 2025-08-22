@@ -37,6 +37,10 @@ class SubtitleExtensionBackground {
       chrome.storage.local.set({
         subtitleEnabled: false,
         subtitleData: [],
+        englishSubtitles: [],
+        chineseSubtitles: [],
+        englishFileName: '',
+        chineseFileName: '',
         subtitleSettings: {
           fontSize: 18,
           fontColor: '#ffffff',
@@ -60,10 +64,29 @@ class SubtitleExtensionBackground {
           const data = await this.getSubtitleData();
           sendResponse({ success: true, data });
           break;
+          
+        case 'getBilingualSubtitleData':
+          const bilingualData = await this.getBilingualSubtitleData();
+          sendResponse({ success: true, data: bilingualData });
+          break;
 
         case 'saveSubtitleData':
           await this.saveSubtitleData(request.data);
           await this.notifyContentScript('loadSubtitle', { subtitleData: request.data });
+          sendResponse({ success: true });
+          break;
+          
+        case 'saveBilingualSubtitles':
+          await this.saveBilingualSubtitles(
+            request.englishSubtitles,
+            request.chineseSubtitles,
+            request.englishFileName,
+            request.chineseFileName
+          );
+          await this.notifyContentScript('loadBilingualSubtitles', { 
+            englishSubtitles: request.englishSubtitles,
+            chineseSubtitles: request.chineseSubtitles
+          });
           sendResponse({ success: true });
           break;
 
@@ -91,6 +114,27 @@ class SubtitleExtensionBackground {
     }
   }
 
+  async getBilingualSubtitleData() {
+    const result = await chrome.storage.local.get([
+      'subtitleData',
+      'englishSubtitles',
+      'chineseSubtitles',
+      'subtitleEnabled', 
+      'subtitleSettings',
+      'englishFileName',
+      'chineseFileName'
+    ]);
+    return {
+      subtitleData: result.subtitleData || [],
+      englishSubtitles: result.englishSubtitles || [],
+      chineseSubtitles: result.chineseSubtitles || [],
+      subtitleEnabled: result.subtitleEnabled || false,
+      subtitleSettings: result.subtitleSettings || {},
+      englishFileName: result.englishFileName || '',
+      chineseFileName: result.chineseFileName || ''
+    };
+  }
+
   async getSubtitleData() {
     const result = await chrome.storage.local.get([
       'subtitleData', 
@@ -102,6 +146,19 @@ class SubtitleExtensionBackground {
       subtitleEnabled: result.subtitleEnabled || false,
       subtitleSettings: result.subtitleSettings || {}
     };
+  }
+
+  async saveBilingualSubtitles(englishSubtitles, chineseSubtitles, englishFileName, chineseFileName) {
+    await chrome.storage.local.set({ 
+      englishSubtitles: englishSubtitles || [],
+      chineseSubtitles: chineseSubtitles || [],
+      englishFileName: englishFileName || '',
+      chineseFileName: chineseFileName || ''
+    });
+    console.log('双语字幕数据已保存:', {
+      英文: englishSubtitles?.length || 0,
+      中文: chineseSubtitles?.length || 0
+    });
   }
 
   async saveSubtitleData(data) {
@@ -130,9 +187,13 @@ class SubtitleExtensionBackground {
   async clearSubtitleData() {
     await chrome.storage.local.set({ 
       subtitleData: [],
+      englishSubtitles: [],
+      chineseSubtitles: [],
+      englishFileName: '',
+      chineseFileName: '',
       subtitleEnabled: false
     });
-    await this.notifyContentScript('loadSubtitle', { subtitleData: [] });
+    await this.notifyContentScript('clearData');
     console.log('字幕数据已清除');
   }
 

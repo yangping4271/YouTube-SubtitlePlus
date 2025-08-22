@@ -27,27 +27,53 @@
 
             <!-- 文件上传区域 -->
             <div class="upload-section">
-                <div class="upload-area" id="uploadArea">
-                    <div class="upload-icon">📁</div>
-                    <div class="upload-text">
-                        <strong>选择字幕文件</strong>
-                        <p>支持 SRT、VTT 格式</p>
+                <!-- 英文字幕上传 -->
+                <div class="upload-group">
+                    <label class="upload-label">英文字幕文件 (SRT/VTT)</label>
+                    <div class="upload-area" id="englishUploadArea">
+                        <div class="upload-icon">🇺🇸</div>
+                        <div class="upload-text">
+                            <strong>选择英文字幕</strong>
+                            <p>English Subtitles</p>
+                        </div>
+                        <input type="file" id="englishFileInput" accept=".srt,.vtt" hidden>
                     </div>
-                    <input type="file" id="fileInput" accept=".srt,.vtt" hidden>
+                    <button class="browse-button" id="englishBrowseButton">浏览英文文件</button>
                 </div>
-                <button class="browse-button" id="browseButton">浏览文件</button>
+                
+                <!-- 中文字幕上传 -->
+                <div class="upload-group">
+                    <label class="upload-label">中文字幕文件 (SRT/VTT)</label>
+                    <div class="upload-area" id="chineseUploadArea">
+                        <div class="upload-icon">🇨🇳</div>
+                        <div class="upload-text">
+                            <strong>选择中文字幕</strong>
+                            <p>中文字幕</p>
+                        </div>
+                        <input type="file" id="chineseFileInput" accept=".srt,.vtt" hidden>
+                    </div>
+                    <button class="browse-button" id="chineseBrowseButton">浏览中文文件</button>
+                </div>
             </div>
 
             <!-- 字幕信息 -->
             <div class="info-section" id="infoSection">
                 <div class="subtitle-info">
                     <div class="info-item">
-                        <span class="info-label">已加载字幕:</span>
-                        <span class="info-value" id="subtitleCount">0 条</span>
+                        <span class="info-label">英文字幕:</span>
+                        <span class="info-value" id="englishSubtitleCount">0 条</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">文件名:</span>
-                        <span class="info-value" id="fileName">未选择</span>
+                        <span class="info-label">中文字幕:</span>
+                        <span class="info-value" id="chineseSubtitleCount">0 条</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">英文文件:</span>
+                        <span class="info-value" id="englishFileName">未选择</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">中文文件:</span>
+                        <span class="info-value" id="chineseFileName">未选择</span>
                     </div>
                 </div>
                 <button class="clear-button" id="clearButton">清除字幕</button>
