@@ -42,11 +42,10 @@ class SubtitleExtensionBackground {
         englishFileName: '',
         chineseFileName: '',
         subtitleSettings: {
-          fontSize: 18,
+          fontSize: 16,
           fontColor: '#ffffff',
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          position: 'bottom',
-          theme: 'dark'
+          backgroundOpacity: 60,
+          position: 'bottom'
         }
       });
       console.log('默认设置已初始化');
