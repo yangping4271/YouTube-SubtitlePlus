@@ -49,9 +49,6 @@ class YouTubeSubtitleOverlay {
   applyStyles() {
     const styles = {
       position: 'fixed',
-      left: '50%',
-      bottom: '10%',
-      transform: 'translateX(-50%)',
       zIndex: '2147483647',
       display: 'none',
       maxWidth: '80%',
@@ -76,6 +73,9 @@ class YouTubeSubtitleOverlay {
     };
 
     Object.assign(this.overlayElement.style, styles);
+    
+    // 初始定位
+    this.repositionSubtitle();
   }
 
   observeVideoChanges() {
@@ -119,26 +119,164 @@ class YouTubeSubtitleOverlay {
   }
 
   setupResizeListener() {
+    // 断开之前的监听器
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }
+    if (this.scrollListener) {
+      window.removeEventListener('scroll', this.scrollListener);
+    }
+    if (this.fullscreenListener) {
+      document.removeEventListener('fullscreenchange', this.fullscreenListener);
+    }
+    if (this.resizeWindowListener) {
+      window.removeEventListener('resize', this.resizeWindowListener);
+    }
     
+    // 视频尺寸变化监听
     this.resizeObserver = new ResizeObserver(() => {
       if (this.overlayElement && this.isEnabled) {
         this.repositionSubtitle();
       }
     });
     
+    // 页面滚动监听
+    this.scrollListener = () => {
+      if (this.overlayElement && this.isEnabled) {
+        this.repositionSubtitle();
+      }
+    };
+    
+    // 全屏状态变化监听
+    this.fullscreenListener = () => {
+      setTimeout(() => {
+        if (this.overlayElement && this.isEnabled) {
+          this.repositionSubtitle();
+        }
+      }, 100); // 延迟确保全屏动画完成
+    };
+    
+    // 窗口大小变化监听
+    this.resizeWindowListener = () => {
+      if (this.overlayElement && this.isEnabled) {
+        this.repositionSubtitle();
+      }
+    };
+    
+    // YouTube页面状态变化监听（剧场模式等）
+    this.setupYouTubeStateListener();
+    
+    // 绑定监听器
     if (this.currentVideo) {
       this.resizeObserver.observe(this.currentVideo);
     }
+    window.addEventListener('scroll', this.scrollListener, { passive: true });
+    document.addEventListener('fullscreenchange', this.fullscreenListener);
+    window.addEventListener('resize', this.resizeWindowListener, { passive: true });
+    
+    console.log('动态定位监听器已设置');
+  }
+
+  setupYouTubeStateListener() {
+    // 监听YouTube播放器状态变化
+    if (this.youtubeStateObserver) {
+      this.youtubeStateObserver.disconnect();
+    }
+    
+    this.youtubeStateObserver = new MutationObserver((mutations) => {
+      let needsReposition = false;
+      
+      mutations.forEach((mutation) => {
+        // 检测剧场模式切换
+        if (mutation.type === 'attributes' && 
+            (mutation.attributeName === 'class' || mutation.attributeName === 'theater')) {
+          needsReposition = true;
+        }
+        
+        // 检测DOM结构变化
+        if (mutation.type === 'childList') {
+          needsReposition = true;
+        }
+      });
+      
+      if (needsReposition && this.overlayElement && this.isEnabled) {
+        setTimeout(() => this.repositionSubtitle(), 200);
+      }
+    });
+    
+    // 监听主要的YouTube容器
+    const targets = [
+      document.querySelector('#movie_player'),
+      document.querySelector('#masthead-container'),
+      document.querySelector('#page-manager'),
+      document.body
+    ].filter(el => el);
+    
+    targets.forEach(target => {
+      this.youtubeStateObserver.observe(target, {
+        attributes: true,
+        attributeFilter: ['class', 'theater', 'fullscreen'],
+        childList: true,
+        subtree: false
+      });
+    });
   }
 
   repositionSubtitle() {
-    // 动态调整字幕位置，适应全屏等模式变化
+    if (!this.overlayElement || !this.currentVideo) return;
+    
+    // 获取视频播放器的位置和尺寸
+    const videoRect = this.currentVideo.getBoundingClientRect();
     const isFullscreen = document.fullscreenElement !== null;
-    const bottomPosition = isFullscreen ? '8%' : '10%';
-    this.overlayElement.style.bottom = bottomPosition;
+    const isTheaterMode = document.querySelector('.ytp-size-large') !== null;
+    const isMiniPlayer = document.querySelector('.ytp-miniplayer-active') !== null;
+    
+    if (isFullscreen) {
+      // 全屏模式：使用fixed定位，相对于屏幕
+      this.overlayElement.style.position = 'fixed';
+      this.overlayElement.style.left = '50%';
+      this.overlayElement.style.transform = 'translateX(-50%)';
+      this.overlayElement.style.bottom = '8%';
+      this.overlayElement.style.top = 'auto';
+      this.overlayElement.style.maxWidth = '80%';
+      this.overlayElement.style.fontSize = (this.settings.fontSize * 1.2) + 'px';
+    } else if (isMiniPlayer) {
+      // 迷你播放器：隐藏字幕
+      this.overlayElement.style.display = 'none';
+      return;
+    } else {
+      // 非全屏模式：相对于视频播放器定位
+      this.overlayElement.style.position = 'fixed';
+      this.overlayElement.style.left = videoRect.left + videoRect.width / 2 + 'px';
+      this.overlayElement.style.transform = 'translateX(-50%)';
+      
+      // 根据模式调整位置
+      let bottomOffset = 20;
+      let fontSize = this.settings.fontSize;
+      
+      if (isTheaterMode) {
+        bottomOffset = 40;
+        fontSize = this.settings.fontSize * 1.1;
+      }
+      
+      this.overlayElement.style.bottom = (window.innerHeight - videoRect.bottom + bottomOffset) + 'px';
+      this.overlayElement.style.top = 'auto';
+      this.overlayElement.style.fontSize = fontSize + 'px';
+      
+      // 限制字幕最大宽度不超过视频宽度的90%
+      this.overlayElement.style.maxWidth = Math.min(videoRect.width * 0.9, 800) + 'px';
+    }
+    
+    console.log('字幕位置已调整:', {
+      fullscreen: isFullscreen,
+      theater: isTheaterMode,
+      mini: isMiniPlayer,
+      videoRect: {
+        width: Math.round(videoRect.width),
+        height: Math.round(videoRect.height),
+        bottom: Math.round(videoRect.bottom)
+      }
+    });
   }
 
   insertOverlayToPage() {
@@ -178,6 +316,9 @@ class YouTubeSubtitleOverlay {
     this.overlayElement.style.zIndex = '2147483647';
     this.overlayElement.style.visibility = 'visible';
     this.overlayElement.style.opacity = '1';
+    
+    // 更新位置
+    this.repositionSubtitle();
   }
 
   hideSubtitle() {
@@ -339,6 +480,8 @@ if (document.readyState === 'loading') {
 
 // 导出
 window.SubtitleParser = SubtitleParser;
+
+// 测试函数
 window.testSubtitleNow = () => {
   if (subtitleOverlayInstance) {
     subtitleOverlayInstance.isEnabled = true;
@@ -346,4 +489,50 @@ window.testSubtitleNow = () => {
     return true;
   }
   return false;
+};
+
+// 字幕位置测试工具
+window.testSubtitlePositioning = () => {
+  if (!subtitleOverlayInstance) {
+    console.log('❌ 字幕实例不存在');
+    return false;
+  }
+
+  const instance = subtitleOverlayInstance;
+  console.log('🧪 开始字幕位置测试...');
+  
+  // 强制启用字幕
+  instance.isEnabled = true;
+  
+  // 获取当前状态
+  const videoRect = instance.currentVideo?.getBoundingClientRect();
+  const isFullscreen = document.fullscreenElement !== null;
+  const isTheaterMode = document.querySelector('.ytp-size-large') !== null;
+  const isMiniPlayer = document.querySelector('.ytp-miniplayer-active') !== null;
+  
+  console.log('📊 当前页面状态:', {
+    全屏模式: isFullscreen,
+    剧场模式: isTheaterMode,
+    迷你播放器: isMiniPlayer,
+    视频尺寸: videoRect ? {
+      宽度: Math.round(videoRect.width),
+      高度: Math.round(videoRect.height),
+      顶部: Math.round(videoRect.top),
+      底部: Math.round(videoRect.bottom)
+    } : '未找到视频'
+  });
+  
+  // 测试字幕显示
+  instance.showSubtitle('📍 测试字幕 - 位置动态调整\n当前模式: ' + 
+    (isFullscreen ? '全屏' : isTheaterMode ? '剧场' : isMiniPlayer ? '迷你' : '普通'));
+  
+  // 5秒后恢复正常
+  setTimeout(() => {
+    if (!instance.isEnabled || !instance.currentVideo) {
+      instance.hideSubtitle();
+    }
+    console.log('✅ 字幕位置测试完成');
+  }, 5000);
+  
+  return true;
 };
