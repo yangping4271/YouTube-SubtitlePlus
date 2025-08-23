@@ -76,7 +76,7 @@ class YouTubeSubtitleOverlay {
   }
 
   applyStyles() {
-    // 主容器样式 - 使用精确的中等z-index
+    // 主容器样式 - 初始为绝对定位
     const mainStyles = {
       position: 'absolute',
       zIndex: '40', // 在视频上方(1-10)，在控制栏下方(50+)
@@ -106,11 +106,7 @@ class YouTubeSubtitleOverlay {
     // 应用独立的中文字幕样式
     this.applyLanguageStyles('chinese');
     
-    // 确保容器被添加到DOM
-    if (!document.body.contains(this.overlayElement)) {
-      document.body.appendChild(this.overlayElement);
-      console.log('字幕容器已添加到页面 - 独立语言样式');
-    }
+    console.log('字幕样式已应用 - 独立语言样式，等待插入到播放器');
   }
 
   // 应用独立语言样式
@@ -308,89 +304,62 @@ class YouTubeSubtitleOverlay {
     const isTheaterMode = document.querySelector('.ytp-size-large') !== null;
     const isMiniPlayer = document.querySelector('.ytp-miniplayer-active') !== null;
     
+    // 获取视频播放器容器
+    const playerContainer = document.querySelector('#movie_player');
+    const containerRect = playerContainer ? playerContainer.getBoundingClientRect() : videoRect;
+    
     if (isFullscreen) {
+      // 全屏模式：居中显示
       this.overlayElement.style.position = 'fixed';
       this.overlayElement.style.left = '50%';
       this.overlayElement.style.transform = 'translateX(-50%)';
       this.overlayElement.style.bottom = '80px';
       this.overlayElement.style.maxWidth = '90%';
-      this.updateSubtitleStyles(this.settings.fontSize + 4);
+      this.overlayElement.style.zIndex = '9999';
     } else if (isMiniPlayer) {
+      // 迷你播放器：隐藏字幕
       this.overlayElement.style.display = 'none';
       return;
     } else {
-      this.overlayElement.style.position = 'fixed';
+      // 普通和剧场模式：相对于视频容器定位
+      this.overlayElement.style.display = 'block';
+      this.overlayElement.style.position = 'absolute';
+      this.overlayElement.style.zIndex = '40';
       
-      // 计算字幕的最大宽度（不超过视频宽度的90%）
-      const maxWidth = Math.max(300, videoRect.width * 0.9);
-      this.overlayElement.style.maxWidth = maxWidth + 'px';
-      
-      // 设置初始位置为视频中心
-      let leftPosition = videoRect.left + videoRect.width / 2;
-      this.overlayElement.style.left = leftPosition + 'px';
-      this.overlayElement.style.transform = 'translateX(-50%)';
-      
-      // 获取字幕实际尺寸进行边界检测
-      const subtitleRect = this.overlayElement.getBoundingClientRect();
-      const subtitleWidth = subtitleRect.width;
-      
-      // 边界检测和修正
-      const leftBoundary = videoRect.left + 10; // 左侧留10px边距
-      const rightBoundary = videoRect.right - 10; // 右侧留10px边距
-      const subtitleLeft = leftPosition - subtitleWidth / 2;
-      const subtitleRight = leftPosition + subtitleWidth / 2;
-      
-      if (subtitleLeft < leftBoundary) {
-        // 字幕左侧超出，调整到左边界
-        leftPosition = leftBoundary + subtitleWidth / 2;
-        this.overlayElement.style.left = leftPosition + 'px';
-      } else if (subtitleRight > rightBoundary) {
-        // 字幕右侧超出，调整到右边界
-        leftPosition = rightBoundary - subtitleWidth / 2;
-        this.overlayElement.style.left = leftPosition + 'px';
+      // 确保字幕容器相对于播放器定位
+      if (playerContainer) {
+        // 如果播放器容器存在，使用相对定位
+        if (playerContainer.style.position !== 'relative') {
+          playerContainer.style.position = 'relative';
+        }
+        
+        // 相对于播放器容器居中
+        this.overlayElement.style.left = '50%';
+        this.overlayElement.style.transform = 'translateX(-50%)';
+        this.overlayElement.style.bottom = isTheaterMode ? '70px' : '60px';
+        this.overlayElement.style.maxWidth = '90%';
+        
+        // 确保字幕容器在播放器内部
+        if (!playerContainer.contains(this.overlayElement)) {
+          playerContainer.appendChild(this.overlayElement);
+        }
+      } else {
+        // 后备方案：使用fixed定位
+        this.overlayElement.style.position = 'fixed';
+        this.overlayElement.style.left = '50%';
+        this.overlayElement.style.transform = 'translateX(-50%)';
+        this.overlayElement.style.bottom = (window.innerHeight - videoRect.bottom + 60) + 'px';
+        this.overlayElement.style.maxWidth = Math.min(videoRect.width * 0.9, 800) + 'px';
       }
-      
-      let bottomOffset = 30;
-      let fontSize = this.settings.fontSize;
-      
-      if (isTheaterMode) {
-        bottomOffset = 40;
-        fontSize = this.settings.fontSize + 2;
-      }
-      
-      this.overlayElement.style.bottom = (window.innerHeight - videoRect.bottom + bottomOffset) + 'px';
-      this.updateSubtitleStyles(fontSize);
     }
     
-    console.log('字幕位置已调整，包含边界检测');
-  }
-
-  updateSubtitleStyles(fontSize) {
-    const englishSubtitle = this.overlayElement.querySelector('#englishSubtitle');
-    const chineseSubtitle = this.overlayElement.querySelector('#chineseSubtitle');
-    
-    if (englishSubtitle) {
-      englishSubtitle.style.fontSize = fontSize + 'px';
-      englishSubtitle.style.color = this.settings.fontColor;
-      englishSubtitle.style.background = `rgba(0, 0, 0, ${this.settings.backgroundOpacity / 100})`;
-      englishSubtitle.style.padding = '2px 6px';
-      englishSubtitle.style.lineHeight = '1.2';
-      englishSubtitle.style.margin = '0';
-      englishSubtitle.style.whiteSpace = 'pre-wrap';
-      englishSubtitle.style.wordBreak = 'break-word';
-      englishSubtitle.style.maxWidth = '100%';
-    }
-    if (chineseSubtitle) {
-      chineseSubtitle.style.fontSize = fontSize + 'px';
-      chineseSubtitle.style.color = this.settings.fontColor;
-      chineseSubtitle.style.background = `rgba(0, 0, 0, ${this.settings.backgroundOpacity / 100})`;
-      chineseSubtitle.style.padding = '2px 6px';
-      chineseSubtitle.style.lineHeight = '1.2';
-      chineseSubtitle.style.margin = '0';
-      chineseSubtitle.style.whiteSpace = 'pre-wrap';
-      chineseSubtitle.style.wordBreak = 'break-word';
-      chineseSubtitle.style.maxWidth = '100%';
-    }
+    console.log('字幕定位已优化 - 模式:', {
+      fullscreen: isFullscreen,
+      theater: isTheaterMode,
+      mini: isMiniPlayer,
+      containerRect: containerRect,
+      position: this.overlayElement.style.position
+    });
   }
 
   insertOverlayToPage() {
@@ -399,18 +368,25 @@ class YouTubeSubtitleOverlay {
       existingOverlay.remove();
     }
     
-    // 新策略：插入到适当位置，使用中等z-index
+    // 优先插入到播放器容器内
     const moviePlayer = document.querySelector('#movie_player');
     
     if (moviePlayer) {
-      // 插入到movie_player容器内，但使用z-index确保在视频上方、控制栏下方
+      // 设置播放器容器为相对定位，确保字幕绝对定位相对于它
+      if (moviePlayer.style.position !== 'relative') {
+        moviePlayer.style.position = 'relative';
+      }
+      
       moviePlayer.appendChild(this.overlayElement);
-      console.log('字幕已插入到movie_player容器');
+      console.log('字幕已插入到movie_player容器内 - 相对定位模式');
     } else {
-      // 后备方案
+      // 后备方案：插入到body
       document.body.appendChild(this.overlayElement);
       console.log('字幕已插入到body（后备方案）');
     }
+    
+    // 初始定位
+    this.repositionSubtitle();
   }
 
   updateSubtitle() {
