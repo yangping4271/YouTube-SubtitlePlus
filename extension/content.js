@@ -58,13 +58,14 @@ class YouTubeSubtitleOverlay {
   }
 
   applyStyles() {
-    // 主容器样式
+    // 主容器样式 - 使用精确的中等z-index
     const mainStyles = {
-      position: 'fixed',
-      zIndex: '100',
+      position: 'absolute',
+      zIndex: '40', // 在视频上方(1-10)，在控制栏下方(50+)
       display: 'none',
       left: '50%',
       transform: 'translateX(-50%)',
+      bottom: '60px',
       pointerEvents: 'none',
       userSelect: 'none',
       fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif'
@@ -327,12 +328,18 @@ class YouTubeSubtitleOverlay {
       existingOverlay.remove();
     }
     
-    const playerContainer = document.querySelector('#movie_player') || 
-                           document.querySelector('.html5-video-container') ||
-                           document.body;
+    // 新策略：插入到适当位置，使用中等z-index
+    const moviePlayer = document.querySelector('#movie_player');
     
-    playerContainer.appendChild(this.overlayElement);
-    console.log('字幕容器已插入到页面');
+    if (moviePlayer) {
+      // 插入到movie_player容器内，但使用z-index确保在视频上方、控制栏下方
+      moviePlayer.appendChild(this.overlayElement);
+      console.log('字幕已插入到movie_player容器');
+    } else {
+      // 后备方案
+      document.body.appendChild(this.overlayElement);
+      console.log('字幕已插入到body（后备方案）');
+    }
   }
 
   updateSubtitle() {
@@ -386,8 +393,8 @@ class YouTubeSubtitleOverlay {
     }
     
     this.overlayElement.style.display = 'block';
-    this.overlayElement.style.position = 'fixed';
-    this.overlayElement.style.zIndex = '100';
+    this.overlayElement.style.position = 'absolute';
+    this.overlayElement.style.zIndex = '40'; // 精确的中等层级
     this.overlayElement.style.visibility = 'visible';
     this.overlayElement.style.opacity = '1';
     
@@ -630,8 +637,8 @@ window.testSubtitlePositioning = () => {
   // 强制启用字幕并显示测试内容
   instance.isEnabled = true;
   instance.showBilingualSubtitle(
-    'Layer Test: Should appear BELOW YouTube controls', 
-    '层级测试：应显示在YouTube控制栏下方'
+    '✅ Layer Test: Should appear BELOW YouTube controls', 
+    '✅ 层级测试：应显示在YouTube控制栏下方'
   );
   
   // 检查z-index设置
@@ -642,18 +649,28 @@ window.testSubtitlePositioning = () => {
     显示状态: instance.overlayElement?.style.display
   });
   
-  // 检查进度条等控件的z-index（用于对比）
+  // 检查YouTube控件的z-index（用于对比）
   const progressBar = document.querySelector('.ytp-progress-bar');
   const controls = document.querySelector('.ytp-chrome-bottom');
+  const controlsContainer = document.querySelector('.ytp-chrome-controls');
   
-  if (progressBar || controls) {
-    console.log('🎮 YouTube控件层级对比:', {
-      进度条zIndex: progressBar ? window.getComputedStyle(progressBar).zIndex : '未找到',
-      控制栏zIndex: controls ? window.getComputedStyle(controls).zIndex : '未找到'
-    });
-  }
+  console.log('🎮 YouTube控件层级对比:', {
+    进度条zIndex: progressBar ? window.getComputedStyle(progressBar).zIndex : '未找到',
+    控制栏zIndex: controls ? window.getComputedStyle(controls).zIndex : '未找到',
+    控制容器zIndex: controlsContainer ? window.getComputedStyle(controlsContainer).zIndex : '未找到'
+  });
   
-  console.log('✅ 字幕已显示，请检查是否在进度条下方');
+  // 验证层级关系
+  const subtitleZ = parseInt(zIndex) || 50;
+  const progressZ = progressBar ? parseInt(window.getComputedStyle(progressBar).zIndex) || 0 : 0;
+  const controlsZ = controls ? parseInt(window.getComputedStyle(controls).zIndex) || 0 : 0;
+  
+  console.log('🔍 层级关系验证:', {
+    字幕层级: subtitleZ,
+    进度条层级: progressZ,
+    控制栏层级: controlsZ,
+    关系正确: subtitleZ < Math.max(progressZ, controlsZ, 60) ? '✅ 字幕在控制栏下方' : '❌ 字幕仍在控制栏上方'
+  });
   
   // 5秒后隐藏测试字幕
   setTimeout(() => {

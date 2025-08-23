@@ -4,7 +4,7 @@
   bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 2147483647 !important;
+  z-index: 40; /* 中等层级：在视频上方，在控制栏下方 */
   pointer-events: none !important;
   font-family: 'Helvetica Neue', Arial, sans-serif;
   font-size: 18px;

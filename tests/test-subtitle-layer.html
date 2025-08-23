@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字幕层级修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .layer-demo {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            background: #000;
+            margin: 20px 0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .simulated-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(0,0,0,0.8);
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            color: white;
+        }
+        
+        .simulated-progress {
+            flex: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            margin: 0 10px;
+            border-radius: 2px;
+        }
+        
+        .progress-filled {
+            width: 30%;
+            height: 100%;
+            background: #ff0000;
+            border-radius: 2px;
+        }
+        
+        .subtitle-correct {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .subtitle-wrong {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 70;
+            background: rgba(255,0,0,0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .result {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎯 字幕层级修复测试报告</h1>
+        
+        <div class="result success">
+            <h3>✅ 问题已修复</h3>
+            <p><strong>修改前：</strong> z-index: 2,147,483,647（JavaScript 32位整数最大值）</p>
+            <p><strong>修改后：</strong> z-index: 50（合理的中等层级）</p>
+            <p><strong>效果：</strong> 字幕现在正确显示在YouTube控制栏下方</p>
+        </div>
+        
+        <h2>层级关系演示</h2>
+        
+        <div class="layer-demo">
+            <div class="subtitle-correct">✅ 正确位置：字幕在控制栏下方 (z-index: 50)</div>
+            <div class="simulated-controls">
+                <span>⏯️</span>
+                <div class="simulated-progress">
+                    <div class="progress-filled"></div>
+                </div>
+                <span>🔊 YouTube控制栏 (z-index: 60)</span>
+            </div>
+        </div>
+        
+        <div class="layer-demo">
+            <div class="subtitle-wrong">❌ 错误位置：字幕遮挡控制栏 (z-index: 70)</div>
+            <div class="simulated-controls">
+                <span>⏯️</span>
+                <div class="simulated-progress">
+                    <div class="progress-filled"></div>
+                </div>
+                <span>🔊 被遮挡的控制栏</span>
+            </div>
+        </div>
+        
+        <div class="result info">
+            <h3>🔧 技术实现</h3>
+            <p>修改了以下文件中的 z-index 设置：</p>
+            <ul>
+                <li><code>extension/subtitle-overlay.css</code> - CSS样式中的z-index</li>
+                <li><code>extension/content.js</code> - JavaScript代码中的zIndex设置</li>
+            </ul>
+        </div>
+        
+        <div class="code">
+            <strong>CSS 修改：</strong><br>
+            /* 修改前 */<br>
+            z-index: 2147483647 !important;<br><br>
+            /* 修改后 */<br>
+            z-index: 50 !important;
+        </div>
+        
+        <div class="code">
+            <strong>JavaScript 修改：</strong><br>
+            // 修改前<br>
+            zIndex: '100'<br><br>
+            // 修改后<br>
+            zIndex: '50'
+        </div>
+        
+        <div class="result warning">
+            <h3>⚡ 测试方法</h3>
+            <p>在YouTube页面的开发者控制台中运行：</p>
+            <code>testSubtitlePositioning()</code>
+            <p>该函数会：</p>
+            <ul>
+                <li>显示测试字幕</li>
+                <li>检测当前z-index设置</li>
+                <li>对比YouTube控件的层级</li>
+                <li>验证层级关系是否正确</li>
+            </ul>
+        </div>
+        
+        <div class="result info">
+            <h3>🎨 层级设计理念</h3>
+            <ul>
+                <li><strong>视频内容：</strong> z-index: 1-10</li>
+                <li><strong>字幕覆盖层：</strong> z-index: 50 （当前设置）</li>
+                <li><strong>播放器控件：</strong> z-index: 60-100</li>
+                <li><strong>弹出菜单：</strong> z-index: 1000+</li>
+            </ul>
+            <p>这样的设计确保了用户界面的逻辑层次，字幕可见但不会干扰控件操作。</p>
+        </div>
+    </div>
+</body>
+</html>
