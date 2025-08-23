@@ -6,12 +6,30 @@ class YouTubeSubtitleOverlay {
     this.currentVideo = null;
     this.overlayElement = null;
     this.isEnabled = false;
-    this.settings = {
-      fontSize: 16,
+    
+    // 独立的语言设置 (32px基础，20%背景透明度)
+    this.englishSettings = {
+      fontSize: 32,
       fontColor: '#ffffff',
-      backgroundOpacity: 60,
+      fontFamily: 'Arial, sans-serif',
+      fontWeight: 'bold',
+      backgroundOpacity: 20,
+      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+      lineHeight: 1.3,
       position: 'bottom'
     };
+    
+    this.chineseSettings = {
+      fontSize: 34,
+      fontColor: '#ffffff',
+      fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
+      fontWeight: 'bold',
+      backgroundOpacity: 25,
+      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+      lineHeight: 1.4,
+      position: 'bottom'
+    };
+    
     this.init();
   }
 
@@ -38,7 +56,7 @@ class YouTubeSubtitleOverlay {
           this.clearSubtitleData();
           break;
         case 'updateSettings':
-          this.updateSettings(request.settings);
+          this.updateLanguageSettings(request.language, request.settings);
           break;
       }
     });
@@ -67,13 +85,9 @@ class YouTubeSubtitleOverlay {
       transform: 'translateX(-50%)',
       bottom: '60px',
       pointerEvents: 'none',
-      userSelect: 'none',
-      fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif'
+      userSelect: 'none'
     };
     Object.assign(this.overlayElement.style, mainStyles);
-
-    // 更新CSS变量
-    this.updateCSSVariables();
 
     // 字幕容器样式
     const container = this.overlayElement.querySelector('.subtitle-container');
@@ -86,52 +100,49 @@ class YouTubeSubtitleOverlay {
       });
     }
     
-    // 英文字幕样式 - 使用CSS变量
-    const englishSubtitle = this.overlayElement.querySelector('#englishSubtitle');
-    if (englishSubtitle) {
-      Object.assign(englishSubtitle.style, {
-        fontSize: 'var(--subtitle-font-size, ' + this.settings.fontSize + 'px)',
-        color: 'var(--subtitle-font-color, ' + this.settings.fontColor + ')',
-        fontWeight: '600',
-        textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
-        lineHeight: '1.2',
-        background: `rgba(0, 0, 0, var(--subtitle-bg-opacity, ${this.settings.backgroundOpacity / 100}))`,
-        padding: '2px 6px',
-        borderRadius: '3px',
-        display: 'inline-block',
-        textAlign: 'center',
-        whiteSpace: 'pre-wrap', // 允许换行
-        wordBreak: 'break-word', // 长单词自动换行
-        maxWidth: '100%', // 继承父容器最大宽度
-        margin: '0'
-      });
-    }
+    // 应用独立的英文字幕样式
+    this.applyLanguageStyles('english');
     
-    // 中文字幕样式 - 使用CSS变量
-    const chineseSubtitle = this.overlayElement.querySelector('#chineseSubtitle');
-    if (chineseSubtitle) {
-      Object.assign(chineseSubtitle.style, {
-        fontSize: 'var(--subtitle-font-size, ' + this.settings.fontSize + 'px)',
-        color: 'var(--subtitle-font-color, ' + this.settings.fontColor + ')',
-        fontWeight: '600',
-        textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
-        lineHeight: '1.2',
-        background: `rgba(0, 0, 0, var(--subtitle-bg-opacity, ${this.settings.backgroundOpacity / 100}))`,
-        padding: '2px 6px',
-        borderRadius: '3px',
-        display: 'inline-block',
-        textAlign: 'center',
-        whiteSpace: 'pre-wrap', // 允许换行
-        wordBreak: 'break-word', // 长文本自动换行
-        maxWidth: '100%', // 继承父容器最大宽度
-        margin: '0'
-      });
-    }
+    // 应用独立的中文字幕样式
+    this.applyLanguageStyles('chinese');
     
     // 确保容器被添加到DOM
     if (!document.body.contains(this.overlayElement)) {
       document.body.appendChild(this.overlayElement);
-      console.log('字幕容器已添加到页面');
+      console.log('字幕容器已添加到页面 - 独立语言样式');
+    }
+  }
+
+  // 应用独立语言样式
+  applyLanguageStyles(language) {
+    const settings = language === 'english' ? this.englishSettings : this.chineseSettings;
+    const elementId = language === 'english' ? '#englishSubtitle' : '#chineseSubtitle';
+    const element = this.overlayElement.querySelector(elementId);
+    
+    if (element && settings) {
+      Object.assign(element.style, {
+        fontSize: settings.fontSize + 'px',
+        color: settings.fontColor,
+        fontFamily: settings.fontFamily,
+        fontWeight: settings.fontWeight,
+        textShadow: settings.textShadow,
+        lineHeight: settings.lineHeight,
+        background: `rgba(0, 0, 0, ${settings.backgroundOpacity / 100})`,
+        padding: '2px 6px',
+        borderRadius: '3px',
+        display: 'inline-block',
+        textAlign: 'center',
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+        maxWidth: '100%',
+        margin: '0'
+      });
+      
+      console.log(`${language === 'english' ? '英文' : '中文'}字幕样式已应用:`, {
+        fontSize: settings.fontSize + 'px',
+        backgroundOpacity: settings.backgroundOpacity + '%',
+        fontFamily: settings.fontFamily
+      });
     }
   }
 
@@ -547,20 +558,18 @@ class YouTubeSubtitleOverlay {
     }
   }
 
-  // 更新CSS变量系统
-  updateCSSVariables() {
-    if (!this.overlayElement) return;
+  // 更新独立语言设置
+  updateLanguageSettings(language, settings) {
+    if (language === 'english') {
+      this.englishSettings = { ...this.englishSettings, ...settings };
+      console.log('英文字幕设置已更新:', settings);
+    } else if (language === 'chinese') {
+      this.chineseSettings = { ...this.chineseSettings, ...settings };
+      console.log('中文字幕设置已更新:', settings);
+    }
     
-    // 设置CSS自定义属性，实现实时更新
-    this.overlayElement.style.setProperty('--subtitle-font-size', this.settings.fontSize + 'px');
-    this.overlayElement.style.setProperty('--subtitle-font-color', this.settings.fontColor);
-    this.overlayElement.style.setProperty('--subtitle-bg-opacity', this.settings.backgroundOpacity / 100);
-    
-    console.log('CSS变量已更新:', {
-      fontSize: this.settings.fontSize + 'px',
-      fontColor: this.settings.fontColor,
-      backgroundOpacity: this.settings.backgroundOpacity / 100
-    });
+    // 重新应用对应语言的样式
+    this.applyLanguageStyles(language);
   }
 
   async loadSubtitleData() {
@@ -570,7 +579,8 @@ class YouTubeSubtitleOverlay {
         'englishSubtitles',
         'chineseSubtitles',
         'subtitleEnabled', 
-        'subtitleSettings'
+        'englishSettings',
+        'chineseSettings'
       ]);
       
       if (result.englishSubtitles || result.chineseSubtitles) {
@@ -589,8 +599,21 @@ class YouTubeSubtitleOverlay {
         this.isEnabled = result.subtitleEnabled;
       }
       
-      if (result.subtitleSettings) {
-        this.settings = { ...this.settings, ...result.subtitleSettings };
+      // 加载独立语言设置
+      if (result.englishSettings) {
+        this.englishSettings = { ...this.englishSettings, ...result.englishSettings };
+        console.log('英文字幕设置已加载:', this.englishSettings);
+      }
+      
+      if (result.chineseSettings) {
+        this.chineseSettings = { ...this.chineseSettings, ...result.chineseSettings };
+        console.log('中文字幕设置已加载:', this.chineseSettings);
+      }
+      
+      // 重新应用样式
+      if (this.overlayElement) {
+        this.applyLanguageStyles('english');
+        this.applyLanguageStyles('chinese');
       }
     } catch (error) {
       console.error('加载字幕数据失败:', error);

@@ -87,6 +87,25 @@
                 </button>
                 
                 <div class="settings-panel active" id="settingsPanel">
+                    <!-- 语言切换标签 -->
+                    <div class="language-tabs">
+                        <button class="lang-tab active" data-lang="english" id="englishTab">
+                            <span class="flag">🇺🇸</span>
+                            <span>English</span>
+                        </button>
+                        <button class="lang-tab" data-lang="chinese" id="chineseTab">
+                            <span class="flag">🇨🇳</span>
+                            <span>中文</span>
+                        </button>
+                        <div class="sync-option">
+                            <label class="sync-switch">
+                                <input type="checkbox" id="syncSettings">
+                                <span class="sync-slider"></span>
+                            </label>
+                            <span class="sync-label">同步设置</span>
+                        </div>
+                    </div>
+
                     <!-- 实时预览区域 -->
                     <div class="preview-section">
                         <div class="preview-label">
@@ -99,33 +118,72 @@
                         </div>
                     </div>
 
-                    <!-- 快速预设 -->
-                    <div class="preset-section">
-                        <div class="preset-label">🚀 快速预设</div>
+                    <!-- 快速预设 - 英文 -->
+                    <div class="preset-section english-presets" id="englishPresets">
+                        <div class="preset-label">🚀 英文预设 (32px基础)</div>
                         <div class="preset-buttons">
-                            <button class="preset-btn" data-preset="standard">📺 标准</button>
-                            <button class="preset-btn" data-preset="large">🔍 大字幕</button>
-                            <button class="preset-btn" data-preset="contrast">⚡ 高对比</button>
-                            <button class="preset-btn" data-preset="cinema">🎬 影院</button>
+                            <button class="preset-btn active" data-preset="standard" data-lang="english">📺 标准</button>
+                            <button class="preset-btn" data-preset="large" data-lang="english">🔍 大字幕</button>
+                            <button class="preset-btn" data-preset="contrast" data-lang="english">⚡ 高对比</button>
+                            <button class="preset-btn" data-preset="cinema" data-lang="english">🎬 影院</button>
+                        </div>
+                    </div>
+
+                    <!-- 快速预设 - 中文 -->
+                    <div class="preset-section chinese-presets" id="chinesePresets" style="display: none;">
+                        <div class="preset-label">🚀 中文预设 (34px基础)</div>
+                        <div class="preset-buttons">
+                            <button class="preset-btn active" data-preset="standard" data-lang="chinese">📺 标准</button>
+                            <button class="preset-btn" data-preset="large" data-lang="chinese">🔍 大字幕</button>
+                            <button class="preset-btn" data-preset="contrast" data-lang="chinese">⚡ 高对比</button>
+                            <button class="preset-btn" data-preset="cinema" data-lang="chinese">🎬 影院</button>
                         </div>
                     </div>
 
                     <!-- 详细设置 -->
                     <div class="detailed-settings">
                         <div class="setting-group">
-                            <label for="fontSize">
+                            <label>
                                 <span class="setting-icon">📏</span>
                                 <span class="setting-name">字体大小</span>
-                                <span class="setting-desc">建议范围: 12-32px</span>
+                                <span class="setting-desc">建议范围: 20-60px</span>
                             </label>
                             <div class="setting-control">
-                                <input type="range" id="fontSize" min="12" max="32" value="16">
-                                <span class="setting-value" id="fontSizeValue">16px</span>
+                                <input type="range" id="fontSize" min="20" max="60" value="32">
+                                <span class="setting-value" id="fontSizeValue">32px</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>
+                                <span class="setting-icon">🎭</span>
+                                <span class="setting-name">字体系列</span>
+                                <span class="setting-desc">选择字体类型</span>
+                            </label>
+                            <div class="setting-control">
+                                <select id="fontFamily">
+                                    <!-- 动态填充 -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>
+                                <span class="setting-icon">💪</span>
+                                <span class="setting-name">字体粗细</span>
+                                <span class="setting-desc">字体的粗细程度</span>
+                            </label>
+                            <div class="setting-control">
+                                <select id="fontWeight">
+                                    <option value="normal">正常</option>
+                                    <option value="bold" selected>粗体</option>
+                                    <option value="bolder">更粗</option>
+                                </select>
                             </div>
                         </div>
                         
                         <div class="setting-group">
-                            <label for="fontColor">
+                            <label>
                                 <span class="setting-icon">🎨</span>
                                 <span class="setting-name">字体颜色</span>
                                 <span class="setting-desc">选择字幕文字颜色</span>
@@ -137,26 +195,50 @@
                         </div>
                         
                         <div class="setting-group">
-                            <label for="bgOpacity">
-                                <span class="setting-icon">🎭</span>
+                            <label>
+                                <span class="setting-icon">🌫️</span>
                                 <span class="setting-name">背景透明度</span>
-                                <span class="setting-desc">背景框透明程度</span>
+                                <span class="setting-desc">背景框透明程度 (默认20%)</span>
                             </label>
                             <div class="setting-control">
-                                <input type="range" id="bgOpacity" min="0" max="100" value="60">
-                                <span class="setting-value" id="bgOpacityValue">60%</span>
+                                <input type="range" id="bgOpacity" min="0" max="100" value="20">
+                                <span class="setting-value" id="bgOpacityValue">20%</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>
+                                <span class="setting-icon">🌟</span>
+                                <span class="setting-name">文字阴影</span>
+                                <span class="setting-desc">增强文字可读性</span>
+                            </label>
+                            <div class="setting-control">
+                                <input type="range" id="textShadow" min="0" max="8" value="2" step="1">
+                                <span class="setting-value" id="textShadowValue">2px</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>
+                                <span class="setting-icon">📐</span>
+                                <span class="setting-name">行高</span>
+                                <span class="setting-desc">行间距设置</span>
+                            </label>
+                            <div class="setting-control">
+                                <input type="range" id="lineHeight" min="1.0" max="2.0" value="1.3" step="0.1">
+                                <span class="setting-value" id="lineHeightValue">1.3</span>
                             </div>
                         </div>
                         
                         <div class="setting-group">
-                            <label for="subtitlePosition">
+                            <label>
                                 <span class="setting-icon">📍</span>
                                 <span class="setting-name">字幕位置</span>
                                 <span class="setting-desc">字幕在视频中的位置</span>
                             </label>
                             <div class="setting-control">
                                 <select id="subtitlePosition">
-                                    <option value="bottom">底部</option>
+                                    <option value="bottom" selected>底部</option>
                                     <option value="top">顶部</option>
                                     <option value="center">中央</option>
                                 </select>

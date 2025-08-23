@@ -41,14 +41,32 @@ class SubtitleExtensionBackground {
         chineseSubtitles: [],
         englishFileName: '',
         chineseFileName: '',
-        subtitleSettings: {
-          fontSize: 16,
+        // 英文字幕独立设置 - 基础32px字体，20%背景透明度
+        englishSettings: {
+          fontSize: 32,
           fontColor: '#ffffff',
-          backgroundOpacity: 60,
+          fontFamily: 'Arial, sans-serif',
+          fontWeight: 'bold',
+          backgroundOpacity: 20,
+          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+          lineHeight: 1.3,
           position: 'bottom'
-        }
+        },
+        // 中文字幕独立设置 - 针对中文优化的设置
+        chineseSettings: {
+          fontSize: 34,
+          fontColor: '#ffffff', 
+          fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
+          fontWeight: 'bold',
+          backgroundOpacity: 25,
+          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+          lineHeight: 1.4,
+          position: 'bottom'
+        },
+        // 同步设置选项
+        syncSettings: false
       });
-      console.log('默认设置已初始化');
+      console.log('默认双语独立设置已初始化 - 32px基础字体');
     });
   }
 
@@ -119,7 +137,9 @@ class SubtitleExtensionBackground {
       'englishSubtitles',
       'chineseSubtitles',
       'subtitleEnabled', 
-      'subtitleSettings',
+      'englishSettings',
+      'chineseSettings',
+      'syncSettings',
       'englishFileName',
       'chineseFileName'
     ]);
@@ -128,7 +148,9 @@ class SubtitleExtensionBackground {
       englishSubtitles: result.englishSubtitles || [],
       chineseSubtitles: result.chineseSubtitles || [],
       subtitleEnabled: result.subtitleEnabled || false,
-      subtitleSettings: result.subtitleSettings || {},
+      englishSettings: result.englishSettings || {},
+      chineseSettings: result.chineseSettings || {},
+      syncSettings: result.syncSettings || false,
       englishFileName: result.englishFileName || '',
       chineseFileName: result.chineseFileName || ''
     };
@@ -172,15 +194,38 @@ class SubtitleExtensionBackground {
   }
 
   async updateSettings(settings) {
-    const currentSettings = await chrome.storage.local.get(['subtitleSettings']);
-    const newSettings = {
-      ...(currentSettings.subtitleSettings || {}),
-      ...settings
-    };
-    
-    await chrome.storage.local.set({ subtitleSettings: newSettings });
-    await this.notifyContentScript('updateSettings', { settings: newSettings });
-    console.log('设置已更新:', newSettings);
+    // 根据设置类型更新对应的语言设置
+    if (settings.language === 'english') {
+      const currentSettings = await chrome.storage.local.get(['englishSettings']);
+      const newSettings = {
+        ...(currentSettings.englishSettings || {}),
+        ...settings.data
+      };
+      
+      await chrome.storage.local.set({ englishSettings: newSettings });
+      await this.notifyContentScript('updateSettings', { 
+        language: 'english', 
+        settings: newSettings 
+      });
+      console.log('英文字幕设置已更新:', newSettings);
+    } else if (settings.language === 'chinese') {
+      const currentSettings = await chrome.storage.local.get(['chineseSettings']);
+      const newSettings = {
+        ...(currentSettings.chineseSettings || {}),
+        ...settings.data
+      };
+      
+      await chrome.storage.local.set({ chineseSettings: newSettings });
+      await this.notifyContentScript('updateSettings', { 
+        language: 'chinese', 
+        settings: newSettings 
+      });
+      console.log('中文字幕设置已更新:', newSettings);
+    } else if (settings.sync !== undefined) {
+      // 更新同步设置
+      await chrome.storage.local.set({ syncSettings: settings.sync });
+      console.log('设置同步选项已更新:', settings.sync);
+    }
   }
 
   async clearSubtitleData() {

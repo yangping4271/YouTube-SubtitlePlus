@@ -6,6 +6,13 @@ class PopupController {
     this.currentFileName = '';
     this.englishFileName = '';
     this.chineseFileName = '';
+    
+    // 当前选择的语言和设置
+    this.currentLanguage = 'english';
+    this.englishSettings = {};
+    this.chineseSettings = {};
+    this.syncSettings = false;
+    
     this.init();
   }
 
@@ -91,65 +98,65 @@ class PopupController {
   }
 
   bindSettingsEvents() {
-    // 预设配置
-    const presets = {
-      standard: { fontSize: 16, fontColor: '#ffffff', backgroundOpacity: 60, position: 'bottom' },
-      large: { fontSize: 24, fontColor: '#ffffff', backgroundOpacity: 70, position: 'bottom' },
-      contrast: { fontSize: 20, fontColor: '#ffff00', backgroundOpacity: 90, position: 'bottom' },
-      cinema: { fontSize: 18, fontColor: '#ffffff', backgroundOpacity: 40, position: 'bottom' }
+    // 初始化字体系列选项
+    this.initializeFontFamilyOptions();
+    
+    // 语言标签切换
+    document.querySelectorAll('.lang-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        const language = e.currentTarget.dataset.lang;
+        this.switchLanguage(language);
+      });
+    });
+
+    // 同步设置选项
+    const syncCheckbox = document.getElementById('syncSettings');
+    syncCheckbox.addEventListener('change', (e) => {
+      this.syncSettings = e.target.checked;
+      this.updateSettings({ sync: this.syncSettings });
+      
+      if (this.syncSettings) {
+        // 如果开启同步，将当前语言设置复制到另一种语言
+        this.syncSettingsToOtherLanguage();
+      }
+    });
+
+    // 双语预设配置
+    const englishPresets = {
+      standard: { fontSize: 32, fontColor: '#ffffff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', backgroundOpacity: 20, textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', lineHeight: 1.3, position: 'bottom' },
+      large: { fontSize: 40, fontColor: '#ffffff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', backgroundOpacity: 25, textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)', lineHeight: 1.3, position: 'bottom' },
+      contrast: { fontSize: 36, fontColor: '#ffff00', fontFamily: 'Arial, sans-serif', fontWeight: 'bolder', backgroundOpacity: 40, textShadow: '2px 2px 4px rgba(0, 0, 0, 1.0)', lineHeight: 1.2, position: 'bottom' },
+      cinema: { fontSize: 34, fontColor: '#f0f0f0', fontFamily: 'Georgia, serif', fontWeight: 'bold', backgroundOpacity: 15, textShadow: '2px 2px 8px rgba(0, 0, 0, 0.8)', lineHeight: 1.4, position: 'bottom' }
+    };
+
+    const chinesePresets = {
+      standard: { fontSize: 34, fontColor: '#ffffff', fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif', fontWeight: 'bold', backgroundOpacity: 25, textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', lineHeight: 1.4, position: 'bottom' },
+      large: { fontSize: 42, fontColor: '#ffffff', fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif', fontWeight: 'bold', backgroundOpacity: 30, textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)', lineHeight: 1.4, position: 'bottom' },
+      contrast: { fontSize: 38, fontColor: '#ffff00', fontFamily: '"SimHei", "Microsoft YaHei", sans-serif', fontWeight: 'bolder', backgroundOpacity: 45, textShadow: '2px 2px 4px rgba(0, 0, 0, 1.0)', lineHeight: 1.3, position: 'bottom' },
+      cinema: { fontSize: 36, fontColor: '#f0f0f0', fontFamily: '"SimSun", "Microsoft YaHei", serif', fontWeight: 'bold', backgroundOpacity: 20, textShadow: '2px 2px 8px rgba(0, 0, 0, 0.8)', lineHeight: 1.5, position: 'bottom' }
     };
 
     // 预设按钮事件
     document.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const presetName = btn.dataset.preset;
+        const language = btn.dataset.lang;
+        const presets = language === 'english' ? englishPresets : chinesePresets;
         const preset = presets[presetName];
         
-        // 更新所有预设按钮状态
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        // 更新对应语言的预设按钮状态
+        const targetContainer = language === 'english' ? 'englishPresets' : 'chinesePresets';
+        document.querySelectorAll(`#${targetContainer} .preset-btn`).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         
         // 应用预设设置
-        this.applyPreset(preset);
+        this.applyPreset(preset, language);
       });
     });
 
-    // 字体大小
-    const fontSize = document.getElementById('fontSize');
-    const fontSizeValue = document.getElementById('fontSizeValue');
-    fontSize.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      fontSizeValue.textContent = value + 'px';
-      this.updatePreview({ fontSize: value });
-      this.updateSettings({ fontSize: value });
-    });
-
-    // 字体颜色
-    const fontColor = document.getElementById('fontColor');
-    const colorName = document.getElementById('colorName');
-    fontColor.addEventListener('change', (e) => {
-      const color = e.target.value;
-      colorName.textContent = this.getColorName(color);
-      this.updatePreview({ fontColor: color });
-      this.updateSettings({ fontColor: color });
-    });
-
-    // 背景透明度
-    const bgOpacity = document.getElementById('bgOpacity');
-    const bgOpacityValue = document.getElementById('bgOpacityValue');
-    bgOpacity.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      bgOpacityValue.textContent = value + '%';
-      this.updatePreview({ backgroundOpacity: value });
-      this.updateSettings({ backgroundOpacity: value });
-    });
-
-    // 字幕位置
-    const subtitlePosition = document.getElementById('subtitlePosition');
-    subtitlePosition.addEventListener('change', (e) => {
-      this.updateSettings({ position: e.target.value });
-    });
-
+    // 设置控件事件绑定
+    this.bindSettingControls();
+    
     // 重置按钮
     document.getElementById('resetSettings').addEventListener('click', () => {
       this.resetToDefault();
@@ -159,41 +166,274 @@ class PopupController {
     this.initializePreview();
   }
 
-  // 应用预设设置
-  applyPreset(preset) {
-    // 更新UI控件
-    document.getElementById('fontSize').value = preset.fontSize;
-    document.getElementById('fontSizeValue').textContent = preset.fontSize + 'px';
-    document.getElementById('fontColor').value = preset.fontColor;
-    document.getElementById('colorName').textContent = this.getColorName(preset.fontColor);
-    document.getElementById('bgOpacity').value = preset.backgroundOpacity;
-    document.getElementById('bgOpacityValue').textContent = preset.backgroundOpacity + '%';
-    document.getElementById('subtitlePosition').value = preset.position;
+  // 初始化字体系列选项
+  initializeFontFamilyOptions() {
+    const fontFamilySelect = document.getElementById('fontFamily');
+    
+    // 清空现有选项
+    fontFamilySelect.innerHTML = '';
+    
+    // 英文字体选项
+    const englishFonts = [
+      { value: 'Arial, sans-serif', name: 'Arial' },
+      { value: 'Helvetica, Arial, sans-serif', name: 'Helvetica' },
+      { value: 'Georgia, serif', name: 'Georgia' },
+      { value: '"Times New Roman", serif', name: 'Times New Roman' },
+      { value: 'Verdana, sans-serif', name: 'Verdana' },
+      { value: '"Courier New", monospace', name: 'Courier New' }
+    ];
+    
+    // 中文字体选项
+    const chineseFonts = [
+      { value: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif', name: '微软雅黑' },
+      { value: '"SimHei", "Heiti SC", "Microsoft YaHei", sans-serif', name: '黑体' },
+      { value: '"SimSun", "Songti SC", "Microsoft YaHei", serif', name: '宋体' },
+      { value: '"KaiTi", "Kaiti SC", "Microsoft YaHei", serif', name: '楷体' },
+      { value: '"PingFang SC", "Microsoft YaHei", sans-serif', name: '苹方' }
+    ];
+    
+    // 根据当前语言填充选项
+    const fonts = this.currentLanguage === 'english' ? englishFonts : chineseFonts;
+    fonts.forEach(font => {
+      const option = document.createElement('option');
+      option.value = font.value;
+      option.textContent = font.name;
+      fontFamilySelect.appendChild(option);
+    });
+  }
 
+  // 切换语言标签
+  switchLanguage(language) {
+    if (this.currentLanguage === language) return;
+    
+    this.currentLanguage = language;
+    
+    // 更新标签状态
+    document.querySelectorAll('.lang-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.lang === language);
+    });
+    
+    // 切换预设区域显示
+    document.getElementById('englishPresets').style.display = language === 'english' ? 'block' : 'none';
+    document.getElementById('chinesePresets').style.display = language === 'chinese' ? 'block' : 'none';
+    
+    // 更新字体选项
+    this.initializeFontFamilyOptions();
+    
+    // 加载对应语言的设置到UI
+    this.loadLanguageSettingsToUI(language);
+  }
+
+  // 绑定设置控件
+  bindSettingControls() {
+    // 字体大小
+    const fontSize = document.getElementById('fontSize');
+    const fontSizeValue = document.getElementById('fontSizeValue');
+    fontSize.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      fontSizeValue.textContent = value + 'px';
+      this.updateCurrentLanguageSetting('fontSize', value);
+    });
+
+    // 字体系列
+    const fontFamily = document.getElementById('fontFamily');
+    fontFamily.addEventListener('change', (e) => {
+      this.updateCurrentLanguageSetting('fontFamily', e.target.value);
+    });
+
+    // 字体粗细
+    const fontWeight = document.getElementById('fontWeight');
+    fontWeight.addEventListener('change', (e) => {
+      this.updateCurrentLanguageSetting('fontWeight', e.target.value);
+    });
+
+    // 字体颜色
+    const fontColor = document.getElementById('fontColor');
+    const colorName = document.getElementById('colorName');
+    fontColor.addEventListener('change', (e) => {
+      const color = e.target.value;
+      colorName.textContent = this.getColorName(color);
+      this.updateCurrentLanguageSetting('fontColor', color);
+    });
+
+    // 背景透明度
+    const bgOpacity = document.getElementById('bgOpacity');
+    const bgOpacityValue = document.getElementById('bgOpacityValue');
+    bgOpacity.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      bgOpacityValue.textContent = value + '%';
+      this.updateCurrentLanguageSetting('backgroundOpacity', value);
+    });
+
+    // 文字阴影
+    const textShadow = document.getElementById('textShadow');
+    const textShadowValue = document.getElementById('textShadowValue');
+    textShadow.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      textShadowValue.textContent = value + 'px';
+      const shadowValue = `${value}px ${value}px ${value * 2}px rgba(0, 0, 0, 0.8)`;
+      this.updateCurrentLanguageSetting('textShadow', shadowValue);
+    });
+
+    // 行高
+    const lineHeight = document.getElementById('lineHeight');
+    const lineHeightValue = document.getElementById('lineHeightValue');
+    lineHeight.addEventListener('input', (e) => {
+      const value = parseFloat(e.target.value);
+      lineHeightValue.textContent = value.toString();
+      this.updateCurrentLanguageSetting('lineHeight', value);
+    });
+
+    // 字幕位置
+    const subtitlePosition = document.getElementById('subtitlePosition');
+    subtitlePosition.addEventListener('change', (e) => {
+      this.updateCurrentLanguageSetting('position', e.target.value);
+    });
+  }
+
+  // 更新当前语言设置
+  updateCurrentLanguageSetting(key, value) {
+    const settings = this.currentLanguage === 'english' ? this.englishSettings : this.chineseSettings;
+    settings[key] = value;
+    
     // 更新预览
-    this.updatePreview(preset);
+    this.updatePreview();
     
     // 保存设置
-    this.updateSettings(preset);
+    this.updateSettings({
+      language: this.currentLanguage,
+      data: { [key]: value }
+    });
+    
+    // 如果开启同步，同步到另一种语言
+    if (this.syncSettings) {
+      const otherLanguage = this.currentLanguage === 'english' ? 'chinese' : 'english';
+      const otherSettings = otherLanguage === 'english' ? this.englishSettings : this.chineseSettings;
+      otherSettings[key] = value;
+      
+      this.updateSettings({
+        language: otherLanguage,
+        data: { [key]: value }
+      });
+    }
+    
+    // 显示保存状态
+    this.showSaveStatus();
+  }
+
+  // 同步设置到另一种语言
+  syncSettingsToOtherLanguage() {
+    const currentSettings = this.currentLanguage === 'english' ? this.englishSettings : this.chineseSettings;
+    const otherLanguage = this.currentLanguage === 'english' ? 'chinese' : 'english';
+    const otherSettings = otherLanguage === 'english' ? this.englishSettings : this.chineseSettings;
+    
+    // 复制设置
+    Object.assign(otherSettings, currentSettings);
+    
+    // 保存
+    this.updateSettings({
+      language: otherLanguage,
+      data: currentSettings
+    });
+  }
+
+  // 加载语言设置到UI
+  loadLanguageSettingsToUI(language) {
+    const settings = language === 'english' ? this.englishSettings : this.chineseSettings;
+    
+    if (settings.fontSize !== undefined) {
+      document.getElementById('fontSize').value = settings.fontSize;
+      document.getElementById('fontSizeValue').textContent = settings.fontSize + 'px';
+    }
+    
+    if (settings.fontFamily) {
+      document.getElementById('fontFamily').value = settings.fontFamily;
+    }
+    
+    if (settings.fontWeight) {
+      document.getElementById('fontWeight').value = settings.fontWeight;
+    }
+    
+    if (settings.fontColor) {
+      document.getElementById('fontColor').value = settings.fontColor;
+      document.getElementById('colorName').textContent = this.getColorName(settings.fontColor);
+    }
+    
+    if (settings.backgroundOpacity !== undefined) {
+      document.getElementById('bgOpacity').value = settings.backgroundOpacity;
+      document.getElementById('bgOpacityValue').textContent = settings.backgroundOpacity + '%';
+    }
+    
+    if (settings.textShadow) {
+      // 从阴影字符串提取数值（简化处理）
+      const match = settings.textShadow.match(/(\d+)px/);
+      const shadowValue = match ? parseInt(match[1]) : 2;
+      document.getElementById('textShadow').value = shadowValue;
+      document.getElementById('textShadowValue').textContent = shadowValue + 'px';
+    }
+    
+    if (settings.lineHeight !== undefined) {
+      document.getElementById('lineHeight').value = settings.lineHeight;
+      document.getElementById('lineHeightValue').textContent = settings.lineHeight.toString();
+    }
+    
+    if (settings.position) {
+      document.getElementById('subtitlePosition').value = settings.position;
+    }
+    
+    // 更新预览
+    this.updatePreview();
+  }
+
+  // 应用预设设置
+  applyPreset(preset, language) {
+    // 更新对应语言的设置
+    const targetSettings = language === 'english' ? this.englishSettings : this.chineseSettings;
+    Object.assign(targetSettings, preset);
+    
+    // 如果是当前语言，更新UI
+    if (language === this.currentLanguage) {
+      this.loadLanguageSettingsToUI(language);
+    }
+    
+    // 保存设置
+    this.updateSettings({
+      language: language,
+      data: preset
+    });
+    
+    // 更新预览
+    this.updatePreview();
     
     // 显示保存状态
     this.showSaveStatus();
   }
 
   // 更新预览区域
-  updatePreview(settings = {}) {
-    const previewContainer = document.querySelector('.preview-container');
-    if (!previewContainer) return;
-
-    // 更新CSS变量
-    const fontSize = settings.fontSize || parseInt(document.getElementById('fontSize').value);
-    const fontColor = settings.fontColor || document.getElementById('fontColor').value;
-    const backgroundOpacity = settings.backgroundOpacity !== undefined ? 
-      settings.backgroundOpacity : parseInt(document.getElementById('bgOpacity').value);
-
-    previewContainer.style.setProperty('--preview-font-size', fontSize + 'px');
-    previewContainer.style.setProperty('--preview-font-color', fontColor);
-    previewContainer.style.setProperty('--preview-bg-color', `rgba(0, 0, 0, ${backgroundOpacity / 100})`);
+  updatePreview() {
+    // 更新英文字幕预览CSS变量
+    const englishSettings = this.englishSettings;
+    if (englishSettings.fontSize) {
+      document.documentElement.style.setProperty('--preview-english-size', englishSettings.fontSize + 'px');
+    }
+    if (englishSettings.fontColor) {
+      document.documentElement.style.setProperty('--preview-english-color', englishSettings.fontColor);
+    }
+    if (englishSettings.backgroundOpacity !== undefined) {
+      document.documentElement.style.setProperty('--preview-english-bg', `rgba(0, 0, 0, ${englishSettings.backgroundOpacity / 100})`);
+    }
+    
+    // 更新中文字幕预览CSS变量
+    const chineseSettings = this.chineseSettings;
+    if (chineseSettings.fontSize) {
+      document.documentElement.style.setProperty('--preview-chinese-size', chineseSettings.fontSize + 'px');
+    }
+    if (chineseSettings.fontColor) {
+      document.documentElement.style.setProperty('--preview-chinese-color', chineseSettings.fontColor);
+    }
+    if (chineseSettings.backgroundOpacity !== undefined) {
+      document.documentElement.style.setProperty('--preview-chinese-bg', `rgba(0, 0, 0, ${chineseSettings.backgroundOpacity / 100})`);
+    }
   }
 
   // 初始化预览
@@ -247,7 +487,9 @@ class PopupController {
           englishSubtitles, 
           chineseSubtitles, 
           subtitleEnabled, 
-          subtitleSettings,
+          englishSettings,
+          chineseSettings,
+          syncSettings,
           englishFileName,
           chineseFileName
         } = response.data;
@@ -261,12 +503,21 @@ class PopupController {
         this.englishFileName = englishFileName || '';
         this.chineseFileName = chineseFileName || '';
         
+        // 更新设置
+        this.englishSettings = englishSettings || {};
+        this.chineseSettings = chineseSettings || {};
+        this.syncSettings = syncSettings || false;
+        
+        // 更新同步设置UI
+        document.getElementById('syncSettings').checked = this.syncSettings;
+        
         this.updateSubtitleInfo();
         
-        // 更新设置UI
-        if (subtitleSettings) {
-          this.updateSettingsUI(subtitleSettings);
-        }
+        // 加载当前语言设置到UI
+        this.loadLanguageSettingsToUI(this.currentLanguage);
+        
+        // 更新预览
+        this.updatePreview();
       }
     } catch (error) {
       console.error('加载当前状态失败:', error);
@@ -274,60 +525,55 @@ class PopupController {
     }
   }
 
-  updateSettingsUI(settings) {
-    if (settings.fontSize) {
-      document.getElementById('fontSize').value = settings.fontSize;
-      document.getElementById('fontSizeValue').textContent = settings.fontSize + 'px';
-    }
-    
-    if (settings.fontColor) {
-      document.getElementById('fontColor').value = settings.fontColor;
-      document.getElementById('colorName').textContent = this.getColorName(settings.fontColor);
-    }
-    
-    if (settings.backgroundOpacity !== undefined) {
-      document.getElementById('bgOpacity').value = settings.backgroundOpacity;
-      document.getElementById('bgOpacityValue').textContent = settings.backgroundOpacity + '%';
-    }
-    
-    if (settings.position) {
-      document.getElementById('subtitlePosition').value = settings.position;
-    }
-
-    // 更新预览
-    this.updatePreview(settings);
-    
-    // 检查是否匹配某个预设，并高亮对应按钮
-    this.checkAndHighlightPreset(settings);
-  }
-
-  // 检查并高亮匹配的预设
-  checkAndHighlightPreset(settings) {
-    const presets = {
-      standard: { fontSize: 16, fontColor: '#ffffff', backgroundOpacity: 60, position: 'bottom' },
-      large: { fontSize: 24, fontColor: '#ffffff', backgroundOpacity: 70, position: 'bottom' },
-      contrast: { fontSize: 20, fontColor: '#ffff00', backgroundOpacity: 90, position: 'bottom' },
-      cinema: { fontSize: 18, fontColor: '#ffffff', backgroundOpacity: 40, position: 'bottom' }
+  // 重置为默认设置
+  resetToDefault() {
+    // 默认英文设置 (32px基础)
+    const defaultEnglishSettings = {
+      fontSize: 32,
+      fontColor: '#ffffff',
+      fontFamily: 'Arial, sans-serif',
+      fontWeight: 'bold',
+      backgroundOpacity: 20,
+      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+      lineHeight: 1.3,
+      position: 'bottom'
     };
-
-    // 移除所有active状态
+    
+    // 默认中文设置 (34px基础)
+    const defaultChineseSettings = {
+      fontSize: 34,
+      fontColor: '#ffffff',
+      fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
+      fontWeight: 'bold',
+      backgroundOpacity: 25,
+      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+      lineHeight: 1.4,
+      position: 'bottom'
+    };
+    
+    // 更新设置对象
+    this.englishSettings = { ...defaultEnglishSettings };
+    this.chineseSettings = { ...defaultChineseSettings };
+    this.syncSettings = false;
+    
+    // 更新UI
+    document.getElementById('syncSettings').checked = false;
+    
+    // 激活标准预设按钮
     document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-
-    // 检查是否匹配某个预设
-    for (const [presetName, preset] of Object.entries(presets)) {
-      if (this.settingsMatch(settings, preset)) {
-        document.querySelector(`[data-preset="${presetName}"]`)?.classList.add('active');
-        break;
-      }
-    }
-  }
-
-  // 检查设置是否匹配预设
-  settingsMatch(settings, preset) {
-    return settings.fontSize === preset.fontSize &&
-           settings.fontColor === preset.fontColor &&
-           settings.backgroundOpacity === preset.backgroundOpacity &&
-           settings.position === preset.position;
+    document.querySelectorAll('[data-preset="standard"]').forEach(btn => btn.classList.add('active'));
+    
+    // 加载当前语言设置到UI
+    this.loadLanguageSettingsToUI(this.currentLanguage);
+    
+    // 保存设置
+    this.updateSettings({ language: 'english', data: defaultEnglishSettings });
+    this.updateSettings({ language: 'chinese', data: defaultChineseSettings });
+    this.updateSettings({ sync: false });
+    
+    // 更新预览和显示状态
+    this.updatePreview();
+    this.showSaveStatus();
   }
 
   async toggleSubtitle(enabled) {
