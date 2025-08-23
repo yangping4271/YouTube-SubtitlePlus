@@ -97,7 +97,9 @@ class YouTubeSubtitleOverlay {
         borderRadius: '3px',
         display: 'inline-block',
         textAlign: 'center',
-        whiteSpace: 'nowrap',
+        whiteSpace: 'pre-wrap', // 允许换行
+        wordBreak: 'break-word', // 长单词自动换行
+        maxWidth: '100%', // 继承父容器最大宽度
         margin: '0'
       });
     }
@@ -116,7 +118,9 @@ class YouTubeSubtitleOverlay {
         borderRadius: '3px',
         display: 'inline-block',
         textAlign: 'center',
-        whiteSpace: 'nowrap',
+        whiteSpace: 'pre-wrap', // 允许换行
+        wordBreak: 'break-word', // 长文本自动换行
+        maxWidth: '100%', // 继承父容器最大宽度
         margin: '0'
       });
     }
@@ -184,19 +188,23 @@ class YouTubeSubtitleOverlay {
       window.removeEventListener('resize', this.resizeWindowListener);
     }
     
-    this.resizeObserver = new ResizeObserver(() => {
+    // 节流函数，避免频繁重新定位
+    const throttleReposition = this.throttle(() => {
       if (this.overlayElement && this.isEnabled) {
         this.repositionSubtitle();
       }
+    }, 100); // 100ms节流
+    
+    this.resizeObserver = new ResizeObserver(() => {
+      throttleReposition();
     });
     
     this.scrollListener = () => {
-      if (this.overlayElement && this.isEnabled) {
-        this.repositionSubtitle();
-      }
+      throttleReposition();
     };
     
     this.fullscreenListener = () => {
+      // 全屏切换需要立即响应，稍微延迟确保DOM更新完成
       setTimeout(() => {
         if (this.overlayElement && this.isEnabled) {
           this.repositionSubtitle();
@@ -205,9 +213,7 @@ class YouTubeSubtitleOverlay {
     };
     
     this.resizeWindowListener = () => {
-      if (this.overlayElement && this.isEnabled) {
-        this.repositionSubtitle();
-      }
+      throttleReposition();
     };
     
     this.setupYouTubeStateListener();
@@ -219,7 +225,20 @@ class YouTubeSubtitleOverlay {
     document.addEventListener('fullscreenchange', this.fullscreenListener);
     window.addEventListener('resize', this.resizeWindowListener, { passive: true });
     
-    console.log('动态定位监听器已设置');
+    console.log('优化的动态定位监听器已设置');
+  }
+
+  // 节流函数
+  throttle(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
   }
 
   setupYouTubeStateListener() {
@@ -276,14 +295,42 @@ class YouTubeSubtitleOverlay {
       this.overlayElement.style.left = '50%';
       this.overlayElement.style.transform = 'translateX(-50%)';
       this.overlayElement.style.bottom = '80px';
+      this.overlayElement.style.maxWidth = '90%';
       this.updateSubtitleStyles(this.settings.fontSize + 4);
     } else if (isMiniPlayer) {
       this.overlayElement.style.display = 'none';
       return;
     } else {
       this.overlayElement.style.position = 'fixed';
-      this.overlayElement.style.left = (videoRect.left + videoRect.width / 2) + 'px';
+      
+      // 计算字幕的最大宽度（不超过视频宽度的90%）
+      const maxWidth = Math.max(300, videoRect.width * 0.9);
+      this.overlayElement.style.maxWidth = maxWidth + 'px';
+      
+      // 设置初始位置为视频中心
+      let leftPosition = videoRect.left + videoRect.width / 2;
+      this.overlayElement.style.left = leftPosition + 'px';
       this.overlayElement.style.transform = 'translateX(-50%)';
+      
+      // 获取字幕实际尺寸进行边界检测
+      const subtitleRect = this.overlayElement.getBoundingClientRect();
+      const subtitleWidth = subtitleRect.width;
+      
+      // 边界检测和修正
+      const leftBoundary = videoRect.left + 10; // 左侧留10px边距
+      const rightBoundary = videoRect.right - 10; // 右侧留10px边距
+      const subtitleLeft = leftPosition - subtitleWidth / 2;
+      const subtitleRight = leftPosition + subtitleWidth / 2;
+      
+      if (subtitleLeft < leftBoundary) {
+        // 字幕左侧超出，调整到左边界
+        leftPosition = leftBoundary + subtitleWidth / 2;
+        this.overlayElement.style.left = leftPosition + 'px';
+      } else if (subtitleRight > rightBoundary) {
+        // 字幕右侧超出，调整到右边界
+        leftPosition = rightBoundary - subtitleWidth / 2;
+        this.overlayElement.style.left = leftPosition + 'px';
+      }
       
       let bottomOffset = 30;
       let fontSize = this.settings.fontSize;
@@ -297,7 +344,7 @@ class YouTubeSubtitleOverlay {
       this.updateSubtitleStyles(fontSize);
     }
     
-    console.log('字幕位置已调整');
+    console.log('字幕位置已调整，包含边界检测');
   }
 
   updateSubtitleStyles(fontSize) {
@@ -311,6 +358,9 @@ class YouTubeSubtitleOverlay {
       englishSubtitle.style.padding = '2px 6px';
       englishSubtitle.style.lineHeight = '1.2';
       englishSubtitle.style.margin = '0';
+      englishSubtitle.style.whiteSpace = 'pre-wrap';
+      englishSubtitle.style.wordBreak = 'break-word';
+      englishSubtitle.style.maxWidth = '100%';
     }
     if (chineseSubtitle) {
       chineseSubtitle.style.fontSize = fontSize + 'px';
@@ -319,6 +369,9 @@ class YouTubeSubtitleOverlay {
       chineseSubtitle.style.padding = '2px 6px';
       chineseSubtitle.style.lineHeight = '1.2';
       chineseSubtitle.style.margin = '0';
+      chineseSubtitle.style.whiteSpace = 'pre-wrap';
+      chineseSubtitle.style.wordBreak = 'break-word';
+      chineseSubtitle.style.maxWidth = '100%';
     }
   }
 
@@ -737,6 +790,68 @@ window.debugBilingualSubtitles = () => {
   } else {
     instance.showBilingualSubtitle('Test English', '测试中文');
   }
+  
+  return true;
+};
+
+// 新的窗口大小调整测试函数
+window.testSubtitleWindowResize = () => {
+  if (!subtitleOverlayInstance) {
+    console.log('❌ 字幕实例不存在');
+    return false;
+  }
+
+  const instance = subtitleOverlayInstance;
+  
+  console.log('🔧 开始窗口大小调整测试...');
+  
+  // 启用字幕并显示长测试文本
+  instance.isEnabled = true;
+  const longEnglishText = "This is a very long subtitle text that should wrap properly within video boundaries when the window is resized to different sizes";
+  const longChineseText = "这是一个非常长的中文字幕文本，当窗口调整为不同尺寸时，它应该在视频边界内正确换行显示，确保不会超出视频范围";
+  
+  instance.showBilingualSubtitle(longEnglishText, longChineseText);
+  
+  // 获取当前视频和字幕位置信息
+  const video = document.querySelector('video');
+  const videoRect = video?.getBoundingClientRect();
+  const subtitleRect = instance.overlayElement?.getBoundingClientRect();
+  
+  console.log('📐 当前尺寸信息:', {
+    窗口尺寸: `${window.innerWidth}x${window.innerHeight}`,
+    视频尺寸: videoRect ? `${Math.round(videoRect.width)}x${Math.round(videoRect.height)}` : '未找到视频',
+    视频位置: videoRect ? `左:${Math.round(videoRect.left)} 上:${Math.round(videoRect.top)}` : '未找到视频',
+    字幕尺寸: subtitleRect ? `${Math.round(subtitleRect.width)}x${Math.round(subtitleRect.height)}` : '未找到字幕',
+    字幕位置: subtitleRect ? `左:${Math.round(subtitleRect.left)} 上:${Math.round(subtitleRect.top)}` : '未找到字幕'
+  });
+  
+  // 检查字幕是否在视频范围内
+  if (videoRect && subtitleRect) {
+    const isWithinBounds = 
+      subtitleRect.left >= videoRect.left &&
+      subtitleRect.right <= videoRect.right &&
+      subtitleRect.top >= videoRect.top &&
+      subtitleRect.bottom <= videoRect.bottom + 100; // 允许底部超出一些空间
+    
+    console.log('✅ 边界检查结果:', {
+      字幕在视频范围内: isWithinBounds,
+      左边界检查: subtitleRect.left >= videoRect.left ? '✅' : '❌',
+      右边界检查: subtitleRect.right <= videoRect.right ? '✅' : '❌',
+      上边界检查: subtitleRect.top >= videoRect.top ? '✅' : '❌',
+      下边界检查: subtitleRect.bottom <= videoRect.bottom + 100 ? '✅' : '❌'
+    });
+  }
+  
+  console.log('💡 请手动调整窗口大小，观察字幕是否始终保持在视频范围内...');
+  console.log('💡 10秒后自动清除测试字幕');
+  
+  // 10秒后清除测试字幕
+  setTimeout(() => {
+    if (!instance.currentVideo || (!instance.englishSubtitles.length && !instance.chineseSubtitles.length)) {
+      instance.hideSubtitle();
+      console.log('🔄 测试完成，字幕已隐藏');
+    }
+  }, 10000);
   
   return true;
 };
