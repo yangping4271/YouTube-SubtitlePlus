@@ -61,7 +61,7 @@ class YouTubeSubtitleOverlay {
     // 主容器样式
     const mainStyles = {
       position: 'fixed',
-      zIndex: '2147483647',
+      zIndex: '100',
       display: 'none',
       left: '50%',
       transform: 'translateX(-50%)',
@@ -387,7 +387,7 @@ class YouTubeSubtitleOverlay {
     
     this.overlayElement.style.display = 'block';
     this.overlayElement.style.position = 'fixed';
-    this.overlayElement.style.zIndex = '2147483647';
+    this.overlayElement.style.zIndex = '100';
     this.overlayElement.style.visibility = 'visible';
     this.overlayElement.style.opacity = '1';
     
@@ -605,7 +605,67 @@ window.testSubtitleNow = () => {
   return false;
 };
 
-// 双语字幕调试工具
+// 字幕定位和层级测试工具
+window.testSubtitlePositioning = () => {
+  if (!subtitleOverlayInstance) {
+    console.log('❌ 字幕实例不存在');
+    return false;
+  }
+
+  const instance = subtitleOverlayInstance;
+  
+  // 检查当前播放器状态
+  const video = document.querySelector('video');
+  const isFullscreen = document.fullscreenElement !== null;
+  const isTheaterMode = document.querySelector('.ytp-size-large') !== null;
+  const isMiniPlayer = document.querySelector('.ytp-miniplayer-active') !== null;
+  
+  console.log('🎬 播放器状态检测:', {
+    视频元素: !!video,
+    全屏模式: isFullscreen,
+    剧场模式: isTheaterMode,
+    迷你播放器: isMiniPlayer
+  });
+  
+  // 强制启用字幕并显示测试内容
+  instance.isEnabled = true;
+  instance.showBilingualSubtitle(
+    'Layer Test: Should appear BELOW YouTube controls', 
+    '层级测试：应显示在YouTube控制栏下方'
+  );
+  
+  // 检查z-index设置
+  const zIndex = instance.overlayElement?.style.zIndex;
+  console.log('🎯 字幕层级设置:', {
+    zIndex: zIndex,
+    位置类型: instance.overlayElement?.style.position,
+    显示状态: instance.overlayElement?.style.display
+  });
+  
+  // 检查进度条等控件的z-index（用于对比）
+  const progressBar = document.querySelector('.ytp-progress-bar');
+  const controls = document.querySelector('.ytp-chrome-bottom');
+  
+  if (progressBar || controls) {
+    console.log('🎮 YouTube控件层级对比:', {
+      进度条zIndex: progressBar ? window.getComputedStyle(progressBar).zIndex : '未找到',
+      控制栏zIndex: controls ? window.getComputedStyle(controls).zIndex : '未找到'
+    });
+  }
+  
+  console.log('✅ 字幕已显示，请检查是否在进度条下方');
+  
+  // 5秒后隐藏测试字幕
+  setTimeout(() => {
+    if (!instance.currentVideo || !instance.englishSubtitles.length) {
+      instance.hideSubtitle();
+      console.log('🔄 测试字幕已隐藏');
+    }
+  }, 5000);
+  
+  return true;
+};
+
 window.debugBilingualSubtitles = () => {
   if (!subtitleOverlayInstance) {
     console.log('❌ 字幕实例不存在');

@@ -1,80 +1,80 @@
 /* YouTube本地字幕样式 */
-.subtitle-overlay-container {
-  position: absolute !important;
-  bottom: 80px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
+#movie_player .subtitle-overlay-container {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 2147483647 !important;
   pointer-events: none !important;
-  font-family: 'Helvetica Neue', Arial, sans-serif !important;
-  font-size: 18px !important;
-  font-weight: bold !important;
-  color: white !important;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
-  background-color: rgba(0,0,0,0.7) !important;
-  padding: 8px 16px !important;
-  border-radius: 4px !important;
-  max-width: 80% !important;
-  text-align: center !important;
-  display: none !important;
-  word-wrap: break-word !important;
-  line-height: 1.4 !important;
-  border: 1px solid rgba(255,255,255,0.2) !important;
-  backdrop-filter: blur(4px) !important;
-  transition: opacity 0.3s ease-in-out !important;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  background-color: rgba(0,0,0,0.7);
+  padding: 8px 16px;
+  border-radius: 4px;
+  max-width: 80%;
+  text-align: center;
+  display: none;
+  word-wrap: break-word;
+  line-height: 1.4;
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(4px);
+  transition: opacity 0.3s ease-in-out;
 }
 
 /* 自适应字体大小 */
 @media (max-width: 768px) {
-  .subtitle-overlay-container {
-    font-size: 14px !important;
-    bottom: 60px !important;
-    max-width: 90% !important;
-    padding: 6px 12px !important;
+  #movie_player .subtitle-overlay-container {
+    font-size: 14px;
+    bottom: 60px;
+    max-width: 90%;
+    padding: 6px 12px;
   }
 }
 
 @media (min-width: 1920px) {
-  .subtitle-overlay-container {
-    font-size: 22px !important;
-    bottom: 100px !important;
+  #movie_player .subtitle-overlay-container {
+    font-size: 22px;
+    bottom: 100px;
   }
 }
 
 /* 全屏模式下的样式调整 */
-.ytp-fullscreen .subtitle-overlay-container {
-  bottom: 120px !important;
-  font-size: 24px !important;
+.ytp-fullscreen #movie_player .subtitle-overlay-container {
+  bottom: 120px;
+  font-size: 24px;
 }
 
 /* 剧场模式下的样式调整 */
-.ytp-big-mode .subtitle-overlay-container {
-  bottom: 100px !important;
-  font-size: 20px !important;
+.ytp-big-mode #movie_player .subtitle-overlay-container {
+  bottom: 100px;
+  font-size: 20px;
 }
 
 /* 不同主题的适配 */
-.subtitle-overlay-container.light-theme {
-  color: black !important;
-  background-color: rgba(255,255,255,0.9) !important;
-  text-shadow: 1px 1px 2px rgba(255,255,255,0.8) !important;
-  border: 1px solid rgba(0,0,0,0.2) !important;
+#movie_player .subtitle-overlay-container.light-theme {
+  color: black;
+  background-color: rgba(255,255,255,0.9);
+  text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+  border: 1px solid rgba(0,0,0,0.2);
 }
 
-.subtitle-overlay-container.high-contrast {
-  color: yellow !important;
-  background-color: rgba(0,0,0,0.9) !important;
-  text-shadow: 2px 2px 4px rgba(0,0,0,1) !important;
-  border: 2px solid yellow !important;
+#movie_player .subtitle-overlay-container.high-contrast {
+  color: yellow;
+  background-color: rgba(0,0,0,0.9);
+  text-shadow: 2px 2px 4px rgba(0,0,0,1);
+  border: 2px solid yellow;
 }
 
 /* 动画效果 */
-.subtitle-overlay-container.fade-in {
-  animation: subtitleFadeIn 0.3s ease-in-out !important;
+#movie_player .subtitle-overlay-container.fade-in {
+  animation: subtitleFadeIn 0.3s ease-in-out;
 }
 
-.subtitle-overlay-container.fade-out {
-  animation: subtitleFadeOut 0.3s ease-in-out !important;
+#movie_player .subtitle-overlay-container.fade-out {
+  animation: subtitleFadeOut 0.3s ease-in-out;
 }
 
 @keyframes subtitleFadeIn {
