@@ -91,26 +91,57 @@ class PopupController {
   }
 
   bindSettingsEvents() {
+    // 预设配置
+    const presets = {
+      standard: { fontSize: 16, fontColor: '#ffffff', backgroundOpacity: 60, position: 'bottom' },
+      large: { fontSize: 24, fontColor: '#ffffff', backgroundOpacity: 70, position: 'bottom' },
+      contrast: { fontSize: 20, fontColor: '#ffff00', backgroundOpacity: 90, position: 'bottom' },
+      cinema: { fontSize: 18, fontColor: '#ffffff', backgroundOpacity: 40, position: 'bottom' }
+    };
+
+    // 预设按钮事件
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const presetName = btn.dataset.preset;
+        const preset = presets[presetName];
+        
+        // 更新所有预设按钮状态
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // 应用预设设置
+        this.applyPreset(preset);
+      });
+    });
+
     // 字体大小
     const fontSize = document.getElementById('fontSize');
     const fontSizeValue = document.getElementById('fontSizeValue');
     fontSize.addEventListener('input', (e) => {
-      fontSizeValue.textContent = e.target.value + 'px';
-      this.updateSettings({ fontSize: parseInt(e.target.value) });
+      const value = parseInt(e.target.value);
+      fontSizeValue.textContent = value + 'px';
+      this.updatePreview({ fontSize: value });
+      this.updateSettings({ fontSize: value });
     });
 
     // 字体颜色
     const fontColor = document.getElementById('fontColor');
+    const colorName = document.getElementById('colorName');
     fontColor.addEventListener('change', (e) => {
-      this.updateSettings({ fontColor: e.target.value });
+      const color = e.target.value;
+      colorName.textContent = this.getColorName(color);
+      this.updatePreview({ fontColor: color });
+      this.updateSettings({ fontColor: color });
     });
 
     // 背景透明度
     const bgOpacity = document.getElementById('bgOpacity');
     const bgOpacityValue = document.getElementById('bgOpacityValue');
     bgOpacity.addEventListener('input', (e) => {
-      bgOpacityValue.textContent = e.target.value + '%';
-      this.updateSettings({ backgroundOpacity: parseInt(e.target.value) });
+      const value = parseInt(e.target.value);
+      bgOpacityValue.textContent = value + '%';
+      this.updatePreview({ backgroundOpacity: value });
+      this.updateSettings({ backgroundOpacity: value });
     });
 
     // 字幕位置
@@ -118,6 +149,93 @@ class PopupController {
     subtitlePosition.addEventListener('change', (e) => {
       this.updateSettings({ position: e.target.value });
     });
+
+    // 重置按钮
+    document.getElementById('resetSettings').addEventListener('click', () => {
+      this.resetToDefault();
+    });
+
+    // 初始化预览
+    this.initializePreview();
+  }
+
+  // 应用预设设置
+  applyPreset(preset) {
+    // 更新UI控件
+    document.getElementById('fontSize').value = preset.fontSize;
+    document.getElementById('fontSizeValue').textContent = preset.fontSize + 'px';
+    document.getElementById('fontColor').value = preset.fontColor;
+    document.getElementById('colorName').textContent = this.getColorName(preset.fontColor);
+    document.getElementById('bgOpacity').value = preset.backgroundOpacity;
+    document.getElementById('bgOpacityValue').textContent = preset.backgroundOpacity + '%';
+    document.getElementById('subtitlePosition').value = preset.position;
+
+    // 更新预览
+    this.updatePreview(preset);
+    
+    // 保存设置
+    this.updateSettings(preset);
+    
+    // 显示保存状态
+    this.showSaveStatus();
+  }
+
+  // 更新预览区域
+  updatePreview(settings = {}) {
+    const previewContainer = document.querySelector('.preview-container');
+    if (!previewContainer) return;
+
+    // 更新CSS变量
+    const fontSize = settings.fontSize || parseInt(document.getElementById('fontSize').value);
+    const fontColor = settings.fontColor || document.getElementById('fontColor').value;
+    const backgroundOpacity = settings.backgroundOpacity !== undefined ? 
+      settings.backgroundOpacity : parseInt(document.getElementById('bgOpacity').value);
+
+    previewContainer.style.setProperty('--preview-font-size', fontSize + 'px');
+    previewContainer.style.setProperty('--preview-font-color', fontColor);
+    previewContainer.style.setProperty('--preview-bg-color', `rgba(0, 0, 0, ${backgroundOpacity / 100})`);
+  }
+
+  // 初始化预览
+  initializePreview() {
+    // 设置初始值
+    this.updatePreview();
+  }
+
+  // 获取颜色名称
+  getColorName(color) {
+    const colorNames = {
+      '#ffffff': '白色',
+      '#ffff00': '黄色',
+      '#ff0000': '红色',
+      '#00ff00': '绿色',
+      '#0000ff': '蓝色',
+      '#000000': '黑色',
+      '#ffa500': '橙色',
+      '#800080': '紫色'
+    };
+    return colorNames[color.toLowerCase()] || '自定义';
+  }
+
+  // 重置为默认设置
+  resetToDefault() {
+    const defaultSettings = { fontSize: 16, fontColor: '#ffffff', backgroundOpacity: 60, position: 'bottom' };
+    
+    // 移除所有预设按钮的active状态
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+    // 激活标准预设
+    document.querySelector('[data-preset="standard"]').classList.add('active');
+    
+    this.applyPreset(defaultSettings);
+  }
+
+  // 显示保存状态提示
+  showSaveStatus() {
+    const saveStatus = document.getElementById('saveStatus');
+    saveStatus.classList.add('show');
+    setTimeout(() => {
+      saveStatus.classList.remove('show');
+    }, 2000);
   }
 
   async loadCurrentState() {
@@ -164,6 +282,7 @@ class PopupController {
     
     if (settings.fontColor) {
       document.getElementById('fontColor').value = settings.fontColor;
+      document.getElementById('colorName').textContent = this.getColorName(settings.fontColor);
     }
     
     if (settings.backgroundOpacity !== undefined) {
@@ -174,6 +293,41 @@ class PopupController {
     if (settings.position) {
       document.getElementById('subtitlePosition').value = settings.position;
     }
+
+    // 更新预览
+    this.updatePreview(settings);
+    
+    // 检查是否匹配某个预设，并高亮对应按钮
+    this.checkAndHighlightPreset(settings);
+  }
+
+  // 检查并高亮匹配的预设
+  checkAndHighlightPreset(settings) {
+    const presets = {
+      standard: { fontSize: 16, fontColor: '#ffffff', backgroundOpacity: 60, position: 'bottom' },
+      large: { fontSize: 24, fontColor: '#ffffff', backgroundOpacity: 70, position: 'bottom' },
+      contrast: { fontSize: 20, fontColor: '#ffff00', backgroundOpacity: 90, position: 'bottom' },
+      cinema: { fontSize: 18, fontColor: '#ffffff', backgroundOpacity: 40, position: 'bottom' }
+    };
+
+    // 移除所有active状态
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+
+    // 检查是否匹配某个预设
+    for (const [presetName, preset] of Object.entries(presets)) {
+      if (this.settingsMatch(settings, preset)) {
+        document.querySelector(`[data-preset="${presetName}"]`)?.classList.add('active');
+        break;
+      }
+    }
+  }
+
+  // 检查设置是否匹配预设
+  settingsMatch(settings, preset) {
+    return settings.fontSize === preset.fontSize &&
+           settings.fontColor === preset.fontColor &&
+           settings.backgroundOpacity === preset.backgroundOpacity &&
+           settings.position === preset.position;
   }
 
   async toggleSubtitle(enabled) {
@@ -391,6 +545,11 @@ class PopupController {
         action: 'updateSettings',
         settings: settings
       });
+      
+      // 显示保存状态提示
+      this.showSaveStatus();
+      
+      console.log('设置已更新并保存:', settings);
     } catch (error) {
       console.error('更新设置失败:', error);
     }

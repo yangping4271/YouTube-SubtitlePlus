@@ -79,38 +79,101 @@
                 <button class="clear-button" id="clearButton">清除字幕</button>
             </div>
 
-            <!-- 设置区域 -->
+            <!-- 字幕设置区域 -->
             <div class="settings-section">
-                <button class="settings-toggle" id="settingsToggle">
-                    <span>显示设置</span>
-                    <span class="arrow">▼</span>
+                <button class="settings-toggle active" id="settingsToggle">
+                    <span>🎨 字幕设置</span>
+                    <span class="arrow">▲</span>
                 </button>
                 
-                <div class="settings-panel" id="settingsPanel">
-                    <div class="setting-group">
-                        <label for="fontSize">字体大小:</label>
-                        <input type="range" id="fontSize" min="12" max="32" value="16">
-                        <span class="setting-value" id="fontSizeValue">16px</span>
+                <div class="settings-panel active" id="settingsPanel">
+                    <!-- 实时预览区域 -->
+                    <div class="preview-section">
+                        <div class="preview-label">
+                            <span>🔍 实时预览</span>
+                            <span class="preview-tip">设置效果即时显示</span>
+                        </div>
+                        <div class="preview-container">
+                            <div class="preview-subtitle english" id="previewEnglish">Sample English Subtitle</div>
+                            <div class="preview-subtitle chinese" id="previewChinese">示例中文字幕</div>
+                        </div>
                     </div>
-                    
-                    <div class="setting-group">
-                        <label for="fontColor">字体颜色:</label>
-                        <input type="color" id="fontColor" value="#ffffff">
+
+                    <!-- 快速预设 -->
+                    <div class="preset-section">
+                        <div class="preset-label">🚀 快速预设</div>
+                        <div class="preset-buttons">
+                            <button class="preset-btn" data-preset="standard">📺 标准</button>
+                            <button class="preset-btn" data-preset="large">🔍 大字幕</button>
+                            <button class="preset-btn" data-preset="contrast">⚡ 高对比</button>
+                            <button class="preset-btn" data-preset="cinema">🎬 影院</button>
+                        </div>
                     </div>
-                    
-                    <div class="setting-group">
-                        <label for="bgOpacity">背景透明度:</label>
-                        <input type="range" id="bgOpacity" min="0" max="100" value="60">
-                        <span class="setting-value" id="bgOpacityValue">60%</span>
+
+                    <!-- 详细设置 -->
+                    <div class="detailed-settings">
+                        <div class="setting-group">
+                            <label for="fontSize">
+                                <span class="setting-icon">📏</span>
+                                <span class="setting-name">字体大小</span>
+                                <span class="setting-desc">建议范围: 12-32px</span>
+                            </label>
+                            <div class="setting-control">
+                                <input type="range" id="fontSize" min="12" max="32" value="16">
+                                <span class="setting-value" id="fontSizeValue">16px</span>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="fontColor">
+                                <span class="setting-icon">🎨</span>
+                                <span class="setting-name">字体颜色</span>
+                                <span class="setting-desc">选择字幕文字颜色</span>
+                            </label>
+                            <div class="setting-control">
+                                <input type="color" id="fontColor" value="#ffffff">
+                                <span class="color-name" id="colorName">白色</span>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="bgOpacity">
+                                <span class="setting-icon">🎭</span>
+                                <span class="setting-name">背景透明度</span>
+                                <span class="setting-desc">背景框透明程度</span>
+                            </label>
+                            <div class="setting-control">
+                                <input type="range" id="bgOpacity" min="0" max="100" value="60">
+                                <span class="setting-value" id="bgOpacityValue">60%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="subtitlePosition">
+                                <span class="setting-icon">📍</span>
+                                <span class="setting-name">字幕位置</span>
+                                <span class="setting-desc">字幕在视频中的位置</span>
+                            </label>
+                            <div class="setting-control">
+                                <select id="subtitlePosition">
+                                    <option value="bottom">底部</option>
+                                    <option value="top">顶部</option>
+                                    <option value="center">中央</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="setting-group">
-                        <label for="subtitlePosition">字幕位置:</label>
-                        <select id="subtitlePosition">
-                            <option value="bottom">底部</option>
-                            <option value="top">顶部</option>
-                            <option value="center">中央</option>
-                        </select>
+
+                    <!-- 操作按钮 -->
+                    <div class="setting-actions">
+                        <button class="action-btn reset-btn" id="resetSettings">
+                            <span>🔄</span>
+                            <span>恢复默认</span>
+                        </button>
+                        <div class="save-status" id="saveStatus">
+                            <span class="status-icon">✅</span>
+                            <span class="status-text">设置已保存</span>
+                        </div>
                     </div>
                 </div>
             </div>
