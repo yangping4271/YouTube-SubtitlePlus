@@ -2,21 +2,21 @@
    双语字幕样式 - 自定义配置区域
    ======================================== */
 :root {
-  /* 🇺🇸 英文字幕默认样式 (32px基础) */
-  --english-font-size: 32px;
+  /* 🇺🇸 英文字幕默认样式 (34px基础) */
+  --english-font-size: 34px;
   --english-font-color: #ffffff;
-  --english-font-family: 'Arial', sans-serif;
-  --english-font-weight: bold;
+  --english-font-family: 'Noto Serif', Georgia, serif;
+  --english-font-weight: 700;
   --english-bg-opacity: 0.20; /* 20%透明度 */
   --english-text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   --english-line-height: 1.3;
 
-  /* 🇨🇳 中文字幕默认样式 (34px基础) */
-  --chinese-font-size: 34px;
+  /* 🇨🇳 中文字幕默认样式 (32px基础) */
+  --chinese-font-size: 32px;
   --chinese-font-color: #ffffff;
-  --chinese-font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
-  --chinese-font-weight: bold;
-  --chinese-bg-opacity: 0.25; /* 25%透明度 */
+  --chinese-font-family: SimSun, serif;
+  --chinese-font-weight: 700;
+  --chinese-bg-opacity: 0.20; /* 20%透明度 */
   --chinese-text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   --chinese-line-height: 1.4;
   

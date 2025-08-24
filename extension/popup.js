@@ -123,17 +123,17 @@ class PopupController {
 
     // 双语预设配置
     const englishPresets = {
-      standard: { fontSize: 32, fontColor: '#ffffff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', backgroundOpacity: 20, textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', lineHeight: 1.3, position: 'bottom' },
-      large: { fontSize: 40, fontColor: '#ffffff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', backgroundOpacity: 25, textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)', lineHeight: 1.3, position: 'bottom' },
-      contrast: { fontSize: 36, fontColor: '#ffff00', fontFamily: 'Arial, sans-serif', fontWeight: 'bolder', backgroundOpacity: 40, textShadow: '2px 2px 4px rgba(0, 0, 0, 1.0)', lineHeight: 1.2, position: 'bottom' },
-      cinema: { fontSize: 34, fontColor: '#f0f0f0', fontFamily: 'Georgia, serif', fontWeight: 'bold', backgroundOpacity: 15, textShadow: '2px 2px 8px rgba(0, 0, 0, 0.8)', lineHeight: 1.4, position: 'bottom' }
+      standard: { fontSize: 34, fontColor: '#ffffff', fontFamily: '"Noto Serif", Georgia, serif', fontWeight: '700', backgroundOpacity: 20, textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', lineHeight: 1.3, position: 'bottom' },
+      large: { fontSize: 40, fontColor: '#ffffff', fontFamily: '"Noto Serif", Georgia, serif', fontWeight: '700', backgroundOpacity: 25, textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)', lineHeight: 1.3, position: 'bottom' },
+      contrast: { fontSize: 36, fontColor: '#ffff00', fontFamily: '"Noto Serif", Georgia, serif', fontWeight: '900', backgroundOpacity: 40, textShadow: '2px 2px 4px rgba(0, 0, 0, 1.0)', lineHeight: 1.2, position: 'bottom' },
+      cinema: { fontSize: 34, fontColor: '#f0f0f0', fontFamily: '"Noto Serif", Georgia, serif', fontWeight: '700', backgroundOpacity: 15, textShadow: '2px 2px 8px rgba(0, 0, 0, 0.8)', lineHeight: 1.4, position: 'bottom' }
     };
 
     const chinesePresets = {
-      standard: { fontSize: 34, fontColor: '#ffffff', fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif', fontWeight: 'bold', backgroundOpacity: 25, textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', lineHeight: 1.4, position: 'bottom' },
-      large: { fontSize: 42, fontColor: '#ffffff', fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif', fontWeight: 'bold', backgroundOpacity: 30, textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)', lineHeight: 1.4, position: 'bottom' },
-      contrast: { fontSize: 38, fontColor: '#ffff00', fontFamily: '"SimHei", "Microsoft YaHei", sans-serif', fontWeight: 'bolder', backgroundOpacity: 45, textShadow: '2px 2px 4px rgba(0, 0, 0, 1.0)', lineHeight: 1.3, position: 'bottom' },
-      cinema: { fontSize: 36, fontColor: '#f0f0f0', fontFamily: '"SimSun", "Microsoft YaHei", serif', fontWeight: 'bold', backgroundOpacity: 20, textShadow: '2px 2px 8px rgba(0, 0, 0, 0.8)', lineHeight: 1.5, position: 'bottom' }
+      standard: { fontSize: 32, fontColor: '#ffffff', fontFamily: 'SimSun, serif', fontWeight: '700', backgroundOpacity: 20, textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', lineHeight: 1.4, position: 'bottom' },
+      large: { fontSize: 40, fontColor: '#ffffff', fontFamily: 'SimSun, serif', fontWeight: '700', backgroundOpacity: 25, textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)', lineHeight: 1.4, position: 'bottom' },
+      contrast: { fontSize: 36, fontColor: '#ffff00', fontFamily: '"SimHei", SimSun, sans-serif', fontWeight: '900', backgroundOpacity: 40, textShadow: '2px 2px 4px rgba(0, 0, 0, 1.0)', lineHeight: 1.3, position: 'bottom' },
+      cinema: { fontSize: 34, fontColor: '#f0f0f0', fontFamily: 'SimSun, serif', fontWeight: '700', backgroundOpacity: 20, textShadow: '2px 2px 8px rgba(0, 0, 0, 0.8)', lineHeight: 1.5, position: 'bottom' }
     };
 
     // 预设按钮事件
@@ -175,9 +175,10 @@ class PopupController {
     
     // 英文字体选项
     const englishFonts = [
+      { value: '"Noto Serif", Georgia, serif', name: 'Noto Serif（推荐）' },
+      { value: 'Georgia, serif', name: 'Georgia' },
       { value: 'Arial, sans-serif', name: 'Arial' },
       { value: 'Helvetica, Arial, sans-serif', name: 'Helvetica' },
-      { value: 'Georgia, serif', name: 'Georgia' },
       { value: '"Times New Roman", serif', name: 'Times New Roman' },
       { value: 'Verdana, sans-serif', name: 'Verdana' },
       { value: '"Courier New", monospace', name: 'Courier New' }
@@ -185,6 +186,7 @@ class PopupController {
     
     // 中文字体选项
     const chineseFonts = [
+      { value: 'SimSun, serif', name: '宋体（推荐）' },
       { value: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif', name: '微软雅黑' },
       { value: '"SimHei", "Heiti SC", "Microsoft YaHei", sans-serif', name: '黑体' },
       { value: '"SimSun", "Songti SC", "Microsoft YaHei", serif', name: '宋体' },
@@ -527,25 +529,25 @@ class PopupController {
 
   // 重置为默认设置
   resetToDefault() {
-    // 默认英文设置 (32px基础)
+    // 默认英文设置 (34px基础)
     const defaultEnglishSettings = {
-      fontSize: 32,
+      fontSize: 34,
       fontColor: '#ffffff',
-      fontFamily: 'Arial, sans-serif',
-      fontWeight: 'bold',
+      fontFamily: '"Noto Serif", Georgia, serif',
+      fontWeight: '700',
       backgroundOpacity: 20,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
       lineHeight: 1.3,
       position: 'bottom'
     };
     
-    // 默认中文设置 (34px基础)
+    // 默认中文设置 (32px基础)
     const defaultChineseSettings = {
-      fontSize: 34,
+      fontSize: 32,
       fontColor: '#ffffff',
-      fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
-      fontWeight: 'bold',
-      backgroundOpacity: 25,
+      fontFamily: 'SimSun, serif',
+      fontWeight: '700',
+      backgroundOpacity: 20,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
       lineHeight: 1.4,
       position: 'bottom'

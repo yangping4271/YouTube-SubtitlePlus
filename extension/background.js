@@ -43,10 +43,10 @@ class SubtitleExtensionBackground {
         chineseFileName: '',
         // 英文字幕独立设置 - 基础32px字体，20%背景透明度
         englishSettings: {
-          fontSize: 32,
+          fontSize: 34,
           fontColor: '#ffffff',
-          fontFamily: 'Arial, sans-serif',
-          fontWeight: 'bold',
+          fontFamily: '"Noto Serif", Georgia, serif',
+          fontWeight: '700',
           backgroundOpacity: 20,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
           lineHeight: 1.3,
@@ -54,11 +54,11 @@ class SubtitleExtensionBackground {
         },
         // 中文字幕独立设置 - 针对中文优化的设置
         chineseSettings: {
-          fontSize: 34,
+          fontSize: 32,
           fontColor: '#ffffff', 
-          fontFamily: '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
-          fontWeight: 'bold',
-          backgroundOpacity: 25,
+          fontFamily: 'SimSun, serif',
+          fontWeight: '700',
+          backgroundOpacity: 20,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
           lineHeight: 1.4,
           position: 'bottom'
