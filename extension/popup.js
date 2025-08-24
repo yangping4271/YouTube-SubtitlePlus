@@ -130,9 +130,9 @@ class PopupController {
     };
 
     const chinesePresets = {
-      standard: { fontSize: 32, fontColor: '#ffffff', fontFamily: 'SimSun, serif', fontWeight: '700', backgroundOpacity: 20, textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', lineHeight: 1.4, position: 'bottom' },
+      standard: { fontSize: 32, fontColor: '#ffffff', fontFamily: 'SimSun, serif', fontWeight: '900', backgroundOpacity: 20, textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', lineHeight: 1.4, position: 'bottom' },
       large: { fontSize: 40, fontColor: '#ffffff', fontFamily: 'SimSun, serif', fontWeight: '700', backgroundOpacity: 25, textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)', lineHeight: 1.4, position: 'bottom' },
-      contrast: { fontSize: 36, fontColor: '#ffff00', fontFamily: '"SimHei", SimSun, sans-serif', fontWeight: '900', backgroundOpacity: 40, textShadow: '2px 2px 4px rgba(0, 0, 0, 1.0)', lineHeight: 1.3, position: 'bottom' },
+      contrast: { fontSize: 36, fontColor: '#00ff00', fontFamily: 'SimSun, serif', fontWeight: '900', backgroundOpacity: 40, textShadow: '2px 2px 4px rgba(0, 0, 0, 1.0)', lineHeight: 1.3, position: 'bottom' },
       cinema: { fontSize: 34, fontColor: '#f0f0f0', fontFamily: 'SimSun, serif', fontWeight: '700', backgroundOpacity: 20, textShadow: '2px 2px 8px rgba(0, 0, 0, 0.8)', lineHeight: 1.5, position: 'bottom' }
     };
 
@@ -250,8 +250,23 @@ class PopupController {
     });
 
     // 字体颜色
+    const fontColorPreset = document.getElementById('fontColorPreset');
     const fontColor = document.getElementById('fontColor');
     const colorName = document.getElementById('colorName');
+    
+    fontColorPreset.addEventListener('change', (e) => {
+      const value = e.target.value;
+      if (value === 'custom') {
+        fontColor.style.display = 'block';
+        fontColor.click(); // 自动打开颜色选择器
+      } else {
+        fontColor.style.display = 'none';
+        const colorNameText = this.getColorName(value);
+        colorName.textContent = colorNameText;
+        this.updateCurrentLanguageSetting('fontColor', value);
+      }
+    });
+    
     fontColor.addEventListener('change', (e) => {
       const color = e.target.value;
       colorName.textContent = this.getColorName(color);
@@ -357,8 +372,24 @@ class PopupController {
     }
     
     if (settings.fontColor) {
-      document.getElementById('fontColor').value = settings.fontColor;
-      document.getElementById('colorName').textContent = this.getColorName(settings.fontColor);
+      // 更新预设选择器
+      const fontColorPreset = document.getElementById('fontColorPreset');
+      const fontColor = document.getElementById('fontColor');
+      const colorName = document.getElementById('colorName');
+      
+      // 检查是否为预设颜色
+      const isPresetColor = Array.from(fontColorPreset.options).some(option => option.value === settings.fontColor);
+      
+      if (isPresetColor) {
+        fontColorPreset.value = settings.fontColor;
+        fontColor.style.display = 'none';
+      } else {
+        fontColorPreset.value = 'custom';
+        fontColor.style.display = 'block';
+        fontColor.value = settings.fontColor;
+      }
+      
+      colorName.textContent = this.getColorName(settings.fontColor);
     }
     
     if (settings.backgroundOpacity !== undefined) {
@@ -449,12 +480,24 @@ class PopupController {
     const colorNames = {
       '#ffffff': '白色',
       '#ffff00': '黄色',
-      '#ff0000': '红色',
       '#00ff00': '绿色',
+      '#ff0000': '红色',
       '#0000ff': '蓝色',
-      '#000000': '黑色',
       '#ffa500': '橙色',
-      '#800080': '紫色'
+      '#800080': '紫色',
+      '#ffc0cb': '粉色',
+      '#00ffff': '青色',
+      '#a0a0a0': '灰色',
+      '#000000': '黑色',
+      '#f0f0f0': '浅灰色',
+      '#c0c0c0': '银色',
+      '#800000': '栗色',
+      '#008000': '深绿色',
+      '#000080': '藏青色',
+      '#ff00ff': '洋红色',
+      '#808000': '橄榄色',
+      '#008080': '青绿色',
+      '#ffd700': '金色'
     };
     return colorNames[color.toLowerCase()] || '自定义';
   }
@@ -546,7 +589,7 @@ class PopupController {
       fontSize: 32,
       fontColor: '#ffffff',
       fontFamily: 'SimSun, serif',
-      fontWeight: '700',
+      fontWeight: '900',
       backgroundOpacity: 20,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
       lineHeight: 1.4,

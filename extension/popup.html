@@ -193,7 +193,23 @@
                                 <span class="setting-desc">选择字幕文字颜色</span>
                             </label>
                             <div class="setting-control">
-                                <input type="color" id="fontColor" value="#ffffff">
+                                <div class="color-control">
+                                    <select id="fontColorPreset">
+                                        <option value="#ffffff">白色</option>
+                                        <option value="#ffff00">黄色</option>
+                                        <option value="#00ff00">绿色</option>
+                                        <option value="#ff0000">红色</option>
+                                        <option value="#0000ff">蓝色</option>
+                                        <option value="#ffa500">橙色</option>
+                                        <option value="#800080">紫色</option>
+                                        <option value="#ffc0cb">粉色</option>
+                                        <option value="#00ffff">青色</option>
+                                        <option value="#a0a0a0">灰色</option>
+                                        <option value="#000000">黑色</option>
+                                        <option value="custom">自定义颜色...</option>
+                                    </select>
+                                    <input type="color" id="fontColor" value="#ffffff" style="display: none;">
+                                </div>
                                 <span class="color-name" id="colorName">白色</span>
                             </div>
                         </div>

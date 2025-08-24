@@ -640,6 +640,18 @@ input:checked + .slider:before {
   cursor: pointer;
 }
 
+.color-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.color-control select {
+  flex: 1;
+  min-width: 0;
+}
+
 .setting-value {
   font-weight: 600;
   color: #667eea;
