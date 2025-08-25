@@ -462,14 +462,19 @@ class YouTubeSubtitleOverlay {
     if (!enabled) {
       this.hideSubtitle();
     } else {
+      // 开启时总是先显示测试字幕，无论是否有真实字幕数据
+      this.testSubtitleDisplay();
+      
+      // 如果有真实字幕数据，在测试字幕消失后继续更新显示
       if (this.englishSubtitles.length > 0 || this.chineseSubtitles.length > 0 || this.subtitleData.length > 0) {
         if (this.currentVideo) {
-          this.updateSubtitle();
-        } else {
-          this.testSubtitleDisplay();
+          // 4秒后开始显示真实字幕（确保测试字幕已消失）
+          setTimeout(() => {
+            if (this.isEnabled) {
+              this.updateSubtitle();
+            }
+          }, 4000);
         }
-      } else {
-        this.testSubtitleDisplay();
       }
     }
   }
@@ -480,8 +485,14 @@ class YouTubeSubtitleOverlay {
     this.showBilingualSubtitle('✅ Subtitle system working', '✅ 字幕功能正常 - 3秒后消失');
     
     setTimeout(() => {
-      if (!this.isEnabled || !this.currentVideo) {
+      // 只有在没有加载真实字幕数据的情况下才隐藏测试字幕
+      const hasRealSubtitles = this.englishSubtitles.length > 0 || 
+                               this.chineseSubtitles.length > 0 || 
+                               this.subtitleData.length > 0;
+      
+      if (!hasRealSubtitles) {
         this.hideSubtitle();
+        console.log('✅ 测试字幕已自动隐藏');
       }
     }, 3000);
   }
@@ -819,7 +830,11 @@ window.testSubtitlePositioning = () => {
   
   // 5秒后隐藏测试字幕
   setTimeout(() => {
-    if (!instance.currentVideo || !instance.englishSubtitles.length) {
+    const hasRealSubtitles = instance.englishSubtitles.length > 0 || 
+                             instance.chineseSubtitles.length > 0 || 
+                             instance.subtitleData.length > 0;
+    
+    if (!hasRealSubtitles) {
       instance.hideSubtitle();
       console.log('🔄 测试字幕已隐藏');
     }
@@ -939,7 +954,11 @@ window.testSubtitleWindowResize = () => {
   
   // 10秒后清除测试字幕
   setTimeout(() => {
-    if (!instance.currentVideo || (!instance.englishSubtitles.length && !instance.chineseSubtitles.length)) {
+    const hasRealSubtitles = instance.englishSubtitles.length > 0 || 
+                             instance.chineseSubtitles.length > 0 || 
+                             instance.subtitleData.length > 0;
+    
+    if (!hasRealSubtitles) {
       instance.hideSubtitle();
       console.log('🔄 测试完成，字幕已隐藏');
     }

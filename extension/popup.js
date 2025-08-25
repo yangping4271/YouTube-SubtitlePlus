@@ -276,18 +276,17 @@ class PopupController {
                 throw new Error('ASS文件解析失败或未找到有效的双语字幕');
             }
             
-            // 同时设置英文和中文字幕
+            // 设置字幕数据，但不设置英文和中文的文件名
             this.englishSubtitles = assResult.english;
             this.chineseSubtitles = assResult.chinese;
-            this.englishFileName = file.name;
-            this.chineseFileName = file.name;
+            // 不设置 englishFileName 和 chineseFileName，避免在分别上传区域显示
             
             const response = await chrome.runtime.sendMessage({
                 action: 'saveBilingualSubtitles',
                 englishSubtitles: this.englishSubtitles,
                 chineseSubtitles: this.chineseSubtitles,
-                englishFileName: this.englishFileName,
-                chineseFileName: this.chineseFileName
+                englishFileName: '', // 清空英文文件名
+                chineseFileName: ''  // 清空中文文件名
             });
             
             if (response.success) {
@@ -318,7 +317,11 @@ class PopupController {
         const assFileName = document.getElementById('assFileName');
 
         if (assFileStatus && assFileName) {
-            assFileName.textContent = filename;
+            // 使用截断函数限制显示长度
+            const displayName = this.truncateFileName(filename, 30);
+            assFileName.textContent = displayName;
+            // 设置完整文件名作为title，用于工具提示
+            assFileName.setAttribute('title', filename);
             assFileStatus.style.display = 'block';
         }
     }
@@ -336,8 +339,27 @@ class PopupController {
             assFileInput.value = '';
         }
         
-        // 清除数据（与现有clearSubtitle逻辑一致）
-        this.clearSubtitle();
+        // 清除字幕数据
+        this.englishSubtitles = [];
+        this.chineseSubtitles = [];
+        this.englishFileName = '';
+        this.chineseFileName = '';
+        
+        // 更新UI显示
+        this.updateSubtitleInfo();
+        
+        // 保存到后台
+        chrome.runtime.sendMessage({
+            action: 'clearSubtitleData'
+        });
+        
+        // 关闭字幕显示
+        const subtitleToggle = document.getElementById('subtitleToggle');
+        if (subtitleToggle) {
+            subtitleToggle.checked = false;
+        }
+        
+        this.showStatus('ASS字幕已移除', 'success');
     }
 
     bindSettingsEvents() {
@@ -1057,9 +1079,9 @@ class PopupController {
         if (englishCount) englishCount.textContent = `${this.englishSubtitles.length}条`;
         if (chineseCount) chineseCount.textContent = `${this.chineseSubtitles.length}条`;
         
-        // 更新文件卡片状态
-        this.updateFileCardState('english', this.englishSubtitles.length > 0);
-        this.updateFileCardState('chinese', this.chineseSubtitles.length > 0);
+        // 更新文件卡片状态 - 只有当对应的文件名存在时才显示为有文件状态
+        this.updateFileCardState('english', this.englishFileName && this.englishFileName.length > 0);
+        this.updateFileCardState('chinese', this.chineseFileName && this.chineseFileName.length > 0);
     }
 
     // ========================================
