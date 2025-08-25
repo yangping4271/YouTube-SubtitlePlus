@@ -27,20 +27,15 @@ Chrome-Translator/
 - 保持代码简洁、可读性强
 - 使用有意义的变量和函数命名
 
-#### 测试和调试
-- 扩展安装：选择`extension/`文件夹加载
+#### 安装和使用
+- 扩展安装：选择`extension/`文件夹加载到Chrome
 - 测试页面：任意YouTube视频页面
 - 调试工具：浏览器开发者工具Console
-- 全局测试函数：
-  - `testSubtitleNow()` - 基础字幕显示测试
-  - `testSubtitlePositioning()` - 字幕位置和状态测试
-  - `debugBilingualSubtitles()` - 双语字幕调试和状态检查
 
 #### 文件管理
 - **必需文件**：放在`extension/`文件夹
 - **文档文件**：放在`docs/`文件夹  
 - **示例文件**：放在`examples/`文件夹
-- **调试工具**：放在`tests/`文件夹
 
 ### 技术栈
 - **Chrome Manifest V3**
@@ -92,7 +87,6 @@ Chrome-Translator/
 - **基础功能**：字幕文件上传和显示
 - **同步测试**：视频播放时字幕同步
 - **样式测试**：全屏、剧场模式适配
-- **定位测试**：使用`testSubtitlePositioning()`测试不同模式下的字幕定位
 - **性能测试**：大字幕文件处理
 
 #### 代码提交
@@ -106,8 +100,7 @@ Chrome-Translator/
 1. 检查字幕是否正确上传
 2. 确认字幕开关已开启
 3. 验证视频时间在字幕范围内
-4. 使用`testSubtitleNow()`基础测试
-5. 使用`testSubtitlePositioning()`检查定位状态
+4. 使用浏览器开发者工具检查Console错误
 
 #### 样式和定位优化
 - 使用`position: fixed`确保定位稳定
@@ -163,7 +156,6 @@ Chrome-Translator/
 - **动态字幕定位**：根据视频播放器位置实时调整字幕显示
 - **多模式智能适配**：全屏、剧场、普通、迷你播放器自动适配
 - **高性能监听**：ResizeObserver、MutationObserver、事件监听优化
-- **完备调试工具**：`debugBilingualSubtitles()`提供详细双语字幕状态信息
 
 ---
 *最后更新：2025年8月*
