@@ -1571,15 +1571,4 @@ body {
         background: var(--bg-tertiary);
         border: 1px solid rgba(139, 92, 246, 0.2);
     }
-    
-    /* 暗色模式下的文件卡片样式优化 */
-    .file-card.has-file {
-        background: var(--success-bg);
-        border-color: var(--success-color);
-        box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
-    }
-    
-    .file-card.has-file .file-name {
-        color: var(--success-color);
-    }
 }

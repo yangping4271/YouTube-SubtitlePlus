@@ -353,13 +353,7 @@ class YouTubeSubtitleOverlay {
       }
     }
     
-    console.log('字幕定位已优化 - 模式:', {
-      fullscreen: isFullscreen,
-      theater: isTheaterMode,
-      mini: isMiniPlayer,
-      containerRect: containerRect,
-      position: this.overlayElement.style.position
-    });
+    // 字幕定位已优化
   }
 
   insertOverlayToPage() {
@@ -378,11 +372,9 @@ class YouTubeSubtitleOverlay {
       }
       
       moviePlayer.appendChild(this.overlayElement);
-      console.log('字幕已插入到movie_player容器内 - 相对定位模式');
     } else {
       // 后备方案：插入到body
       document.body.appendChild(this.overlayElement);
-      console.log('字幕已插入到body（后备方案）');
     }
     
     // 初始定位
