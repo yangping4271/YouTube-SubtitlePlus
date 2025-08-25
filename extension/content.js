@@ -23,7 +23,7 @@ class YouTubeSubtitleOverlay {
       fontSize: 32,
       fontColor: '#ffffff',
       fontFamily: 'SimSun, serif',
-      fontWeight: '700',
+      fontWeight: '900',
       backgroundOpacity: 20,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
       lineHeight: 1.4,
@@ -505,6 +505,9 @@ class YouTubeSubtitleOverlay {
       中文: this.chineseSubtitles.length
     });
     
+    // 加载字幕时，同步加载最新的设置
+    this.loadSubtitleData();
+    
     if (this.isEnabled && this.currentVideo) {
       this.updateSubtitle();
     }
@@ -519,9 +522,9 @@ class YouTubeSubtitleOverlay {
     this.subtitleData = [];
     this.englishSubtitles = [];
     this.chineseSubtitles = [];
-    this.isEnabled = false;
+    // 注意：不再清空设置和开关状态，保持用户的设置不变
     this.hideSubtitle();
-    console.log('字幕数据已清除');
+    console.log('字幕数据已清除，设置和开关状态保持不变');
   }
 
   updateSettings(settings) {

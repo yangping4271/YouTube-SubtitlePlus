@@ -13,8 +13,30 @@ class PopupController {
         
         // 当前选择的语言和设置
         this.currentLanguage = 'english';
-        this.englishSettings = {};
-        this.chineseSettings = {};
+        
+        // 使用默认设置初始化，而不是空对象
+        this.englishSettings = {
+            fontSize: 34,
+            fontColor: '#ffffff',
+            fontFamily: '"Noto Serif", Georgia, serif',
+            fontWeight: '700',
+            backgroundOpacity: 20,
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+            lineHeight: 1.3,
+            position: 'bottom'
+        };
+        
+        this.chineseSettings = {
+            fontSize: 32,
+            fontColor: '#ffffff',
+            fontFamily: 'SimSun, serif',
+            fontWeight: '900',
+            backgroundOpacity: 20,
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+            lineHeight: 1.4,
+            position: 'bottom'
+        };
+        
         this.syncSettings = false;
         
         // UI状态
@@ -24,12 +46,56 @@ class PopupController {
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupTabs();
         this.setupUploadModeSelection();
         this.bindEvents();
-        this.loadCurrentState();
+        
+        // 先确保默认设置写入 storage，再加载当前状态
+        try {
+            await this.ensureDefaultSettings();
+        } catch (e) {
+            console.warn('确保默认设置时出现问题，但继续加载当前状态:', e);
+        }
+        
+        await this.loadCurrentState();
         this.setupFileNameTooltips();
+    }
+    
+    // 确保默认设置存在于storage中
+    async ensureDefaultSettings() {
+        try {
+            const result = await chrome.storage.local.get(['englishSettings', 'chineseSettings']);
+            let needsSave = false;
+            
+            if (!result.englishSettings || Object.keys(result.englishSettings).length === 0) {
+                await chrome.runtime.sendMessage({
+                    action: 'updateSettings',
+                    settings: {
+                        language: 'english',
+                        data: this.englishSettings
+                    }
+                });
+                needsSave = true;
+            }
+            
+            if (!result.chineseSettings || Object.keys(result.chineseSettings).length === 0) {
+                await chrome.runtime.sendMessage({
+                    action: 'updateSettings',
+                    settings: {
+                        language: 'chinese',
+                        data: this.chineseSettings
+                    }
+                });
+                needsSave = true;
+            }
+            
+            if (needsSave) {
+                console.log('已初始化默认设置到storage');
+            }
+        } catch (error) {
+            console.error('初始化默认设置失败:', error);
+        }
     }
 
     // ========================================
@@ -317,8 +383,8 @@ class PopupController {
         const assFileName = document.getElementById('assFileName');
 
         if (assFileStatus && assFileName) {
-            // 使用截断函数限制显示长度
-            const displayName = this.truncateFileName(filename, 30);
+            // 使用更短的截断长度，更适合界面显示
+            const displayName = this.truncateFileName(filename, 18);
             assFileName.textContent = displayName;
             // 设置完整文件名作为title，用于工具提示
             assFileName.setAttribute('title', filename);
@@ -353,11 +419,7 @@ class PopupController {
             action: 'clearSubtitleData'
         });
         
-        // 关闭字幕显示
-        const subtitleToggle = document.getElementById('subtitleToggle');
-        if (subtitleToggle) {
-            subtitleToggle.checked = false;
-        }
+        // 注意：不再自动关闭字幕开关，让用户手动控制
         
         this.showStatus('ASS字幕已移除', 'success');
     }
@@ -486,9 +548,10 @@ class PopupController {
         // 字体类型
         const fontFamily = document.getElementById('fontFamily');
         if (fontFamily) {
-            // 填充字体选项
+            // 填充字体选项（加入 Noto Serif 以匹配默认首选英文字体）
             const fontOptions = [
                 { value: 'inherit', text: '系统默认' },
+                { value: '"Noto Serif", Georgia, serif', text: 'Noto Serif（英文首选）' },
                 { value: 'Arial, sans-serif', text: 'Arial' },
                 { value: 'Georgia, serif', text: 'Georgia' },
                 { value: '"Times New Roman", serif', text: 'Times New Roman' },
@@ -707,34 +770,42 @@ class PopupController {
             standard: {
                 fontSize: baseSize,
                 fontColor: '#ffffff',
+                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : 'SimSun, serif',
+                fontWeight: language === 'english' ? '700' : '900',
                 backgroundOpacity: 20,
-                fontWeight: '700',
                 textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                lineHeight: language === 'english' ? 1.3 : 1.4
+                lineHeight: language === 'english' ? 1.3 : 1.4,
+                position: 'bottom'
             },
             large: {
                 fontSize: baseSize + 8,
                 fontColor: '#ffffff',
-                backgroundOpacity: 25,
+                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : 'SimSun, serif',
                 fontWeight: '800',
+                backgroundOpacity: 25,
                 textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)',
-                lineHeight: language === 'english' ? 1.3 : 1.4
+                lineHeight: language === 'english' ? 1.3 : 1.4,
+                position: 'bottom'
             },
             contrast: {
                 fontSize: baseSize,
                 fontColor: '#ffff00',
-                backgroundOpacity: 40,
+                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : 'SimSun, serif',
                 fontWeight: '900',
+                backgroundOpacity: 40,
                 textShadow: '2px 2px 8px rgba(0, 0, 0, 1)',
-                lineHeight: language === 'english' ? 1.2 : 1.3
+                lineHeight: language === 'english' ? 1.2 : 1.3,
+                position: 'bottom'
             },
             cinema: {
                 fontSize: baseSize + 4,
                 fontColor: '#ffffff',
-                backgroundOpacity: 15,
+                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : 'SimSun, serif',
                 fontWeight: '600',
+                backgroundOpacity: 15,
                 textShadow: '1px 1px 3px rgba(0, 0, 0, 0.7)',
-                lineHeight: language === 'english' ? 1.4 : 1.5
+                lineHeight: language === 'english' ? 1.4 : 1.5,
+                position: 'bottom'
             }
         };
         
@@ -845,9 +916,55 @@ class PopupController {
                 this.englishFileName = englishFileName || '';
                 this.chineseFileName = chineseFileName || '';
                 
-                // 更新设置
-                this.englishSettings = englishSettings || {};
-                this.chineseSettings = chineseSettings || {};
+                // 定义默认设置，与构造函数保持一致
+                const defaultEnglishSettings = {
+                    fontSize: 34,
+                    fontColor: '#ffffff',
+                    fontFamily: '"Noto Serif", Georgia, serif',
+                    fontWeight: '700',
+                    backgroundOpacity: 20,
+                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+                    lineHeight: 1.3,
+                    position: 'bottom'
+                };
+                
+                const defaultChineseSettings = {
+                    fontSize: 32,
+                    fontColor: '#ffffff',
+                    fontFamily: 'SimSun, serif',
+                    fontWeight: '900',
+                    backgroundOpacity: 20,
+                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+                    lineHeight: 1.4,
+                    position: 'bottom'
+                };
+                
+                // 使用默认设置作为后备：当对象为空时回退到默认
+                const isEmpty = (obj) => !obj || Object.keys(obj).length === 0;
+                this.englishSettings = isEmpty(englishSettings) ? defaultEnglishSettings : englishSettings;
+                this.chineseSettings = isEmpty(chineseSettings) ? defaultChineseSettings : chineseSettings;
+
+                // 额外修正：若英文字体为 'inherit' 或缺失，强制回退为默认首选字体
+                let needPersistFix = false;
+                if (!this.englishSettings.fontFamily || this.englishSettings.fontFamily === 'inherit') {
+                    this.englishSettings.fontFamily = defaultEnglishSettings.fontFamily;
+                    needPersistFix = true;
+                }
+                // 额外修正：若中文字幕粗细缺失或为非数值字符串，回退为 900
+                if (!this.chineseSettings.fontWeight) {
+                    this.chineseSettings.fontWeight = defaultChineseSettings.fontWeight;
+                    needPersistFix = true;
+                }
+                
+                if (needPersistFix) {
+                    try {
+                        // 持久化修正，避免下次仍显示系统默认
+                        await this.updateSettings({ language: 'english', data: { fontFamily: this.englishSettings.fontFamily } });
+                        await this.updateSettings({ language: 'chinese', data: { fontWeight: this.chineseSettings.fontWeight } });
+                    } catch (e) {
+                        console.warn('持久化默认字体修正失败，不影响前端显示:', e);
+                    }
+                }
                 this.syncSettings = syncSettings || false;
                 
                 // 更新同步设置UI
@@ -1286,8 +1403,7 @@ class PopupController {
                 this.chineseFileName = '';
                 this.updateSubtitleInfo();
                 
-                const subtitleToggle = document.getElementById('subtitleToggle');
-                if (subtitleToggle) subtitleToggle.checked = false;
+                // 注意：不再自动关闭字幕开关，让用户手动控制
                 
                 this.showStatus('字幕数据已清除', 'success');
             }

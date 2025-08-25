@@ -57,7 +57,7 @@ class SubtitleExtensionBackground {
           fontSize: 32,
           fontColor: '#ffffff', 
           fontFamily: 'SimSun, serif',
-          fontWeight: '700',
+          fontWeight: '900',
           backgroundOpacity: 20,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
           lineHeight: 1.4,
@@ -234,11 +234,11 @@ class SubtitleExtensionBackground {
       englishSubtitles: [],
       chineseSubtitles: [],
       englishFileName: '',
-      chineseFileName: '',
-      subtitleEnabled: false
+      chineseFileName: ''
+      // 注意：不再设置 subtitleEnabled: false，让用户手动控制开关状态
     });
     await this.notifyContentScript('clearData');
-    console.log('字幕数据已清除');
+    console.log('字幕数据已清除，开关状态保持不变');
   }
 
   async notifyContentScript(action, data = {}) {
