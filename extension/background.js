@@ -72,6 +72,28 @@ class SubtitleExtensionBackground {
 
   onUpdate() {
     console.log('YouTube字幕扩展已更新');
+
+    // 迁移修复：确保“标准预设”下英文字体为 Noto Serif 而非系统默认
+    // 针对老版本可能将 fontFamily 设为 'inherit' 或未设置的情况
+    chrome.storage.local.get(['englishSettings']).then((res) => {
+      const english = res.englishSettings || {};
+      const needsFix = !english.fontFamily || english.fontFamily === 'inherit';
+      if (needsFix) {
+        const fixed = {
+          ...english,
+          fontFamily: '"Noto Serif", Georgia, serif'
+        };
+        chrome.storage.local.set({ englishSettings: fixed }).then(() => {
+          console.log('迁移修复：已将英文字体设为 Noto Serif（标准预设）');
+          // 同步通知 content script 更新样式
+          try {
+            this.notifyContentScript('updateSettings', { language: 'english', settings: fixed });
+          } catch (e) {
+            // 忽略通知错误，用户打开页面后会自动同步
+          }
+        });
+      }
+    });
   }
 
   async handleMessage(request, sender, sendResponse) {

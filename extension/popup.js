@@ -46,6 +46,20 @@ class PopupController {
         this.init();
     }
 
+    // 辅助方法：健壮地设置下拉框选中项，确保UI显示同步
+    setSelectValue(selectEl, value) {
+        if (!selectEl) return;
+        const options = Array.from(selectEl.options || []);
+        let index = options.findIndex(opt => opt.value === value);
+        if (index < 0 && options.length > 0) {
+            index = 0; // 回退到第一项
+        }
+        if (index >= 0) {
+            selectEl.selectedIndex = index;
+            options.forEach((opt, i) => opt.selected = i === index);
+        }
+    }
+
     async init() {
         this.setupTabs();
         this.setupUploadModeSelection();
@@ -548,10 +562,9 @@ class PopupController {
         // 字体类型
         const fontFamily = document.getElementById('fontFamily');
         if (fontFamily) {
-            // 填充字体选项（加入 Noto Serif 以匹配默认首选英文字体）
+            // 去掉“系统默认”，优先提供 Noto Serif
             const fontOptions = [
-                { value: 'inherit', text: '系统默认' },
-                { value: '"Noto Serif", Georgia, serif', text: 'Noto Serif（英文首选）' },
+                { value: '"Noto Serif", Georgia, serif', text: 'Noto Serif' },
                 { value: 'Arial, sans-serif', text: 'Arial' },
                 { value: 'Georgia, serif', text: 'Georgia' },
                 { value: '"Times New Roman", serif', text: 'Times New Roman' },
@@ -565,6 +578,12 @@ class PopupController {
             fontFamily.innerHTML = fontOptions.map(option => 
                 `<option value="${option.value}">${option.text}</option>`
             ).join('');
+            
+            // 初始化时使用健壮方式设置选中项
+            const targetDefault = this.currentLanguage === 'english' 
+                ? '"Noto Serif", Georgia, serif' 
+                : 'SimSun, serif';
+            this.setSelectValue(fontFamily, targetDefault);
             
             fontFamily.addEventListener('change', (e) => {
                 this.updateCurrentLanguageSetting('fontFamily', e.target.value);
@@ -734,7 +753,7 @@ class PopupController {
         // 高级设置
         if (settings.fontFamily) {
             const fontFamily = document.getElementById('fontFamily');
-            if (fontFamily) fontFamily.value = settings.fontFamily;
+            if (fontFamily) this.setSelectValue(fontFamily, settings.fontFamily);
         }
         
         if (settings.fontWeight) {
