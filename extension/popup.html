@@ -61,8 +61,80 @@
                     </div>
                 </div>
 
-                <!-- 文件上传区 -->
-                <div class="file-upload-section">
+                <!-- 字幕上传方式选择 -->
+                <div class="upload-mode-tabs">
+                    <div class="tab-selector">
+                        <button class="mode-tab active" data-mode="bilingual">
+                            <span class="tab-icon">🎭</span>
+                            <span class="tab-text">双语ASS</span>
+                            <span class="tab-badge">推荐</span>
+                        </button>
+                        <button class="mode-tab" data-mode="separate">
+                            <span class="tab-icon">📑</span>
+                            <span class="tab-text">分别上传</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ASS双语字幕上传区 -->
+                <div class="upload-content active" id="bilingualMode">
+                    <div class="ass-upload-card">
+                        <div class="ass-card-header">
+                            <div class="ass-title">
+                                <span class="ass-icon">✨</span>
+                                <span>ASS双语字幕文件</span>
+                            </div>
+                            <div class="ass-subtitle">一个文件包含英文+中文双语字幕</div>
+                        </div>
+                        
+                        <div class="ass-drop-zone" id="assUploadArea">
+                            <div class="ass-drop-content">
+                                <div class="ass-drop-icon">🎬</div>
+                                <div class="ass-drop-text">
+                                    <strong>拖拽ASS文件到此处或点击选择</strong>
+                                    <p>支持包含Default和Secondary样式的ASS字幕文件</p>
+                                </div>
+                            </div>
+                            <input type="file" id="assFileInput" accept=".ass" hidden>
+                        </div>
+
+                        <div class="ass-info-footer">
+                            <div class="ass-mapping">
+                                <div class="mapping-item">
+                                    <span class="mapping-label">Default样式</span>
+                                    <span class="mapping-arrow">→</span>
+                                    <span class="mapping-target english">英文字幕(上方)</span>
+                                </div>
+                                <div class="mapping-item">
+                                    <span class="mapping-label">Secondary样式</span>
+                                    <span class="mapping-arrow">→</span>
+                                    <span class="mapping-target chinese">中文字幕(下方)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ass-file-status" id="assFileStatus" style="display: none;">
+                            <div class="status-header">
+                                <span class="status-icon">📄</span>
+                                <span class="status-filename" id="assFileName"></span>
+                                <button class="status-remove" id="assRemove" title="移除文件">×</button>
+                            </div>
+                            <div class="status-stats" id="assStats"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分别上传模式 -->
+                <div class="upload-content" id="separateMode">
+                    <div class="separate-upload-header">
+                        <div class="separate-title">
+                            <span class="separate-icon">📑</span>
+                            <span>分别上传字幕文件</span>
+                        </div>
+                        <div class="separate-subtitle">分别选择英文和中文字幕文件</div>
+                    </div>
+                    
+                    <div class="file-upload-section">
                     <!-- 英文字幕 -->
                     <div class="file-card" id="englishCard">
                         <div class="file-header">
@@ -107,6 +179,7 @@
                             <span class="file-name" id="chineseFileName" title="">未选择文件</span>
                             <button class="file-remove" id="chineseRemove" style="display: none;" title="移除此文件">×</button>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>

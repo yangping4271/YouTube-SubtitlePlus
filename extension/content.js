@@ -653,6 +653,82 @@ class SubtitleParser {
     return subtitles;
   }
 
+  static parseASS(content) {
+    const result = { english: [], chinese: [] };
+    const lines = content.split('\n');
+    
+    let inEventsSection = false;
+    
+    lines.forEach(line => {
+      line = line.trim();
+      
+      // 检测Events部分开始
+      if (line === '[Events]') {
+        inEventsSection = true;
+        return;
+      }
+      
+      // 检测到新的段落，停止解析Events
+      if (line.startsWith('[') && line !== '[Events]') {
+        inEventsSection = false;
+        return;
+      }
+      
+      // 解析Dialogue行
+      if (inEventsSection && line.startsWith('Dialogue:')) {
+        const parts = line.split(',');
+        if (parts.length >= 10) {
+          const style = parts[3]; // Style name
+          const startTime = this.parseASSTime(parts[1]); // Start time
+          const endTime = this.parseASSTime(parts[2]); // End time
+          
+          // 提取文本内容，从第10个逗号后开始
+          const textParts = parts.slice(9);
+          let text = textParts.join(',').trim();
+          
+          // 清理ASS格式标签
+          text = this.cleanASSText(text);
+          
+          if (text && startTime !== null && endTime !== null) {
+            const subtitle = { startTime, endTime, text };
+            
+            // 根据Style分配到不同语言
+            if (style === 'Default') {
+              result.english.push(subtitle);
+            } else if (style === 'Secondary') {
+              result.chinese.push(subtitle);
+            }
+          }
+        }
+      }
+    });
+    
+    return result;
+  }
+
+  static parseASSTime(timeStr) {
+    // ASS时间格式: H:MM:SS.CC
+    const match = timeStr.match(/(\d+):(\d{2}):(\d{2})\.(\d{2})/);
+    if (match) {
+      const hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      const seconds = parseInt(match[3]);
+      const centiseconds = parseInt(match[4]);
+      
+      return hours * 3600 + minutes * 60 + seconds + centiseconds / 100;
+    }
+    return null;
+  }
+
+  static cleanASSText(text) {
+    // 移除ASS样式标签，如 {\i1}、{\b1}、{\c&Hffffff&} 等
+    return text
+      .replace(/\{[^}]*\}/g, '') // 移除所有 {} 包围的标签
+      .replace(/\\N/g, '\n') // 转换换行符
+      .replace(/\\h/g, ' ') // 转换硬空格
+      .trim();
+  }
+
   static parseTime(hours, minutes, seconds, milliseconds) {
     return parseInt(hours) * 3600 + 
            parseInt(minutes) * 60 + 
