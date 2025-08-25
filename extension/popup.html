@@ -43,24 +43,6 @@
         <div class="main-content">
             <!-- 文件管理标签页 -->
             <div class="tab-content active" id="filesTab">
-                <!-- 快捷操作区 -->
-                <div class="quick-actions">
-                    <div class="status-card">
-                        <div class="status-info">
-                            <span class="status-label">英文</span>
-                            <span class="status-count" id="englishCount">0条</span>
-                        </div>
-                        <div class="status-divider"></div>
-                        <div class="status-info">
-                            <span class="status-label">中文</span>
-                            <span class="status-count" id="chineseCount">0条</span>
-                        </div>
-                        <button class="clear-all-btn" id="clearButton" title="清除所有字幕">
-                            <span>🗑️</span>
-                        </button>
-                    </div>
-                </div>
-
                 <!-- 字幕上传方式选择 -->
                 <div class="upload-mode-tabs">
                     <div class="tab-selector">
@@ -98,28 +80,12 @@
                             <input type="file" id="assFileInput" accept=".ass" hidden>
                         </div>
 
-                        <div class="ass-info-footer">
-                            <div class="ass-mapping">
-                                <div class="mapping-item">
-                                    <span class="mapping-label">Default样式</span>
-                                    <span class="mapping-arrow">→</span>
-                                    <span class="mapping-target english">英文字幕(上方)</span>
-                                </div>
-                                <div class="mapping-item">
-                                    <span class="mapping-label">Secondary样式</span>
-                                    <span class="mapping-arrow">→</span>
-                                    <span class="mapping-target chinese">中文字幕(下方)</span>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="ass-file-status" id="assFileStatus" style="display: none;">
                             <div class="status-header">
                                 <span class="status-icon">📄</span>
                                 <span class="status-filename" id="assFileName"></span>
                                 <button class="status-remove" id="assRemove" title="移除文件">×</button>
                             </div>
-                            <div class="status-stats" id="assStats"></div>
                         </div>
                     </div>
                 </div>
@@ -180,6 +146,24 @@
                             <button class="file-remove" id="chineseRemove" style="display: none;" title="移除此文件">×</button>
                         </div>
                     </div>
+                    </div>
+                </div>
+
+                <!-- 字幕统计区域 -->
+                <div class="subtitle-stats">
+                    <div class="status-card">
+                        <div class="status-info">
+                            <span class="status-label">英文</span>
+                            <span class="status-count" id="englishCount">0条</span>
+                        </div>
+                        <div class="status-divider"></div>
+                        <div class="status-info">
+                            <span class="status-label">中文</span>
+                            <span class="status-count" id="chineseCount">0条</span>
+                        </div>
+                        <button class="clear-all-btn" id="clearButton" title="清除所有字幕">
+                            <span>🗑️</span>
+                        </button>
                     </div>
                 </div>
             </div>

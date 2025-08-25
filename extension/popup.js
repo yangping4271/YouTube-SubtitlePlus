@@ -316,15 +316,9 @@ class PopupController {
     updateASSFileStatus(filename, assResult) {
         const assFileStatus = document.getElementById('assFileStatus');
         const assFileName = document.getElementById('assFileName');
-        const assStats = document.getElementById('assStats');
 
-        if (assFileStatus && assFileName && assStats) {
+        if (assFileStatus && assFileName) {
             assFileName.textContent = filename;
-            assStats.innerHTML = `
-                <div>✅ 英文字幕：${assResult.english.length} 条</div>
-                <div>✅ 中文字幕：${assResult.chinese.length} 条</div>
-                <div>📊 总时长：${this.calculateDuration(assResult.english, assResult.chinese)}</div>
-            `;
             assFileStatus.style.display = 'block';
         }
     }

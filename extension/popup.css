@@ -305,6 +305,11 @@ body {
    📁 文件管理标签页样式
    ======================================== */
 
+/* 💾 字幕统计区域 */
+.subtitle-stats {
+    margin-top: var(--spacing-xl);
+}
+
 /* 📊 快捷操作区 */
 .quick-actions {
     margin-bottom: var(--spacing-xl);
@@ -604,7 +609,6 @@ body {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
 }
 
 .status-filename {
@@ -628,12 +632,6 @@ body {
 .status-remove:hover {
     background: var(--error-color);
     transform: scale(1.1);
-}
-
-.status-stats {
-    font-size: 13px;
-    opacity: 0.9;
-    line-height: 1.4;
 }
 
 /* 📑 分别上传模式 */
