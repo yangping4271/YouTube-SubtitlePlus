@@ -644,6 +644,7 @@ body {
 .file-card.has-file {
     border-color: var(--success-color);
     background: var(--success-bg);
+    box-shadow: 0 0 0 1px var(--success-color);
 }
 
 .file-header {
@@ -1524,6 +1525,17 @@ body {
         --bg-primary: #1f2937;
         --bg-secondary: #111827;
         --bg-tertiary: #374151;
+        
+        /* 🎯 暗色主题状态色彩 */
+        --success-color: #10b981;
+        --success-bg: rgba(16, 185, 129, 0.1);
+        --warning-color: #f59e0b;
+        --warning-bg: rgba(245, 158, 11, 0.1);
+        --error-color: #ef4444;
+        --error-bg: rgba(239, 68, 68, 0.1);
+        --info-color: #3b82f6;
+        --info-bg: rgba(59, 130, 246, 0.1);
+        
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
         --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
         --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
@@ -1558,5 +1570,16 @@ body {
     .separate-upload-header {
         background: var(--bg-tertiary);
         border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    
+    /* 暗色模式下的文件卡片样式优化 */
+    .file-card.has-file {
+        background: var(--success-bg);
+        border-color: var(--success-color);
+        box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
+    }
+    
+    .file-card.has-file .file-name {
+        color: var(--success-color);
     }
 }
