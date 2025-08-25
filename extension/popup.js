@@ -14,6 +14,11 @@ class PopupController {
         // 当前选择的语言和设置
         this.currentLanguage = 'english';
         
+        // 自动加载相关设置
+        this.autoLoadEnabled = false;
+        this.serverUrl = 'http://127.0.0.1:8888';
+        this.serverStatus = 'unknown'; // unknown, connected, error
+        
         // 使用默认设置初始化，而不是空对象
         this.englishSettings = {
             fontSize: 34,
@@ -174,7 +179,20 @@ class PopupController {
             content.classList.remove('active');
         });
         
-        const targetContent = document.getElementById(mode === 'bilingual' ? 'bilingualMode' : 'separateMode');
+        let targetContent;
+        switch (mode) {
+            case 'auto':
+                targetContent = document.getElementById('autoMode');
+                this.initAutoLoadMode();
+                break;
+            case 'bilingual':
+                targetContent = document.getElementById('bilingualMode');
+                break;
+            case 'separate':
+                targetContent = document.getElementById('separateMode');
+                break;
+        }
+        
         if (targetContent) {
             targetContent.classList.add('active');
         }
@@ -268,6 +286,9 @@ class PopupController {
                 this.showFeedback();
             });
         }
+
+        // 自动加载相关事件
+        this.bindAutoLoadEvents();
     }
 
     bindFileUploadEvents(language, uploadAreaId, fileInputId) {
@@ -1553,6 +1574,204 @@ class PopupController {
     showFeedback() {
         this.showStatus('如有问题请通过Chrome扩展商店反馈', 'info');
         this.switchTab('about'); // 自动切换到关于页面
+    }
+
+    // ========================================
+    // 自动加载相关方法
+    // ========================================
+    bindAutoLoadEvents() {
+        // 自动加载开关
+        const autoLoadToggle = document.getElementById('autoLoadToggle');
+        if (autoLoadToggle) {
+            autoLoadToggle.addEventListener('change', (e) => {
+                this.toggleAutoLoad(e.target.checked);
+            });
+        }
+
+        // 服务器地址配置
+        const serverUrl = document.getElementById('serverUrl');
+        if (serverUrl) {
+            serverUrl.addEventListener('change', (e) => {
+                this.updateServerUrl(e.target.value);
+            });
+        }
+
+        // 测试连接按钮
+        const testServer = document.getElementById('testServer');
+        if (testServer) {
+            testServer.addEventListener('click', () => {
+                this.testServerConnection();
+            });
+        }
+
+        // 刷新状态按钮
+        const statusRefresh = document.getElementById('statusRefresh');
+        if (statusRefresh) {
+            statusRefresh.addEventListener('click', () => {
+                this.checkServerStatus();
+            });
+        }
+    }
+
+    initAutoLoadMode() {
+        console.log('初始化自动加载模式');
+        this.checkServerStatus();
+        this.loadAutoLoadSettings();
+        
+        // 监听来自content script的消息
+        if (!this.messageListenerBound) {
+            chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+                if (request.action === 'autoLoadSuccess') {
+                    this.updateAutoLoadStatus('成功: ' + request.filename, 'success');
+                } else if (request.action === 'autoLoadError') {
+                    this.updateAutoLoadStatus('失败: ' + request.error, 'error');
+                }
+            });
+            this.messageListenerBound = true;
+        }
+    }
+
+    async loadAutoLoadSettings() {
+        try {
+            const result = await chrome.storage.local.get(['autoLoadEnabled', 'serverUrl']);
+            this.autoLoadEnabled = result.autoLoadEnabled || false;
+            this.serverUrl = result.serverUrl || 'http://127.0.0.1:8888';
+
+            const autoLoadToggle = document.getElementById('autoLoadToggle');
+            const serverUrlInput = document.getElementById('serverUrl');
+
+            if (autoLoadToggle) autoLoadToggle.checked = this.autoLoadEnabled;
+            if (serverUrlInput) serverUrlInput.value = this.serverUrl;
+
+        } catch (error) {
+            console.error('加载自动加载设置失败:', error);
+        }
+    }
+
+    async toggleAutoLoad(enabled) {
+        this.autoLoadEnabled = enabled;
+
+        try {
+            // 保存设置
+            await chrome.storage.local.set({ autoLoadEnabled: enabled });
+
+            // 通知content script
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]) {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        action: 'toggleAutoLoad',
+                        enabled: enabled
+                    });
+                }
+            });
+
+            this.showStatus(
+                enabled ? '自动加载已启用' : '自动加载已禁用', 
+                enabled ? 'success' : 'info'
+            );
+
+            if (enabled) {
+                this.checkServerStatus();
+            }
+
+        } catch (error) {
+            console.error('切换自动加载状态失败:', error);
+            this.showStatus('设置失败: ' + error.message, 'error');
+        }
+    }
+
+    async updateServerUrl(url) {
+        this.serverUrl = url;
+
+        try {
+            await chrome.storage.local.set({ serverUrl: url });
+
+            // 通知content script
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]) {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        action: 'updateServerUrl',
+                        url: url
+                    });
+                }
+            });
+
+            console.log('服务器地址已更新:', url);
+
+        } catch (error) {
+            console.error('更新服务器地址失败:', error);
+        }
+    }
+
+    async checkServerStatus() {
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        if (statusText) statusText.textContent = '检查中...';
+        if (statusIndicator) statusIndicator.className = 'status-indicator checking';
+
+        try {
+            const response = await fetch(`${this.serverUrl}/health`, {
+                method: 'GET',
+                timeout: 5000
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                this.updateServerStatus('connected', '服务器已连接');
+                console.log('服务器状态:', result);
+            } else {
+                this.updateServerStatus('error', `服务器错误 (${response.status})`);
+            }
+
+        } catch (error) {
+            this.updateServerStatus('error', '服务器连接失败');
+            console.log('服务器连接失败:', error.message);
+        }
+    }
+
+    updateServerStatus(status, message) {
+        this.serverStatus = status;
+        
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        if (statusText) statusText.textContent = message;
+        if (statusIndicator) {
+            statusIndicator.className = `status-indicator ${status}`;
+        }
+    }
+
+    async testServerConnection() {
+        const testButton = document.getElementById('testServer');
+        const originalText = testButton ? testButton.textContent : '';
+
+        if (testButton) {
+            testButton.textContent = '测试中...';
+            testButton.disabled = true;
+        }
+
+        await this.checkServerStatus();
+
+        if (testButton) {
+            testButton.textContent = originalText;
+            testButton.disabled = false;
+        }
+
+        // 显示测试结果
+        if (this.serverStatus === 'connected') {
+            this.showStatus('服务器连接正常', 'success');
+        } else {
+            this.showStatus('服务器连接失败，请检查服务器是否启动', 'error');
+        }
+    }
+
+    updateAutoLoadStatus(message, type) {
+        const autoLoadStatus = document.getElementById('autoLoadStatus');
+        if (autoLoadStatus) {
+            autoLoadStatus.textContent = message;
+            autoLoadStatus.className = `value ${type}`;
+        }
     }
 }
 

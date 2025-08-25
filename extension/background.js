@@ -64,7 +64,10 @@ class SubtitleExtensionBackground {
           position: 'bottom'
         },
         // 同步设置选项
-        syncSettings: false
+        syncSettings: false,
+        // 自动加载设置
+        autoLoadEnabled: false,
+        serverUrl: 'http://127.0.0.1:8888'
       });
       console.log('默认双语独立设置已初始化 - 32px基础字体');
     });
@@ -143,6 +146,11 @@ class SubtitleExtensionBackground {
           await this.clearSubtitleData();
           sendResponse({ success: true });
           break;
+          
+        case 'setSubtitleEnabled':
+          await this.setSubtitleEnabled(request.enabled);
+          sendResponse({ success: true });
+          break;
 
         default:
           sendResponse({ success: false, error: '未知操作' });
@@ -213,6 +221,11 @@ class SubtitleExtensionBackground {
     await chrome.storage.local.set({ subtitleEnabled: enabled });
     await this.notifyContentScript('toggleSubtitle', { enabled });
     console.log('字幕显示已', enabled ? '开启' : '关闭');
+  }
+  
+  async setSubtitleEnabled(enabled) {
+    await chrome.storage.local.set({ subtitleEnabled: enabled });
+    console.log('字幕状态已设置为:', enabled ? '启用' : '禁用');
   }
 
   async updateSettings(settings) {

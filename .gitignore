@@ -12,6 +12,40 @@ Thumbs.db
 *.swo
 *~
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 虚拟环境
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.uv/
+
 # 测试和调试文件
 tests/
 debug*/
@@ -48,7 +82,6 @@ dist/
 build/
 
 # 环境配置
-.env
 .env.local
 .env.development.local
 .env.test.local
@@ -56,3 +89,9 @@ build/
 
 # 用户特定的配置文件
 *.user.*
+
+# 字幕文件（保留示例文件）
+subtitles/*.ass
+subtitles/*.srt
+subtitles/*.vtt
+!subtitles/QSqc6MMS6Fk.ass

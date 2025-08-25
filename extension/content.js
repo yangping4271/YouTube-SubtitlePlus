@@ -7,6 +7,12 @@ class YouTubeSubtitleOverlay {
     this.overlayElement = null;
     this.isEnabled = false;
     
+    // 自动加载相关配置
+    this.autoLoadEnabled = false;
+    this.serverUrl = 'http://127.0.0.1:8888';
+    this.currentVideoId = null;
+    this.autoLoadAttempted = false;
+    
     // 独立的语言设置 (32px基础，20%背景透明度)
     this.englishSettings = {
       fontSize: 34,
@@ -57,6 +63,12 @@ class YouTubeSubtitleOverlay {
           break;
         case 'updateSettings':
           this.updateLanguageSettings(request.language, request.settings);
+          break;
+        case 'toggleAutoLoad':
+          this.toggleAutoLoad(request.enabled);
+          break;
+        case 'updateServerUrl':
+          this.serverUrl = request.url || 'http://127.0.0.1:8888';
           break;
       }
     });
@@ -162,6 +174,10 @@ class YouTubeSubtitleOverlay {
       this.setupVideoListeners();
       this.insertOverlayToPage();
       this.setupResizeListener();
+      
+      // 尝试自动加载字幕
+      this.autoLoadAttempted = false;
+      this.attemptAutoLoad();
     }
   }
 
@@ -600,6 +616,210 @@ class YouTubeSubtitleOverlay {
     } catch (error) {
       console.error('加载字幕数据失败:', error);
     }
+  }
+
+  // 自动加载相关方法
+  toggleAutoLoad(enabled) {
+    this.autoLoadEnabled = enabled;
+    console.log('自动加载已', enabled ? '启用' : '禁用');
+    
+    if (enabled) {
+      this.attemptAutoLoad();
+    }
+  }
+
+  getVideoId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('v');
+    return videoId;
+  }
+
+  async attemptAutoLoad() {
+    if (!this.autoLoadEnabled || this.autoLoadAttempted) {
+      return;
+    }
+
+    const videoId = this.getVideoId();
+    if (!videoId || videoId === this.currentVideoId) {
+      return;
+    }
+
+    this.currentVideoId = videoId;
+    this.autoLoadAttempted = true;
+
+    console.log('🔍 尝试自动加载字幕:', videoId);
+    
+    try {
+      const response = await fetch(`${this.serverUrl}/subtitle/${videoId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('📝 未找到本地字幕文件:', videoId);
+        } else {
+          console.log('❌ 服务器连接失败:', response.status);
+        }
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success && result.content) {
+        await this.processAutoLoadedSubtitle(result.content, result.info);
+        console.log('✅ 自动加载字幕成功:', videoId);
+        
+        // 通知popup更新状态
+        chrome.runtime.sendMessage({
+          action: 'autoLoadSuccess',
+          videoId: videoId,
+          filename: result.info.filename
+        });
+      }
+
+    } catch (error) {
+      console.log('❌ 自动加载失败:', error.message);
+      
+      // 通知popup服务器连接失败
+      chrome.runtime.sendMessage({
+        action: 'autoLoadError',
+        error: error.message
+      });
+    }
+  }
+
+  async processAutoLoadedSubtitle(content, info) {
+    try {
+      const format = info.format.toLowerCase();
+      
+      if (format === '.ass') {
+        // 使用现有的ASS解析逻辑
+        const assResult = this.parseASSContent(content);
+        
+        if (assResult.english.length > 0 || assResult.chinese.length > 0) {
+          this.englishSubtitles = assResult.english;
+          this.chineseSubtitles = assResult.chinese;
+          
+          // 保存到本地存储
+          await chrome.runtime.sendMessage({
+            action: 'saveBilingualSubtitles',
+            englishSubtitles: assResult.english,
+            chineseSubtitles: assResult.chinese,
+            englishFileName: info.filename + ' (英文)',
+            chineseFileName: info.filename + ' (中文)'
+          });
+          
+          console.log('📊 自动加载双语字幕:', {
+            英文: assResult.english.length,
+            中文: assResult.chinese.length
+          });
+        }
+      } else if (format === '.srt' || format === '.vtt') {
+        // 处理SRT/VTT文件
+        const subtitleData = format === '.srt' ? 
+          SubtitleParser.parseSRT(content) : 
+          SubtitleParser.parseVTT(content);
+          
+        if (subtitleData.length > 0) {
+          this.subtitleData = subtitleData;
+          
+          // 保存到本地存储
+          await chrome.runtime.sendMessage({
+            action: 'saveSubtitleData',
+            data: subtitleData
+          });
+          
+          console.log('📊 自动加载单语字幕:', subtitleData.length, '条');
+        }
+      }
+      
+      // 自动启用字幕显示
+      if (this.englishSubtitles.length > 0 || this.chineseSubtitles.length > 0 || this.subtitleData.length > 0) {
+        this.isEnabled = true;
+        
+        // 通知background更新状态
+        chrome.runtime.sendMessage({
+          action: 'setSubtitleEnabled',
+          enabled: true
+        });
+        
+        if (this.currentVideo) {
+          this.updateSubtitle();
+        }
+      }
+      
+    } catch (error) {
+      console.error('处理自动加载的字幕失败:', error);
+    }
+  }
+
+  parseASSContent(content) {
+    const result = { english: [], chinese: [] };
+    const lines = content.split('\n');
+    
+    let inEventsSection = false;
+    
+    lines.forEach(line => {
+      line = line.trim();
+      
+      if (line === '[Events]') {
+        inEventsSection = true;
+        return;
+      }
+      
+      if (line.startsWith('[') && line !== '[Events]') {
+        inEventsSection = false;
+        return;
+      }
+      
+      if (inEventsSection && line.startsWith('Dialogue:')) {
+        const parts = line.split(',');
+        if (parts.length >= 10) {
+          const style = parts[3];
+          const startTime = this.parseASSTime(parts[1]);
+          const endTime = this.parseASSTime(parts[2]);
+          
+          const textParts = parts.slice(9);
+          let text = textParts.join(',').trim();
+          text = this.cleanASSText(text);
+          
+          if (text && startTime !== null && endTime !== null) {
+            const subtitle = { startTime, endTime, text };
+            
+            // 根据Style分配到不同语言
+            if (style === 'Default') {
+              result.english.push(subtitle);
+            } else if (style === 'Secondary') {
+              result.chinese.push(subtitle);
+            }
+          }
+        }
+      }
+    });
+    
+    return result;
+  }
+
+  parseASSTime(timeStr) {
+    const match = timeStr.match(/(\d+):(\d{2}):(\d{2})\.(\d{2})/);
+    if (match) {
+      const hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      const seconds = parseInt(match[3]);
+      const centiseconds = parseInt(match[4]);
+      
+      return hours * 3600 + minutes * 60 + seconds + centiseconds / 100;
+    }
+    return null;
+  }
+
+  cleanASSText(text) {
+    return text.replace(/\{[^}]*\}/g, '')
+               .replace(/\\N/g, '\n')
+               .replace(/\\n/g, '\n')
+               .trim();
   }
 }
 

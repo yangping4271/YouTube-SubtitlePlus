@@ -46,6 +46,11 @@
                 <!-- 字幕上传方式选择 -->
                 <div class="upload-mode-tabs">
                     <div class="tab-selector">
+                        <button class="mode-tab" data-mode="auto">
+                            <span class="tab-icon">🤖</span>
+                            <span class="tab-text">自动加载</span>
+                            <span class="tab-badge new">NEW</span>
+                        </button>
                         <button class="mode-tab active" data-mode="bilingual">
                             <span class="tab-icon">🎭</span>
                             <span class="tab-text">双语ASS</span>
@@ -55,6 +60,90 @@
                             <span class="tab-icon">📑</span>
                             <span class="tab-text">分别上传</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- 自动加载模式 -->
+                <div class="upload-content" id="autoMode">
+                    <div class="auto-load-card">
+                        <div class="auto-card-header">
+                            <div class="auto-title">
+                                <span class="auto-icon">🤖</span>
+                                <span>本地字幕自动加载</span>
+                            </div>
+                            <div class="auto-subtitle">根据YouTube视频ID自动加载本地字幕文件</div>
+                        </div>
+                        
+                        <!-- 服务器状态 -->
+                        <div class="server-status" id="serverStatus">
+                            <div class="status-indicator" id="statusIndicator">
+                                <span class="status-dot"></span>
+                                <span class="status-text" id="statusText">检查服务器状态中...</span>
+                            </div>
+                            <button class="status-refresh" id="statusRefresh" title="刷新状态">🔄</button>
+                        </div>
+                        
+                        <!-- 自动加载开关 -->
+                        <div class="auto-load-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoLoadToggle">
+                                <span class="toggle-slider-auto"></span>
+                                <span class="toggle-label">启用自动加载</span>
+                            </label>
+                        </div>
+                        
+                        <!-- 服务器配置 -->
+                        <div class="server-config" id="serverConfig">
+                            <div class="config-header">
+                                <span class="config-icon">⚙️</span>
+                                <span>服务器配置</span>
+                            </div>
+                            <div class="config-item">
+                                <label for="serverUrl">服务器地址:</label>
+                                <input type="text" id="serverUrl" value="http://127.0.0.1:8888" placeholder="http://127.0.0.1:8888">
+                                <button class="config-test" id="testServer">测试连接</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 使用说明 -->
+                        <div class="auto-instructions">
+                            <div class="instruction-header">
+                                <span class="instruction-icon">💡</span>
+                                <span>使用说明</span>
+                            </div>
+                            <div class="instruction-steps">
+                                <div class="step">
+                                    <span class="step-number">1</span>
+                                    <span class="step-text">启动本地字幕服务器</span>
+                                </div>
+                                <div class="step">
+                                    <span class="step-number">2</span>
+                                    <span class="step-text">将字幕文件放入服务器目录，文件名为视频ID</span>
+                                </div>
+                                <div class="step">
+                                    <span class="step-number">3</span>
+                                    <span class="step-text">启用自动加载，打开YouTube视频即可自动显示字幕</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 当前视频信息 -->
+                        <div class="current-video-info" id="currentVideoInfo" style="display: none;">
+                            <div class="video-info-header">
+                                <span class="video-icon">🎬</span>
+                                <span>当前视频</span>
+                            </div>
+                            <div class="video-details">
+                                <div class="video-id">
+                                    <span class="label">视频ID:</span>
+                                    <span class="value" id="currentVideoId">-</span>
+                                </div>
+                                <div class="auto-load-status">
+                                    <span class="label">加载状态:</span>
+                                    <span class="value" id="autoLoadStatus">等待检测</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
