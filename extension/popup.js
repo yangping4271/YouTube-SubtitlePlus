@@ -323,17 +323,6 @@ class PopupController {
         }
     }
 
-    calculateDuration(englishSubs, chineseSubs) {
-        const allSubs = [...englishSubs, ...chineseSubs];
-        if (allSubs.length === 0) return '0秒';
-        
-        const maxEndTime = Math.max(...allSubs.map(sub => sub.endTime));
-        const minutes = Math.floor(maxEndTime / 60);
-        const seconds = Math.floor(maxEndTime % 60);
-        
-        return minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
-    }
-
     removeASSFile() {
         // 清除ASS文件状态显示
         const assFileStatus = document.getElementById('assFileStatus');
