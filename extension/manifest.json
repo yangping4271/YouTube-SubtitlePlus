@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "YouTube本地字幕显示器",
+  "name": "YouTube SubtitlePlus",
   "version": "1.0.0",
-  "description": "在YouTube视频上显示本地字幕文件",
+  "description": "Display local subtitle files on YouTube videos with bilingual support and real-time style customization",
   "permissions": [
     "activeTab",
     "storage"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "YouTube本地字幕"
+    "default_title": "YouTube SubtitlePlus"
   },
   "content_scripts": [
     {

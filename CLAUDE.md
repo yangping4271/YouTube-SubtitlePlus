@@ -1,13 +1,13 @@
-# YouTube本地字幕显示器 - 项目配置
+# YouTube SubtitlePlus - 项目配置
 
 ## 项目概述
-YouTube本地字幕显示器是一个Chrome扩展，允许用户在YouTube视频上显示本地字幕文件(SRT/VTT格式)。
+YouTube SubtitlePlus 是一个Chrome扩展，允许用户在YouTube视频上显示本地字幕文件(SRT/VTT格式)，支持双语字幕显示和实时样式自定义。
 
 ## 开发环境配置
 
 ### 项目结构
 ```
-Chrome-Translator/
+YouTube-SubtitlePlus/
 ├── extension/              # Chrome扩展核心文件
 │   ├── manifest.json       # 扩展配置
 │   ├── content.js          # 内容脚本

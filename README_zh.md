@@ -1,4 +1,4 @@
-# YouTube本地字幕显示器
+# YouTube字幕增强器
 
 [中文版本](./README_zh.md) | [English](./README.md)
 
@@ -18,7 +18,7 @@
 ## 📁 项目结构
 
 ```
-Youtube-Translator/
+YouTube-SubtitlePlus/
 ├── extension/              # Chrome扩展文件（加载此文件夹）
 │   ├── manifest.json       # 扩展配置文件
 │   ├── content.js          # 内容脚本（注入YouTube页面）

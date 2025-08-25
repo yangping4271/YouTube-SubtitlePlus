@@ -1,4 +1,4 @@
-# Youtube-Translator
+# YouTube-SubtitlePlus
 
 [中文版本](./README_zh.md) | [English](./README.md)
 
@@ -18,7 +18,7 @@ A Chrome extension that displays local subtitle files on YouTube videos, support
 ## 📁 Project Structure
 
 ```
-Youtube-Translator/
+YouTube-SubtitlePlus/
 ├── extension/              # Chrome extension files (load this folder)
 │   ├── manifest.json       # Extension configuration
 │   ├── content.js          # Content script (injected into YouTube)
