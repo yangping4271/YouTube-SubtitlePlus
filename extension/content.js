@@ -175,7 +175,7 @@ class YouTubeSubtitleOverlay {
       this.insertOverlayToPage();
       this.setupResizeListener();
       
-      // 尝试自动加载字幕
+      // 重置自动加载状态，允许页面刷新时重新加载字幕
       this.autoLoadAttempted = false;
       this.attemptAutoLoad();
     }
@@ -635,19 +635,27 @@ class YouTubeSubtitleOverlay {
   }
 
   async attemptAutoLoad() {
-    if (!this.autoLoadEnabled || this.autoLoadAttempted) {
+    if (!this.autoLoadEnabled) {
       return;
     }
 
     const videoId = this.getVideoId();
-    if (!videoId || videoId === this.currentVideoId) {
+    if (!videoId) {
+      return;
+    }
+
+    // 检查是否为新的视频ID或页面刷新情况
+    const isNewVideo = videoId !== this.currentVideoId;
+    const shouldReload = isNewVideo || !this.autoLoadAttempted;
+    
+    if (!shouldReload) {
       return;
     }
 
     this.currentVideoId = videoId;
     this.autoLoadAttempted = true;
 
-    console.log('🔍 尝试自动加载字幕:', videoId);
+    console.log('🔍 尝试自动加载字幕:', videoId, isNewVideo ? '(新视频)' : '(页面刷新)');
     
     try {
       const response = await fetch(`${this.serverUrl}/subtitle/${videoId}`, {

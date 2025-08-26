@@ -28,7 +28,7 @@ DEFAULT_CONFIG = {
     "subtitle_dir": "../subtitles",  # 保持向后兼容
     "server_port": 8888,
     "server_host": "127.0.0.1",
-    "supported_formats": [".ass", ".srt", ".vtt"],
+    "supported_formats": [".ass", ".srt", ".vtt"],  # ASS优先级最高（双语字幕），其次SRT、VTT
     "cors_origins": ["chrome-extension://*", "http://localhost:*"]
 }
 
@@ -73,46 +73,51 @@ class SubtitleServer:
             logger.info(f"字幕目录已确保存在: {subtitle_dir}")
         
     def find_subtitle_file(self, video_id):
-        """查找指定视频ID的字幕文件 - 支持灵活匹配和多目录搜索"""
+        """查找指定视频ID的字幕文件 - 支持灵活匹配、多目录搜索和格式优先级"""
         logger.info(f"开始查找字幕文件，视频ID: {video_id}")
         
-        # 按优先级顺序在每个目录中搜索
-        for i, subtitle_dir in enumerate(self.subtitle_dirs):
-            logger.info(f"搜索目录 {i+1}/{len(self.subtitle_dirs)}: {subtitle_dir}")
-            
-            # 1. 在当前目录进行精确匹配：video_id.ext
-            for ext in self.config["supported_formats"]:
-                subtitle_file = subtitle_dir / f"{video_id}{ext}"
-                if subtitle_file.exists():
-                    logger.info(f"✅ 找到字幕文件(精确匹配): {subtitle_file}")
-                    return subtitle_file
+        # 按格式优先级排序：ASS > SRT > VTT（ASS支持双语字幕）
+        priority_formats = [".ass", ".srt", ".vtt"]
         
-        # 2. 如果精确匹配失败，进行灵活匹配
-        logger.info(f"未找到精确匹配的文件，在所有目录中尝试灵活匹配...")
-        
-        for i, subtitle_dir in enumerate(self.subtitle_dirs):
-            logger.info(f"灵活搜索目录 {i+1}/{len(self.subtitle_dirs)}: {subtitle_dir}")
-            
-            if not subtitle_dir.exists():
-                logger.warning(f"目录不存在，跳过: {subtitle_dir}")
-                continue
-                
-            candidates = []
-            for subtitle_file in subtitle_dir.iterdir():
-                if subtitle_file.is_file() and subtitle_file.suffix.lower() in [ext.lower() for ext in self.config["supported_formats"]]:
-                    candidates.append(subtitle_file.name)
-                    filename = subtitle_file.stem
-                    # 检查文件名是否包含video_id
-                    # 支持格式：video_id, xxx-video_id, xxx_video_id, video_id-xxx, video_id_xxx
-                    if (video_id in filename or 
-                        filename.endswith(f"-{video_id}") or 
-                        filename.endswith(f"_{video_id}") or
-                        filename.startswith(f"{video_id}-") or
-                        filename.startswith(f"{video_id}_")):
-                        logger.info(f"✅ 找到字幕文件(灵活匹配): {subtitle_file}")
+        # 1. 按格式优先级在每个目录中进行精确匹配
+        for ext in priority_formats:
+            if ext in self.config["supported_formats"]:
+                for i, subtitle_dir in enumerate(self.subtitle_dirs):
+                    logger.info(f"精确搜索格式 {ext} - 目录 {i+1}/{len(self.subtitle_dirs)}: {subtitle_dir}")
+                    
+                    subtitle_file = subtitle_dir / f"{video_id}{ext}"
+                    if subtitle_file.exists():
+                        logger.info(f"✅ 找到字幕文件(精确匹配-{ext}): {subtitle_file}")
                         return subtitle_file
-            
-            logger.info(f"目录 {subtitle_dir} 候选文件: {candidates}")
+        
+        # 2. 如果精确匹配失败，按格式优先级进行灵活匹配
+        logger.info(f"未找到精确匹配的文件，在所有目录中按格式优先级尝试灵活匹配...")
+        
+        for ext in priority_formats:
+            if ext in self.config["supported_formats"]:
+                logger.info(f"灵活匹配格式 {ext}...")
+                
+                for i, subtitle_dir in enumerate(self.subtitle_dirs):
+                    if not subtitle_dir.exists():
+                        continue
+                    
+                    candidates = []
+                    for subtitle_file in subtitle_dir.iterdir():
+                        if subtitle_file.is_file() and subtitle_file.suffix.lower() == ext.lower():
+                            candidates.append(subtitle_file.name)
+                            filename = subtitle_file.stem
+                            # 检查文件名是否包含video_id
+                            # 支持格式：video_id, xxx-video_id, xxx_video_id, video_id-xxx, video_id_xxx
+                            if (video_id in filename or 
+                                filename.endswith(f"-{video_id}") or 
+                                filename.endswith(f"_{video_id}") or
+                                filename.startswith(f"{video_id}-") or
+                                filename.startswith(f"{video_id}_")):
+                                logger.info(f"✅ 找到字幕文件(灵活匹配-{ext}): {subtitle_file}")
+                                return subtitle_file
+                    
+                    if candidates:
+                        logger.info(f"目录 {subtitle_dir} 格式 {ext} 候选文件: {candidates}")
         
         logger.info(f"❌ 在所有目录中均未找到匹配的字幕文件")
         return None
