@@ -1604,11 +1604,20 @@ class PopupController {
             });
         }
 
-        // 刷新状态按钮
-        const statusRefresh = document.getElementById('statusRefresh');
-        if (statusRefresh) {
-            statusRefresh.addEventListener('click', () => {
-                this.checkServerStatus();
+        // 配置折叠按钮
+        const configToggle = document.getElementById('configToggle');
+        const configPanel = document.getElementById('configPanel');
+        if (configToggle && configPanel) {
+            configToggle.addEventListener('click', () => {
+                const isExpanded = configPanel.classList.contains('expanded');
+                
+                if (isExpanded) {
+                    configPanel.classList.remove('expanded');
+                    configToggle.classList.remove('expanded');
+                } else {
+                    configPanel.classList.add('expanded');
+                    configToggle.classList.add('expanded');
+                }
             });
         }
     }
@@ -1704,11 +1713,8 @@ class PopupController {
     }
 
     async checkServerStatus() {
-        const statusText = document.getElementById('statusText');
-        const statusIndicator = document.getElementById('statusIndicator');
-
-        if (statusText) statusText.textContent = '检查中...';
-        if (statusIndicator) statusIndicator.className = 'status-indicator checking';
+        // 设置检查状态
+        this.updateServerStatus('connecting', '检查服务器状态中...');
 
         try {
             const response = await fetch(`${this.serverUrl}/health`, {
@@ -1734,28 +1740,55 @@ class PopupController {
         this.serverStatus = status;
         
         const statusText = document.getElementById('statusText');
-        const statusIndicator = document.getElementById('statusIndicator');
-
+        const statusSubtext = document.getElementById('statusSubtext');
+        const statusCircle = document.querySelector('.status-circle');
+        const statusIcon = document.getElementById('statusIcon');
+        
+        // 更新主状态文本
         if (statusText) statusText.textContent = message;
-        if (statusIndicator) {
-            statusIndicator.className = `status-indicator ${status}`;
+        
+        // 根据状态更新圆圈样式和图标
+        if (statusCircle && statusIcon) {
+            statusCircle.className = `status-circle ${status}`;
+            
+            switch (status) {
+                case 'connected':
+                    statusIcon.textContent = '✅';
+                    if (statusSubtext) statusSubtext.textContent = '服务器运行正常';
+                    break;
+                case 'disconnected':
+                case 'error':
+                    statusIcon.textContent = '❌';
+                    if (statusSubtext) statusSubtext.textContent = '无法连接到服务器';
+                    break;
+                case 'connecting':
+                    statusIcon.textContent = '⚡';
+                    if (statusSubtext) statusSubtext.textContent = '正在检查连接状态';
+                    break;
+                default:
+                    statusIcon.textContent = '❓';
+                    if (statusSubtext) statusSubtext.textContent = '服务器状态未知';
+            }
         }
     }
 
     async testServerConnection() {
         const testButton = document.getElementById('testServer');
-        const originalText = testButton ? testButton.textContent : '';
+        const testText = testButton?.querySelector('.test-text');
+        const originalText = testText?.textContent || '测试';
 
-        if (testButton) {
-            testButton.textContent = '测试中...';
+        if (testButton && testText) {
+            testText.textContent = '测试中...';
             testButton.disabled = true;
+            testButton.style.opacity = '0.6';
         }
 
         await this.checkServerStatus();
 
-        if (testButton) {
-            testButton.textContent = originalText;
+        if (testButton && testText) {
+            testText.textContent = originalText;
             testButton.disabled = false;
+            testButton.style.opacity = '1';
         }
 
         // 显示测试结果
