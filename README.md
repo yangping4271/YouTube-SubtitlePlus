@@ -14,7 +14,9 @@ A Chrome extension that displays local subtitle files on YouTube videos, support
 - ✅ **Drag & Drop Upload**: Easy subtitle file management
 - ✅ **Responsive Design**: Adapts to fullscreen and theater modes
 - ✅ **Smart Background**: Individual background for each subtitle line
-- ✅ **User-friendly Interface**: Intuitive popup interface
+- ✅ **Modern UI Design**: Clean interface with enhanced spacing and interactions
+- ✅ **Semantic Icons**: Meaningful visual elements that enhance usability
+- ✅ **User-friendly Interface**: Intuitive popup interface with improved accessibility
 
 ## 📁 Project Structure
 
