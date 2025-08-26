@@ -70,6 +70,23 @@ class PopupController {
         this.setupUploadModeSelection();
         this.bindEvents();
         
+        // 监听来自content script的消息（全局监听）
+        if (!this.messageListenerBound) {
+            chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+                if (request.action === 'autoLoadSuccess') {
+                    console.log('🎉 收到自动加载成功消息:', request);
+                    this.updateAutoLoadStatus('成功: ' + request.filename, 'success');
+                    // 强制刷新字幕统计和视频信息
+                    this.syncSubtitleDataFromContentScript();
+                    this.getCurrentVideoInfo();
+                } else if (request.action === 'autoLoadError') {
+                    console.log('❌ 收到自动加载失败消息:', request);
+                    this.updateAutoLoadStatus('失败: ' + request.error, 'error');
+                }
+            });
+            this.messageListenerBound = true;
+        }
+        
         // 先确保默认设置写入 storage，再加载当前状态
         try {
             await this.ensureDefaultSettings();
@@ -1685,19 +1702,6 @@ class PopupController {
         
         // 获取当前视频信息
         this.getCurrentVideoInfo();
-        
-        // 监听来自content script的消息
-        if (!this.messageListenerBound) {
-            chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-                if (request.action === 'autoLoadSuccess') {
-                    this.updateAutoLoadStatus('成功: ' + request.filename, 'success');
-                    this.getCurrentVideoInfo(); // 重新获取状态
-                } else if (request.action === 'autoLoadError') {
-                    this.updateAutoLoadStatus('失败: ' + request.error, 'error');
-                }
-            });
-            this.messageListenerBound = true;
-        }
     }
 
     async loadAutoLoadSettings() {
@@ -1933,25 +1937,35 @@ class PopupController {
 
     async syncSubtitleDataFromContentScript() {
         try {
+            console.log('🔄 开始同步字幕数据...');
             // 从后台获取最新的字幕数据
             const response = await chrome.runtime.sendMessage({ action: 'getBilingualSubtitleData' });
+            console.log('📡 从background获取的数据:', response);
+            
             if (response.success) {
                 // 更新本地字幕数据
+                const oldEnglishCount = this.englishSubtitles.length;
+                const oldChineseCount = this.chineseSubtitles.length;
+                
                 this.englishSubtitles = response.englishSubtitles || [];
                 this.chineseSubtitles = response.chineseSubtitles || [];
                 this.englishFileName = response.englishFileName || '';
                 this.chineseFileName = response.chineseFileName || '';
                 
+                console.log('📊 字幕数据已同步:', {
+                    英文字幕: `${oldEnglishCount} → ${this.englishSubtitles.length}`,
+                    中文字幕: `${oldChineseCount} → ${this.chineseSubtitles.length}`,
+                    英文文件名: this.englishFileName,
+                    中文文件名: this.chineseFileName
+                });
+                
                 // 更新统计显示
                 this.updateSubtitleInfo();
-                
-                console.log('同步字幕数据:', {
-                    英文字幕: this.englishSubtitles.length,
-                    中文字幕: this.chineseSubtitles.length
-                });
+            } else {
+                console.error('❌ 同步字幕数据失败:', response.error);
             }
         } catch (error) {
-            console.error('同步字幕数据失败:', error);
+            console.error('❌ 同步字幕数据异常:', error);
         }
     }
 }
