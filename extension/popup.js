@@ -1947,10 +1947,10 @@ class PopupController {
                 const oldEnglishCount = this.englishSubtitles.length;
                 const oldChineseCount = this.chineseSubtitles.length;
                 
-                this.englishSubtitles = response.englishSubtitles || [];
-                this.chineseSubtitles = response.chineseSubtitles || [];
-                this.englishFileName = response.englishFileName || '';
-                this.chineseFileName = response.chineseFileName || '';
+                this.englishSubtitles = response.data.englishSubtitles || [];
+                this.chineseSubtitles = response.data.chineseSubtitles || [];
+                this.englishFileName = response.data.englishFileName || '';
+                this.chineseFileName = response.data.chineseFileName || '';
                 
                 console.log('📊 字幕数据已同步:', {
                     英文字幕: `${oldEnglishCount} → ${this.englishSubtitles.length}`,
