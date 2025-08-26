@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 # 默认配置
 DEFAULT_CONFIG = {
-    "subtitle_dir": "../subtitles",
+    "subtitle_dirs": ["../subtitles", "~/Downloads"],  # 支持多个字幕目录，按优先级排序
+    "subtitle_dir": "../subtitles",  # 保持向后兼容
     "server_port": 8888,
     "server_host": "127.0.0.1",
     "supported_formats": [".ass", ".srt", ".vtt"],
@@ -34,8 +35,26 @@ DEFAULT_CONFIG = {
 class SubtitleServer:
     def __init__(self, config_file=None):
         self.config = self.load_config(config_file)
-        self.subtitle_dir = Path(self.config["subtitle_dir"]).resolve()
-        self.ensure_subtitle_dir()
+        self.subtitle_dirs = self.setup_subtitle_dirs()
+        self.ensure_subtitle_dirs()
+        
+    def setup_subtitle_dirs(self):
+        """设置字幕目录列表，支持多个目录"""
+        dirs = []
+        
+        # 优先使用新的 subtitle_dirs 配置
+        if "subtitle_dirs" in self.config:
+            for dir_path in self.config["subtitle_dirs"]:
+                resolved_path = Path(dir_path).expanduser().resolve()
+                dirs.append(resolved_path)
+                logger.info(f"添加字幕目录: {resolved_path}")
+        else:
+            # 向后兼容：使用旧的 subtitle_dir 配置
+            legacy_dir = Path(self.config["subtitle_dir"]).expanduser().resolve()
+            dirs.append(legacy_dir)
+            logger.info(f"使用传统字幕目录: {legacy_dir}")
+        
+        return dirs
         
     def load_config(self, config_file=None):
         """加载配置文件"""
@@ -47,18 +66,55 @@ class SubtitleServer:
                 logger.warning(f"配置文件加载失败: {e}，使用默认配置")
         return DEFAULT_CONFIG.copy()
         
-    def ensure_subtitle_dir(self):
-        """确保字幕目录存在"""
-        self.subtitle_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"字幕目录: {self.subtitle_dir}")
+    def ensure_subtitle_dirs(self):
+        """确保所有字幕目录存在"""
+        for subtitle_dir in self.subtitle_dirs:
+            subtitle_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"字幕目录已确保存在: {subtitle_dir}")
         
     def find_subtitle_file(self, video_id):
-        """查找指定视频ID的字幕文件"""
-        for ext in self.config["supported_formats"]:
-            subtitle_file = self.subtitle_dir / f"{video_id}{ext}"
-            if subtitle_file.exists():
-                logger.info(f"找到字幕文件: {subtitle_file}")
-                return subtitle_file
+        """查找指定视频ID的字幕文件 - 支持灵活匹配和多目录搜索"""
+        logger.info(f"开始查找字幕文件，视频ID: {video_id}")
+        
+        # 按优先级顺序在每个目录中搜索
+        for i, subtitle_dir in enumerate(self.subtitle_dirs):
+            logger.info(f"搜索目录 {i+1}/{len(self.subtitle_dirs)}: {subtitle_dir}")
+            
+            # 1. 在当前目录进行精确匹配：video_id.ext
+            for ext in self.config["supported_formats"]:
+                subtitle_file = subtitle_dir / f"{video_id}{ext}"
+                if subtitle_file.exists():
+                    logger.info(f"✅ 找到字幕文件(精确匹配): {subtitle_file}")
+                    return subtitle_file
+        
+        # 2. 如果精确匹配失败，进行灵活匹配
+        logger.info(f"未找到精确匹配的文件，在所有目录中尝试灵活匹配...")
+        
+        for i, subtitle_dir in enumerate(self.subtitle_dirs):
+            logger.info(f"灵活搜索目录 {i+1}/{len(self.subtitle_dirs)}: {subtitle_dir}")
+            
+            if not subtitle_dir.exists():
+                logger.warning(f"目录不存在，跳过: {subtitle_dir}")
+                continue
+                
+            candidates = []
+            for subtitle_file in subtitle_dir.iterdir():
+                if subtitle_file.is_file() and subtitle_file.suffix.lower() in [ext.lower() for ext in self.config["supported_formats"]]:
+                    candidates.append(subtitle_file.name)
+                    filename = subtitle_file.stem
+                    # 检查文件名是否包含video_id
+                    # 支持格式：video_id, xxx-video_id, xxx_video_id, video_id-xxx, video_id_xxx
+                    if (video_id in filename or 
+                        filename.endswith(f"-{video_id}") or 
+                        filename.endswith(f"_{video_id}") or
+                        filename.startswith(f"{video_id}-") or
+                        filename.startswith(f"{video_id}_")):
+                        logger.info(f"✅ 找到字幕文件(灵活匹配): {subtitle_file}")
+                        return subtitle_file
+            
+            logger.info(f"目录 {subtitle_dir} 候选文件: {candidates}")
+        
+        logger.info(f"❌ 在所有目录中均未找到匹配的字幕文件")
         return None
         
     def get_subtitle_info(self, video_id):
@@ -90,7 +146,8 @@ def health_check():
     return jsonify({
         "status": "ok",
         "service": "YouTube SubtitlePlus Server",
-        "subtitle_dir": str(server.subtitle_dir),
+        "subtitle_dirs": [str(d) for d in server.subtitle_dirs],  # 支持多目录
+        "subtitle_dir": str(server.subtitle_dirs[0]) if server.subtitle_dirs else "",  # 主目录，向后兼容
         "supported_formats": server.config["supported_formats"]
     })
 
@@ -160,19 +217,33 @@ def get_subtitle_info(video_id):
 def list_subtitles():
     """列出所有可用的字幕文件"""
     subtitles = []
+    processed_video_ids = set()  # 避免重复，优先级高的目录优先
     
     try:
-        for ext in server.config["supported_formats"]:
-            for subtitle_file in server.subtitle_dir.glob(f"*{ext}"):
-                video_id = subtitle_file.stem
-                info = server.get_subtitle_info(video_id)
-                if info:
-                    subtitles.append(info)
+        # 按优先级顺序遍历所有目录
+        for i, subtitle_dir in enumerate(server.subtitle_dirs):
+            if not subtitle_dir.exists():
+                continue
+                
+            for ext in server.config["supported_formats"]:
+                for subtitle_file in subtitle_dir.glob(f"*{ext}"):
+                    video_id = subtitle_file.stem
+                    
+                    # 避免重复处理相同的video_id（优先级高的目录优先）
+                    if video_id not in processed_video_ids:
+                        info = server.get_subtitle_info(video_id)
+                        if info:
+                            # 添加目录信息
+                            info["source_dir"] = str(subtitle_dir)
+                            info["priority"] = i + 1  # 优先级（1最高）
+                            subtitles.append(info)
+                            processed_video_ids.add(video_id)
                     
         return jsonify({
             "success": True,
             "count": len(subtitles),
-            "subtitles": subtitles
+            "subtitles": subtitles,
+            "search_dirs": [str(d) for d in server.subtitle_dirs]
         })
         
     except Exception as e:
@@ -185,7 +256,8 @@ def get_config():
     return jsonify({
         "success": True,
         "config": {
-            "subtitle_dir": str(server.subtitle_dir),
+            "subtitle_dirs": [str(d) for d in server.subtitle_dirs],  # 支持多目录
+            "subtitle_dir": str(server.subtitle_dirs[0]) if server.subtitle_dirs else "",  # 向后兼容
             "supported_formats": server.config["supported_formats"],
             "server_port": server.config["server_port"],
             "server_host": server.config["server_host"]
@@ -199,7 +271,8 @@ def main():
     parser = argparse.ArgumentParser(description='YouTube SubtitlePlus 本地字幕服务器')
     parser.add_argument('--host', default=DEFAULT_CONFIG["server_host"], help='服务器地址')
     parser.add_argument('--port', type=int, default=DEFAULT_CONFIG["server_port"], help='服务器端口')
-    parser.add_argument('--subtitle-dir', default=DEFAULT_CONFIG["subtitle_dir"], help='字幕文件目录')
+    parser.add_argument('--subtitle-dir', default=DEFAULT_CONFIG["subtitle_dir"], help='主字幕文件目录（向后兼容）')
+    parser.add_argument('--subtitle-dirs', nargs='+', help='多个字幕文件目录，按优先级排序')
     parser.add_argument('--config', help='配置文件路径')
     parser.add_argument('--debug', action='store_true', help='调试模式')
     
@@ -208,28 +281,41 @@ def main():
     # 更新配置
     if args.config:
         server.config = server.load_config(args.config)
+    
+    # 处理多目录参数
+    if args.subtitle_dirs:
+        server.config["subtitle_dirs"] = args.subtitle_dirs
+    elif args.subtitle_dir != DEFAULT_CONFIG["subtitle_dir"]:
+        # 如果用户指定了传统的单目录参数，更新配置
+        server.config["subtitle_dirs"] = [args.subtitle_dir]
+        
     server.config.update({
         "server_host": args.host,
         "server_port": args.port,
-        "subtitle_dir": args.subtitle_dir
     })
     
     # 重新初始化字幕目录
-    server.subtitle_dir = Path(server.config["subtitle_dir"]).resolve()
-    server.ensure_subtitle_dir()
+    server.subtitle_dirs = server.setup_subtitle_dirs()
+    server.ensure_subtitle_dirs()
     
     # 启动信息
+    dirs_info = '\n'.join([f"║   {i+1}. {d}" + " " * (58 - len(str(d))) + "║" 
+                          for i, d in enumerate(server.subtitle_dirs)])
+    
     print(f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║                YouTube SubtitlePlus 字幕服务器                ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 服务地址: http://{args.host}:{args.port}                      ║
-║ 字幕目录: {server.subtitle_dir}           ║
+║ 字幕目录: (按优先级排序)                                       ║
+{dirs_info}
 ║ 支持格式: {', '.join(server.config['supported_formats'])}                    ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 使用方法:                                                      ║
-║ 1. 将字幕文件放入字幕目录                                        ║
-║ 2. 文件名格式: <YouTube视频ID>.ass                              ║
+║ 1. 将字幕文件放入任一字幕目录                                    ║
+║ 2. 支持文件名格式:                                              ║
+║    - 精确匹配: <YouTube视频ID>.ass                             ║
+║    - 灵活匹配: movie-<视频ID>.srt, <视频ID>-subtitle.vtt       ║
 ║ 3. 在Chrome扩展中启用自动加载功能                               ║
 ║                                                              ║
 ║ API端点:                                                      ║
