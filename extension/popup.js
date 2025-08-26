@@ -97,9 +97,6 @@ class PopupController {
         await this.loadCurrentState();
         this.setupFileNameTooltips();
         
-        // 确保字幕统计信息初始显示正确
-        this.updateSubtitleInfo();
-        
         // 如果当前在自动加载模式，也要获取视频信息
         const activeMode = document.querySelector('.mode-tab.active');
         if (activeMode && activeMode.dataset.mode === 'auto') {
@@ -1056,7 +1053,9 @@ class PopupController {
                     中文字幕数量: this.chineseSubtitles.length,
                     英文文件名: this.englishFileName,
                     中文文件名: this.chineseFileName,
-                    单语字幕数量: this.subtitleData.length
+                    单语字幕数量: this.subtitleData.length,
+                    使用视频特定数据: !!videoSubtitles,
+                    视频ID: currentVideoId
                 });
                 
                 // 定义默认设置，与构造函数保持一致
@@ -2016,8 +2015,26 @@ class PopupController {
                         自动加载启用: response.autoLoadEnabled
                     });
                     
-                    // 同时更新本地的字幕统计信息
-                    this.syncSubtitleDataFromContentScript();
+                    // 只有在有字幕时才同步，无字幕时保持当前显示
+                    if (response.subtitleLoaded) {
+                        this.syncSubtitleDataFromContentScript();
+                    } else {
+                        // 当前视频无字幕，确保UI显示为空
+                        const currentVideoId = response.videoId;
+                        chrome.storage.local.get(`videoSubtitles_${currentVideoId}`).then(videoResult => {
+                            const videoSubtitles = videoResult[`videoSubtitles_${currentVideoId}`];
+                            if (!videoSubtitles) {
+                                // 确认没有字幕数据，清空显示
+                                this.subtitleData = [];
+                                this.englishSubtitles = [];
+                                this.chineseSubtitles = [];
+                                this.englishFileName = '';
+                                this.chineseFileName = '';
+                                this.currentFileName = '';
+                                this.updateSubtitleInfo();
+                            }
+                        });
+                    }
                 } else {
                     this.updateVideoDisplay(null, '获取视频信息失败');
                 }
@@ -2054,32 +2071,76 @@ class PopupController {
     async syncSubtitleDataFromContentScript() {
         try {
             console.log('🔄 开始同步字幕数据...');
-            // 从后台获取最新的字幕数据
-            const response = await chrome.runtime.sendMessage({ action: 'getBilingualSubtitleData' });
-            console.log('📡 从background获取的数据:', response);
             
-            if (response.success) {
-                // 更新本地字幕数据
-                const oldEnglishCount = this.englishSubtitles.length;
-                const oldChineseCount = this.chineseSubtitles.length;
+            // 获取当前视频ID
+            const currentVideoId = await this.getCurrentVideoId();
+            
+            if (currentVideoId) {
+                // 优先从基于videoId的存储中获取数据
+                const videoResult = await chrome.storage.local.get(`videoSubtitles_${currentVideoId}`);
+                const videoSubtitles = videoResult[`videoSubtitles_${currentVideoId}`];
                 
-                this.englishSubtitles = response.data.englishSubtitles || [];
-                this.chineseSubtitles = response.data.chineseSubtitles || [];
-                this.englishFileName = response.data.englishFileName || '';
-                this.chineseFileName = response.data.chineseFileName || '';
-                
-                console.log('📊 字幕数据已同步:', {
-                    英文字幕: `${oldEnglishCount} → ${this.englishSubtitles.length}`,
-                    中文字幕: `${oldChineseCount} → ${this.chineseSubtitles.length}`,
-                    英文文件名: this.englishFileName,
-                    中文文件名: this.chineseFileName
-                });
-                
-                // 更新统计显示
-                this.updateSubtitleInfo();
+                if (videoSubtitles) {
+                    // 使用当前视频的字幕数据
+                    const oldEnglishCount = this.englishSubtitles.length;
+                    const oldChineseCount = this.chineseSubtitles.length;
+                    
+                    this.subtitleData = videoSubtitles.subtitleData || [];
+                    this.englishSubtitles = videoSubtitles.englishSubtitles || [];
+                    this.chineseSubtitles = videoSubtitles.chineseSubtitles || [];
+                    this.englishFileName = videoSubtitles.englishFileName || '';
+                    this.chineseFileName = videoSubtitles.chineseFileName || '';
+                    this.currentFileName = videoSubtitles.fileName || '';
+                    
+                    console.log('📊 字幕数据已同步(基于videoId):', {
+                        视频ID: currentVideoId,
+                        英文字幕: `${oldEnglishCount} → ${this.englishSubtitles.length}`,
+                        中文字幕: `${oldChineseCount} → ${this.chineseSubtitles.length}`,
+                        英文文件名: this.englishFileName,
+                        中文文件名: this.chineseFileName
+                    });
+                } else {
+                    // 当前视频没有字幕数据，清空显示
+                    const oldEnglishCount = this.englishSubtitles.length;
+                    const oldChineseCount = this.chineseSubtitles.length;
+                    
+                    this.subtitleData = [];
+                    this.englishSubtitles = [];
+                    this.chineseSubtitles = [];
+                    this.englishFileName = '';
+                    this.chineseFileName = '';
+                    this.currentFileName = '';
+                    
+                    console.log('📊 字幕数据已清空(当前视频无字幕):', {
+                        视频ID: currentVideoId,
+                        英文字幕: `${oldEnglishCount} → 0`,
+                        中文字幕: `${oldChineseCount} → 0`
+                    });
+                }
             } else {
-                console.error('❌ 同步字幕数据失败:', response.error);
+                // 无法获取视频ID，使用全局数据作为后备
+                console.log('⚠️ 无法获取视频ID，使用全局数据作为后备');
+                const response = await chrome.runtime.sendMessage({ action: 'getBilingualSubtitleData' });
+                if (response.success) {
+                    const oldEnglishCount = this.englishSubtitles.length;
+                    const oldChineseCount = this.chineseSubtitles.length;
+                    
+                    this.englishSubtitles = response.data.englishSubtitles || [];
+                    this.chineseSubtitles = response.data.chineseSubtitles || [];
+                    this.englishFileName = response.data.englishFileName || '';
+                    this.chineseFileName = response.data.chineseFileName || '';
+                    
+                    console.log('📊 字幕数据已同步(全局后备):', {
+                        英文字幕: `${oldEnglishCount} → ${this.englishSubtitles.length}`,
+                        中文字幕: `${oldChineseCount} → ${this.chineseSubtitles.length}`,
+                        英文文件名: this.englishFileName,
+                        中文文件名: this.chineseFileName
+                    });
+                }
             }
+            
+            // 更新统计显示
+            this.updateSubtitleInfo();
         } catch (error) {
             console.error('❌ 同步字幕数据异常:', error);
         }
