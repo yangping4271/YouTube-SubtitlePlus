@@ -1599,7 +1599,7 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-2xl); /* 增加间距从 --spacing-xl 到 --spacing-2xl */
 }
 
 .auto-load-card::before {
@@ -1617,7 +1617,7 @@ body {
 .server-status-card {
     background: rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl); /* 增加内边距从 --spacing-lg 到 --spacing-xl */
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
@@ -1733,7 +1733,7 @@ body {
 .auto-control-section {
     background: rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl); /* 增加内边距从 --spacing-lg 到 --spacing-xl */
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
@@ -1742,7 +1742,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl); /* 增加间距从 --spacing-lg 到 --spacing-xl */
 }
 
 .control-title {
@@ -1813,10 +1813,10 @@ body {
 .current-video-display {
     background: rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-md);
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg); /* 增加内边距从 --spacing-md 到 --spacing-lg */
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md); /* 增加间距从 --spacing-sm 到 --spacing-md */
 }
 
 .video-info-row,

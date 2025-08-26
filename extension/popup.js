@@ -1627,11 +1627,15 @@ class PopupController {
         this.checkServerStatus();
         this.loadAutoLoadSettings();
         
+        // 获取当前视频信息
+        this.getCurrentVideoInfo();
+        
         // 监听来自content script的消息
         if (!this.messageListenerBound) {
             chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (request.action === 'autoLoadSuccess') {
                     this.updateAutoLoadStatus('成功: ' + request.filename, 'success');
+                    this.getCurrentVideoInfo(); // 重新获取状态
                 } else if (request.action === 'autoLoadError') {
                     this.updateAutoLoadStatus('失败: ' + request.error, 'error');
                 }
@@ -1803,7 +1807,62 @@ class PopupController {
         const autoLoadStatus = document.getElementById('autoLoadStatus');
         if (autoLoadStatus) {
             autoLoadStatus.textContent = message;
-            autoLoadStatus.className = `value ${type}`;
+            autoLoadStatus.className = `load-status ${type}`;
+        }
+    }
+
+    async getCurrentVideoInfo() {
+        try {
+            // 获取当前活动的YouTube标签页
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tabs.length === 0) return;
+            
+            const currentTab = tabs[0];
+            if (!currentTab.url || !currentTab.url.includes('youtube.com/watch')) {
+                this.updateVideoDisplay(null, '未在YouTube页面');
+                return;
+            }
+
+            // 向content script发送消息获取视频信息
+            chrome.tabs.sendMessage(currentTab.id, { action: 'getVideoInfo' }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.log('无法连接到content script:', chrome.runtime.lastError);
+                    this.updateVideoDisplay(null, '页面未加载完成');
+                    return;
+                }
+                
+                if (response && response.videoId) {
+                    this.updateVideoDisplay(response.videoId, response.subtitleLoaded ? '已加载字幕' : '无字幕');
+                } else {
+                    this.updateVideoDisplay(null, '获取视频信息失败');
+                }
+            });
+        } catch (error) {
+            console.error('获取视频信息失败:', error);
+            this.updateVideoDisplay(null, '获取失败');
+        }
+    }
+
+    updateVideoDisplay(videoId, status) {
+        const videoIdElement = document.getElementById('currentVideoId');
+        const statusElement = document.getElementById('autoLoadStatus');
+        
+        if (videoIdElement) {
+            videoIdElement.textContent = videoId || '未检测到视频';
+        }
+        
+        if (statusElement) {
+            statusElement.textContent = status || '等待检测';
+            
+            // 更新状态样式
+            statusElement.className = 'load-status';
+            if (status === '已加载字幕') {
+                statusElement.classList.add('success');
+            } else if (status && (status.includes('失败') || status.includes('错误'))) {
+                statusElement.classList.add('error');
+            } else if (status && (status.includes('加载中') || status.includes('检测中'))) {
+                statusElement.classList.add('loading');
+            }
         }
     }
 }

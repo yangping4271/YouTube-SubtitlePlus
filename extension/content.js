@@ -70,6 +70,15 @@ class YouTubeSubtitleOverlay {
         case 'updateServerUrl':
           this.serverUrl = request.url || 'http://127.0.0.1:8888';
           break;
+        case 'getVideoInfo':
+          const videoId = this.getVideoId();
+          const subtitleLoaded = this.englishSubtitles.length > 0 || this.chineseSubtitles.length > 0;
+          sendResponse({ 
+            videoId: videoId, 
+            subtitleLoaded: subtitleLoaded,
+            autoLoadEnabled: this.autoLoadEnabled
+          });
+          break;
       }
     });
   }
