@@ -177,7 +177,21 @@ class YouTubeSubtitleOverlay {
       
       // 重置自动加载状态，允许页面刷新时重新加载字幕
       this.autoLoadAttempted = false;
-      this.attemptAutoLoad();
+      
+      console.log('🔄 页面/视频切换检测到，当前状态:', {
+        视频ID: this.getVideoId(),
+        自动加载已启用: this.autoLoadEnabled,
+        已尝试加载: this.autoLoadAttempted,
+        英文字幕: this.englishSubtitles.length,
+        中文字幕: this.chineseSubtitles.length,
+        单语字幕: this.subtitleData.length
+      });
+      
+      // 检查并自动加载字幕
+      setTimeout(() => {
+        console.log('🚀 准备尝试自动加载字幕...');
+        this.attemptAutoLoad();
+      }, 500); // 延迟500ms确保页面完全加载
     }
   }
 
@@ -578,7 +592,8 @@ class YouTubeSubtitleOverlay {
         'chineseSubtitles',
         'subtitleEnabled', 
         'englishSettings',
-        'chineseSettings'
+        'chineseSettings',
+        'autoLoadEnabled' // 添加自动加载状态的加载
       ]);
       
       if (result.englishSubtitles || result.chineseSubtitles) {
@@ -595,6 +610,12 @@ class YouTubeSubtitleOverlay {
       
       if (result.subtitleEnabled !== undefined) {
         this.isEnabled = result.subtitleEnabled;
+      }
+      
+      // 加载自动加载状态
+      if (result.autoLoadEnabled !== undefined) {
+        this.autoLoadEnabled = result.autoLoadEnabled;
+        console.log('自动加载状态已加载:', this.autoLoadEnabled);
       }
       
       // 加载独立语言设置
@@ -635,27 +656,68 @@ class YouTubeSubtitleOverlay {
   }
 
   async attemptAutoLoad() {
+    console.log('🔍 attemptAutoLoad 方法被调用');
+    
     if (!this.autoLoadEnabled) {
+      console.log('❌ 自动加载未启用，跳过加载');
       return;
     }
 
     const videoId = this.getVideoId();
     if (!videoId) {
+      console.log('❌ 未找到视频ID，跳过加载');
       return;
     }
 
     // 检查是否为新的视频ID或页面刷新情况
     const isNewVideo = videoId !== this.currentVideoId;
-    const shouldReload = isNewVideo || !this.autoLoadAttempted;
+    
+    // 检查当前是否已有字幕数据
+    const hasExistingSubtitles = this.englishSubtitles.length > 0 || 
+                                this.chineseSubtitles.length > 0 || 
+                                this.subtitleData.length > 0;
+    
+    // 触发自动加载的条件：
+    // 1. 新视频 - 总是尝试加载
+    // 2. 页面刷新且当前没有字幕数据 - 重新加载
+    // 3. 页面刷新但从未尝试过加载 - 首次加载
+    const shouldReload = isNewVideo || 
+                        (!hasExistingSubtitles && !this.autoLoadAttempted) ||
+                        (!hasExistingSubtitles);
+    
+    console.log('🔍 自动加载决策分析:', {
+      视频ID: videoId,
+      当前视频ID: this.currentVideoId,
+      是否新视频: isNewVideo,
+      是否已有字幕: hasExistingSubtitles,
+      已尝试加载: this.autoLoadAttempted,
+      是否应该加载: shouldReload
+    });
     
     if (!shouldReload) {
+      console.log('🔍 跳过自动加载 - 已有字幕数据或已尝试过加载');
       return;
     }
 
     this.currentVideoId = videoId;
     this.autoLoadAttempted = true;
 
-    console.log('🔍 尝试自动加载字幕:', videoId, isNewVideo ? '(新视频)' : '(页面刷新)');
+    // 详细的加载原因日志
+    let loadReason = '';
+    if (isNewVideo) {
+      loadReason = '新视频';
+    } else if (!hasExistingSubtitles) {
+      loadReason = '页面刷新且无字幕数据';
+    }
+
+    console.log('🔍 尝试自动加载字幕:', videoId, `(${loadReason})`);
+    console.log('📊 当前字幕状态:', {
+      英文字幕: this.englishSubtitles.length,
+      中文字幕: this.chineseSubtitles.length,
+      单语字幕: this.subtitleData.length,
+      自动加载已启用: this.autoLoadEnabled,
+      已尝试加载: this.autoLoadAttempted
+    });
     
     try {
       const response = await fetch(`${this.serverUrl}/subtitle/${videoId}`, {
@@ -1128,6 +1190,143 @@ window.debugBilingualSubtitles = () => {
   } else {
     instance.showBilingualSubtitle('Test English', '测试中文');
   }
+  
+  return true;
+};
+
+// 完整的自动加载诊断工具
+window.diagnoseAutoLoad = async () => {
+  if (!subtitleOverlayInstance) {
+    console.log('❌ 字幕实例不存在');
+    return false;
+  }
+
+  const instance = subtitleOverlayInstance;
+  
+  console.log('🔍 开始自动加载功能全面诊断...');
+  console.log('═══════════════════════════════════════');
+  
+  // 1. 检查基本状态
+  console.log('📊 基本状态检查:');
+  const videoId = instance.getVideoId();
+  const hasExistingSubtitles = instance.englishSubtitles.length > 0 || 
+                              instance.chineseSubtitles.length > 0 || 
+                              instance.subtitleData.length > 0;
+  
+  console.log('  视频ID:', videoId || '未找到');
+  console.log('  自动加载已启用:', instance.autoLoadEnabled);
+  console.log('  已尝试加载:', instance.autoLoadAttempted);
+  console.log('  当前视频ID:', instance.currentVideoId);
+  console.log('  是否有现有字幕:', hasExistingSubtitles);
+  console.log('  字幕数量:', {
+    英文: instance.englishSubtitles.length,
+    中文: instance.chineseSubtitles.length,
+    单语: instance.subtitleData.length
+  });
+  
+  // 2. 检查存储状态
+  console.log('\n💾 存储状态检查:');
+  try {
+    const storageResult = await chrome.storage.local.get([
+      'autoLoadEnabled', 'subtitleData', 'englishSubtitles', 'chineseSubtitles'
+    ]);
+    console.log('  存储中的自动加载状态:', storageResult.autoLoadEnabled);
+    console.log('  存储中的字幕数量:', {
+      英文: (storageResult.englishSubtitles || []).length,
+      中文: (storageResult.chineseSubtitles || []).length,
+      单语: (storageResult.subtitleData || []).length
+    });
+  } catch (error) {
+    console.log('  ❌ 无法读取存储:', error.message);
+  }
+  
+  // 3. 检查服务器连接
+  console.log('\n🌐 服务器连接检查:');
+  console.log('  服务器URL:', instance.serverUrl);
+  if (videoId) {
+    console.log('  尝试连接服务器...');
+    try {
+      const testResponse = await fetch(`${instance.serverUrl}/subtitle/${videoId}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      console.log('  服务器响应状态:', testResponse.status);
+      if (testResponse.ok) {
+        const testResult = await testResponse.json();
+        console.log('  服务器返回数据:', testResult.success ? '成功' : '失败');
+        if (testResult.info) {
+          console.log('  文件信息:', testResult.info);
+        }
+      }
+    } catch (error) {
+      console.log('  ❌ 服务器连接失败:', error.message);
+    }
+  } else {
+    console.log('  ⚠️  无法测试服务器连接 - 缺少视频ID');
+  }
+  
+  // 4. 执行手动自动加载测试
+  console.log('\n🧪 手动执行自动加载测试:');
+  console.log('  重置状态...');
+  instance.autoLoadAttempted = false;
+  instance.currentVideoId = null;
+  
+  if (!instance.autoLoadEnabled) {
+    console.log('  ⚠️  自动加载未启用，正在启用...');
+    instance.autoLoadEnabled = true;
+  }
+  
+  console.log('  执行自动加载...');
+  await instance.attemptAutoLoad();
+  
+  console.log('═══════════════════════════════════════');
+  console.log('🎯 诊断完成！请查看以上信息定位问题。');
+  
+  return true;
+};
+
+// 测试自动加载功能
+window.testAutoLoadOnRefresh = () => {
+  if (!subtitleOverlayInstance) {
+    console.log('❌ 字幕实例不存在');
+    return false;
+  }
+
+  const instance = subtitleOverlayInstance;
+  
+  console.log('🧪 开始测试页面刷新时的自动加载功能...');
+  
+  // 1. 清除现有字幕数据，模拟页面刷新状态
+  console.log('🔄 清除现有字幕数据，模拟页面刷新...');
+  instance.clearSubtitleData();
+  
+  // 2. 重置自动加载状态
+  instance.autoLoadAttempted = false;
+  instance.currentVideoId = null;
+  
+  // 3. 启用自动加载
+  instance.autoLoadEnabled = true;
+  
+  console.log('📊 测试前状态:', {
+    自动加载已启用: instance.autoLoadEnabled,
+    已尝试加载: instance.autoLoadAttempted,
+    英文字幕数量: instance.englishSubtitles.length,
+    中文字幕数量: instance.chineseSubtitles.length,
+    单语字幕数量: instance.subtitleData.length,
+    当前视频ID: instance.currentVideoId,
+    页面视频ID: instance.getVideoId()
+  });
+  
+  // 4. 触发自动加载检查
+  console.log('🚀 触发自动加载检查...');
+  instance.attemptAutoLoad().then(() => {
+    console.log('✅ 自动加载检查完成');
+  }).catch(error => {
+    console.log('❌ 自动加载检查失败:', error.message);
+  });
+  
+  console.log('💡 请观察Console输出，查看自动加载是否正确触发');
+  console.log('💡 如果服务器运行且有对应字幕文件，应该会看到自动加载成功的消息');
   
   return true;
 };
