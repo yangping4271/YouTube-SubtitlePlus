@@ -393,6 +393,10 @@ class PopupController {
             if (response.success) {
                 this.updateSubtitleInfo();
                 this.updateASSFileStatus(file.name, assResult);
+                
+                // 更新自动加载状态显示
+                this.getCurrentVideoInfo();
+                
                 this.showStatus(
                     `成功加载ASS双语字幕: ${assResult.english.length} 条英文, ${assResult.chinese.length} 条中文`, 
                     'success'
@@ -448,6 +452,9 @@ class PopupController {
         
         // 更新UI显示
         this.updateSubtitleInfo();
+        
+        // 更新自动加载状态显示
+        this.getCurrentVideoInfo();
         
         // 保存到后台
         chrome.runtime.sendMessage({
@@ -1086,6 +1093,10 @@ class PopupController {
             if (response.success) {
                 this.updateSubtitleInfo();
                 this.updateFileCardState(language, true);
+                
+                // 更新自动加载状态显示
+                this.getCurrentVideoInfo();
+                
                 this.showStatus(`成功加载 ${subtitleData.length} 条${language === 'english' ? '英文' : '中文'}字幕`, 'success');
                 
                 // 自动启用字幕显示
@@ -1215,6 +1226,9 @@ class PopupController {
         
         this.updateFileCardState(language, false);
         this.updateSubtitleInfo();
+        
+        // 更新自动加载状态显示
+        this.getCurrentVideoInfo();
         
         // 保存到后台
         chrome.runtime.sendMessage({
@@ -1442,6 +1456,9 @@ class PopupController {
                 this.englishFileName = '';
                 this.chineseFileName = '';
                 this.updateSubtitleInfo();
+                
+                // 更新自动加载状态显示
+                this.getCurrentVideoInfo();
                 
                 // 注意：不再自动关闭字幕开关，让用户手动控制
                 
@@ -1833,6 +1850,9 @@ class PopupController {
                 
                 if (response && response.videoId) {
                     this.updateVideoDisplay(response.videoId, response.subtitleLoaded ? '已加载字幕' : '无字幕');
+                    
+                    // 同时更新本地的字幕统计信息
+                    this.syncSubtitleDataFromContentScript();
                 } else {
                     this.updateVideoDisplay(null, '获取视频信息失败');
                 }
@@ -1863,6 +1883,30 @@ class PopupController {
             } else if (status && (status.includes('加载中') || status.includes('检测中'))) {
                 statusElement.classList.add('loading');
             }
+        }
+    }
+
+    async syncSubtitleDataFromContentScript() {
+        try {
+            // 从后台获取最新的字幕数据
+            const response = await chrome.runtime.sendMessage({ action: 'getBilingualSubtitleData' });
+            if (response.success) {
+                // 更新本地字幕数据
+                this.englishSubtitles = response.englishSubtitles || [];
+                this.chineseSubtitles = response.chineseSubtitles || [];
+                this.englishFileName = response.englishFileName || '';
+                this.chineseFileName = response.chineseFileName || '';
+                
+                // 更新统计显示
+                this.updateSubtitleInfo();
+                
+                console.log('同步字幕数据:', {
+                    英文字幕: this.englishSubtitles.length,
+                    中文字幕: this.chineseSubtitles.length
+                });
+            }
+        } catch (error) {
+            console.error('同步字幕数据失败:', error);
         }
     }
 }
