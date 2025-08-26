@@ -384,15 +384,16 @@ body {
 
 /* 📂 字幕上传模式选择 */
 .upload-mode-tabs {
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-2xl);
 }
 
 .tab-selector {
     display: flex;
     background: var(--bg-secondary);
-    border-radius: var(--radius-lg);
-    padding: 4px;
+    border-radius: var(--radius-xl);
+    padding: 6px;
     box-shadow: var(--shadow-sm);
+    gap: 4px; /* 增加按钮之间的间距 */
 }
 
 .mode-tab {
@@ -400,10 +401,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md) var(--spacing-lg);
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-xl); /* 增加内部间距 */
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg); /* 增加圆角 */
     background: transparent;
     color: var(--text-secondary);
     font-size: 14px;
@@ -412,32 +413,31 @@ body {
     transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
+    min-height: 48px; /* 增加最小高度 */
 }
 
+/* 处理没有图标的标签按钮 */
+.mode-tab:not(:has(.tab-icon)) {
+    gap: 0; /* 没有图标时不需要间距 */
+}
+
+.mode-tab:hover:not(.active) {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
 .mode-tab.active {
     background: var(--primary-gradient);
     color: var(--text-white);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg); /* 增强阴影 */
+    transform: translateY(-2px); /* 增强上移效果 */
 }
 
 .mode-tab .tab-icon {
-    font-size: 16px;
+    font-size: 18px; /* 稍微增大图标 */
 }
-
-.mode-tab .tab-badge {
-    background: rgba(255, 255, 255, 0.2);
-    color: var(--text-white);
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: 600;
-    margin-left: auto;
-}
-
-.mode-tab:not(.active) .tab-badge {
-    background: var(--primary-color);
-    color: var(--text-white);
+.mode-tab .tab-text {
+    font-weight: 600; /* 增强文字重量 */
 }
 
 /* 上传内容区域 */
