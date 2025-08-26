@@ -79,6 +79,15 @@ class PopupController {
         
         await this.loadCurrentState();
         this.setupFileNameTooltips();
+        
+        // 确保字幕统计信息初始显示正确
+        this.updateSubtitleInfo();
+        
+        // 如果当前在自动加载模式，也要获取视频信息
+        const activeMode = document.querySelector('.mode-tab.active');
+        if (activeMode && activeMode.dataset.mode === 'auto') {
+            this.getCurrentVideoInfo();
+        }
     }
     
     // 确保默认设置存在于storage中
@@ -963,6 +972,14 @@ class PopupController {
                 this.englishFileName = englishFileName || '';
                 this.chineseFileName = chineseFileName || '';
                 
+                console.log('📂 加载当前状态数据:', {
+                    英文字幕数量: this.englishSubtitles.length,
+                    中文字幕数量: this.chineseSubtitles.length,
+                    英文文件名: this.englishFileName,
+                    中文文件名: this.chineseFileName,
+                    单语字幕数量: this.subtitleData.length
+                });
+                
                 // 定义默认设置，与构造函数保持一致
                 const defaultEnglishSettings = {
                     fontSize: 34,
@@ -1247,8 +1264,30 @@ class PopupController {
         const englishCount = document.getElementById('englishCount');
         const chineseCount = document.getElementById('chineseCount');
         
-        if (englishCount) englishCount.textContent = `${this.englishSubtitles.length}条`;
-        if (chineseCount) chineseCount.textContent = `${this.chineseSubtitles.length}条`;
+        console.log('🔄 更新字幕统计信息:', {
+            英文字幕数量: this.englishSubtitles.length,
+            中文字幕数量: this.chineseSubtitles.length,
+            英文文件名: this.englishFileName,
+            中文文件名: this.chineseFileName,
+            englishCount元素存在: !!englishCount,
+            chineseCount元素存在: !!chineseCount
+        });
+        
+        if (englishCount) {
+            const newText = `${this.englishSubtitles.length}条`;
+            englishCount.textContent = newText;
+            console.log('✅ 已更新英文计数为:', newText);
+        } else {
+            console.error('❌ 找不到englishCount元素');
+        }
+        
+        if (chineseCount) {
+            const newText = `${this.chineseSubtitles.length}条`;
+            chineseCount.textContent = newText;
+            console.log('✅ 已更新中文计数为:', newText);
+        } else {
+            console.error('❌ 找不到chineseCount元素');
+        }
         
         // 更新文件卡片状态 - 只有当对应的文件名存在时才显示为有文件状态
         this.updateFileCardState('english', this.englishFileName && this.englishFileName.length > 0);
@@ -1850,6 +1889,12 @@ class PopupController {
                 
                 if (response && response.videoId) {
                     this.updateVideoDisplay(response.videoId, response.subtitleLoaded ? '已加载字幕' : '无字幕');
+                    
+                    console.log('📹 获取到视频信息:', {
+                        视频ID: response.videoId,
+                        字幕已加载: response.subtitleLoaded,
+                        自动加载启用: response.autoLoadEnabled
+                    });
                     
                     // 同时更新本地的字幕统计信息
                     this.syncSubtitleDataFromContentScript();
