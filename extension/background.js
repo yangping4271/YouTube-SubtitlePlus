@@ -132,6 +132,19 @@ class SubtitleExtensionBackground {
           sendResponse({ success: true });
           break;
 
+        case 'saveVideoSubtitles':
+          await this.saveVideoSubtitles(
+            request.videoId,
+            request.englishSubtitles,
+            request.chineseSubtitles,
+            request.subtitleData,
+            request.englishFileName,
+            request.chineseFileName,
+            request.fileName
+          );
+          sendResponse({ success: true });
+          break;
+
         case 'toggleSubtitle':
           await this.toggleSubtitle(request.enabled);
           sendResponse({ success: true });
@@ -197,6 +210,40 @@ class SubtitleExtensionBackground {
       subtitleEnabled: result.subtitleEnabled || false,
       subtitleSettings: result.subtitleSettings || {}
     };
+  }
+
+  async saveVideoSubtitles(videoId, englishSubtitles, chineseSubtitles, subtitleData, englishFileName, chineseFileName, fileName) {
+    if (!videoId) {
+      console.error('❌ 保存字幕失败: 缺少视频ID');
+      return;
+    }
+
+    const subtitleKey = `videoSubtitles_${videoId}`;
+    const videoSubtitleData = {
+      videoId: videoId,
+      timestamp: new Date().toISOString()
+    };
+
+    // 添加双语字幕数据
+    if (englishSubtitles || chineseSubtitles) {
+      videoSubtitleData.englishSubtitles = englishSubtitles || [];
+      videoSubtitleData.chineseSubtitles = chineseSubtitles || [];
+      videoSubtitleData.englishFileName = englishFileName || '';
+      videoSubtitleData.chineseFileName = chineseFileName || '';
+    }
+
+    // 添加单语字幕数据
+    if (subtitleData) {
+      videoSubtitleData.subtitleData = subtitleData;
+      videoSubtitleData.fileName = fileName || '';
+    }
+
+    await chrome.storage.local.set({ [subtitleKey]: videoSubtitleData });
+    console.log('视频字幕数据已保存 (' + videoId + '):', {
+      英文: (englishSubtitles || []).length,
+      中文: (chineseSubtitles || []).length,
+      单语: (subtitleData || []).length
+    });
   }
 
   async saveBilingualSubtitles(englishSubtitles, chineseSubtitles, englishFileName, chineseFileName) {

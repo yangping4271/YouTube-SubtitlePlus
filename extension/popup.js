@@ -408,13 +408,30 @@ class PopupController {
             this.chineseSubtitles = assResult.chinese;
             // 不设置 englishFileName 和 chineseFileName，避免在分别上传区域显示
             
-            const response = await chrome.runtime.sendMessage({
-                action: 'saveBilingualSubtitles',
-                englishSubtitles: this.englishSubtitles,
-                chineseSubtitles: this.chineseSubtitles,
-                englishFileName: '', // 清空英文文件名
-                chineseFileName: ''  // 清空中文文件名
-            });
+            // 获取当前视频ID并保存字幕
+            const currentVideoId = await this.getCurrentVideoId();
+            let response;
+            
+            if (currentVideoId) {
+                // 基于视频ID保存字幕
+                response = await chrome.runtime.sendMessage({
+                    action: 'saveVideoSubtitles',
+                    videoId: currentVideoId,
+                    englishSubtitles: this.englishSubtitles,
+                    chineseSubtitles: this.chineseSubtitles,
+                    englishFileName: file.name + ' (英文)',
+                    chineseFileName: file.name + ' (中文)'
+                });
+            } else {
+                // 后备方案：使用旧的保存方式
+                response = await chrome.runtime.sendMessage({
+                    action: 'saveBilingualSubtitles',
+                    englishSubtitles: this.englishSubtitles,
+                    chineseSubtitles: this.chineseSubtitles,
+                    englishFileName: '', // 清空英文文件名
+                    chineseFileName: ''  // 清空中文文件名
+                });
+            }
             
             if (response.success) {
                 this.updateSubtitleInfo();
@@ -961,35 +978,80 @@ class PopupController {
     }
 
     // ========================================
+    // 获取当前视频ID的辅助方法
+    // ========================================
+    async getCurrentVideoId() {
+        try {
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            const currentTab = tabs[0];
+            
+            if (!currentTab || !this.isYouTubePage(currentTab.url)) {
+                return null;
+            }
+
+            return new Promise((resolve) => {
+                chrome.tabs.sendMessage(currentTab.id, { action: 'getVideoInfo' }, (response) => {
+                    if (chrome.runtime.lastError || !response) {
+                        resolve(null);
+                    } else {
+                        resolve(response.videoId);
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('获取视频ID失败:', error);
+            return null;
+        }
+    }
+
+    // ========================================
     // 文件处理
     // ========================================
     async loadCurrentState() {
         try {
-            const response = await chrome.runtime.sendMessage({ action: 'getBilingualSubtitleData' });
-            if (response.success) {
+            const currentVideoId = await this.getCurrentVideoId();
+            
+            // 加载全局设置
+            const globalResponse = await chrome.runtime.sendMessage({ action: 'getBilingualSubtitleData' });
+            let videoSubtitles = null;
+            
+            // 如果有当前视频ID，尝试加载对应的字幕数据
+            if (currentVideoId) {
+                const videoResult = await chrome.storage.local.get(`videoSubtitles_${currentVideoId}`);
+                videoSubtitles = videoResult[`videoSubtitles_${currentVideoId}`];
+            }
+            
+            if (globalResponse.success) {
                 const { 
-                    subtitleData, 
-                    englishSubtitles, 
-                    chineseSubtitles, 
                     subtitleEnabled, 
                     englishSettings,
                     chineseSettings,
-                    syncSettings,
-                    englishFileName,
-                    chineseFileName
-                } = response.data;
+                    syncSettings
+                } = globalResponse.data;
                 
                 // 更新UI状态
                 const subtitleToggle = document.getElementById('subtitleToggle');
                 if (subtitleToggle) subtitleToggle.checked = subtitleEnabled;
                 
-                this.subtitleData = subtitleData || [];
-                this.englishSubtitles = englishSubtitles || [];
-                this.chineseSubtitles = chineseSubtitles || [];
-                this.englishFileName = englishFileName || '';
-                this.chineseFileName = chineseFileName || '';
+                // 优先使用当前视频的字幕数据，否则使用全局数据作为后备
+                if (videoSubtitles) {
+                    this.subtitleData = videoSubtitles.subtitleData || [];
+                    this.englishSubtitles = videoSubtitles.englishSubtitles || [];
+                    this.chineseSubtitles = videoSubtitles.chineseSubtitles || [];
+                    this.englishFileName = videoSubtitles.englishFileName || '';
+                    this.chineseFileName = videoSubtitles.chineseFileName || '';
+                    this.currentFileName = videoSubtitles.fileName || '';
+                } else {
+                    // 使用全局数据作为后备
+                    const { subtitleData, englishSubtitles, chineseSubtitles, englishFileName, chineseFileName } = globalResponse.data;
+                    this.subtitleData = subtitleData || [];
+                    this.englishSubtitles = englishSubtitles || [];
+                    this.chineseSubtitles = chineseSubtitles || [];
+                    this.englishFileName = englishFileName || '';
+                    this.chineseFileName = chineseFileName || '';
+                }
                 
-                console.log('📂 加载当前状态数据:', {
+                console.log('📂 加载当前状态数据 (' + (currentVideoId || '无视频ID') + '):', {
                     英文字幕数量: this.englishSubtitles.length,
                     中文字幕数量: this.chineseSubtitles.length,
                     英文文件名: this.englishFileName,
@@ -1101,27 +1163,57 @@ class PopupController {
             }
 
             // 保存字幕数据
+            const currentVideoId = await this.getCurrentVideoId();
             let response;
+            
             if (language === 'english') {
                 this.englishSubtitles = subtitleData;
                 this.englishFileName = file.name;
-                response = await chrome.runtime.sendMessage({
-                    action: 'saveBilingualSubtitles',
-                    englishSubtitles: this.englishSubtitles,
-                    chineseSubtitles: this.chineseSubtitles,
-                    englishFileName: this.englishFileName,
-                    chineseFileName: this.chineseFileName
-                });
+                
+                if (currentVideoId) {
+                    // 基于视频ID保存字幕
+                    response = await chrome.runtime.sendMessage({
+                        action: 'saveVideoSubtitles',
+                        videoId: currentVideoId,
+                        englishSubtitles: this.englishSubtitles,
+                        chineseSubtitles: this.chineseSubtitles,
+                        englishFileName: this.englishFileName,
+                        chineseFileName: this.chineseFileName
+                    });
+                } else {
+                    // 后备方案：使用旧的保存方式
+                    response = await chrome.runtime.sendMessage({
+                        action: 'saveBilingualSubtitles',
+                        englishSubtitles: this.englishSubtitles,
+                        chineseSubtitles: this.chineseSubtitles,
+                        englishFileName: this.englishFileName,
+                        chineseFileName: this.chineseFileName
+                    });
+                }
             } else {
                 this.chineseSubtitles = subtitleData;
                 this.chineseFileName = file.name;
-                response = await chrome.runtime.sendMessage({
-                    action: 'saveBilingualSubtitles',
-                    englishSubtitles: this.englishSubtitles,
-                    chineseSubtitles: this.chineseSubtitles,
-                    englishFileName: this.englishFileName,
-                    chineseFileName: this.chineseFileName
-                });
+                
+                if (currentVideoId) {
+                    // 基于视频ID保存字幕
+                    response = await chrome.runtime.sendMessage({
+                        action: 'saveVideoSubtitles',
+                        videoId: currentVideoId,
+                        englishSubtitles: this.englishSubtitles,
+                        chineseSubtitles: this.chineseSubtitles,
+                        englishFileName: this.englishFileName,
+                        chineseFileName: this.chineseFileName
+                    });
+                } else {
+                    // 后备方案：使用旧的保存方式
+                    response = await chrome.runtime.sendMessage({
+                        action: 'saveBilingualSubtitles',
+                        englishSubtitles: this.englishSubtitles,
+                        chineseSubtitles: this.chineseSubtitles,
+                        englishFileName: this.englishFileName,
+                        chineseFileName: this.chineseFileName
+                    });
+                }
             }
 
             if (response.success) {
@@ -1264,13 +1356,28 @@ class PopupController {
         // 更新自动加载状态显示
         this.getCurrentVideoInfo();
         
-        // 保存到后台
-        chrome.runtime.sendMessage({
-            action: 'saveBilingualSubtitles',
-            englishSubtitles: this.englishSubtitles,
-            chineseSubtitles: this.chineseSubtitles,
-            englishFileName: this.englishFileName,
-            chineseFileName: this.chineseFileName
+        // 保存到后台 - 基于当前视频ID
+        this.getCurrentVideoId().then(currentVideoId => {
+            if (currentVideoId) {
+                // 基于视频ID保存字幕
+                chrome.runtime.sendMessage({
+                    action: 'saveVideoSubtitles',
+                    videoId: currentVideoId,
+                    englishSubtitles: this.englishSubtitles,
+                    chineseSubtitles: this.chineseSubtitles,
+                    englishFileName: this.englishFileName,
+                    chineseFileName: this.chineseFileName
+                });
+            } else {
+                // 后备方案：使用旧的保存方式
+                chrome.runtime.sendMessage({
+                    action: 'saveBilingualSubtitles',
+                    englishSubtitles: this.englishSubtitles,
+                    chineseSubtitles: this.chineseSubtitles,
+                    englishFileName: this.englishFileName,
+                    chineseFileName: this.chineseFileName
+                });
+            }
         });
         
         this.showStatus(`已移除${language === 'english' ? '英文' : '中文'}字幕`, 'success');
@@ -1503,6 +1610,15 @@ class PopupController {
 
     async clearSubtitle() {
         try {
+            const currentVideoId = await this.getCurrentVideoId();
+            
+            if (currentVideoId) {
+                // 清除当前视频的字幕数据
+                await chrome.storage.local.remove(`videoSubtitles_${currentVideoId}`);
+                console.log('已清除视频字幕数据:', currentVideoId);
+            }
+            
+            // 同时清除旧的全局存储作为后备
             const response = await chrome.runtime.sendMessage({ action: 'clearSubtitleData' });
             if (response.success) {
                 this.subtitleData = [];

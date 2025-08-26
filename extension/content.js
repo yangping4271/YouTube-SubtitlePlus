@@ -184,6 +184,9 @@ class YouTubeSubtitleOverlay {
       this.insertOverlayToPage();
       this.setupResizeListener();
       
+      // 视频切换时重新加载对应的字幕数据
+      this.loadSubtitleData();
+      
       // 重置自动加载状态，允许页面刷新时重新加载字幕
       this.autoLoadAttempted = false;
       
@@ -595,26 +598,42 @@ class YouTubeSubtitleOverlay {
 
   async loadSubtitleData() {
     try {
+      const currentVideoId = this.getVideoId();
+      
+      // 获取全局设置和当前视频的字幕数据
       const result = await chrome.storage.local.get([
-        'subtitleData', 
-        'englishSubtitles',
-        'chineseSubtitles',
         'subtitleEnabled', 
         'englishSettings',
         'chineseSettings',
-        'autoLoadEnabled' // 添加自动加载状态的加载
+        'autoLoadEnabled',
+        `videoSubtitles_${currentVideoId}` // 基于videoId的字幕数据
       ]);
       
-      if (result.englishSubtitles || result.chineseSubtitles) {
-        this.englishSubtitles = result.englishSubtitles || [];
-        this.chineseSubtitles = result.chineseSubtitles || [];
-        console.log('已加载双语字幕数据:', {
-          英文: this.englishSubtitles.length,
-          中文: this.chineseSubtitles.length
-        });
-      } else if (result.subtitleData && result.subtitleData.length > 0) {
-        this.subtitleData = result.subtitleData;
-        console.log('已加载单语字幕数据:', this.subtitleData.length, '条');
+      // 清除之前的字幕数据
+      this.subtitleData = [];
+      this.englishSubtitles = [];
+      this.chineseSubtitles = [];
+      
+      // 只有当前视频ID存在且有对应字幕数据时才加载
+      if (currentVideoId && result[`videoSubtitles_${currentVideoId}`]) {
+        const videoSubtitles = result[`videoSubtitles_${currentVideoId}`];
+        
+        // 加载当前视频的字幕数据
+        if (videoSubtitles.englishSubtitles || videoSubtitles.chineseSubtitles) {
+          this.englishSubtitles = videoSubtitles.englishSubtitles || [];
+          this.chineseSubtitles = videoSubtitles.chineseSubtitles || [];
+          console.log('已加载视频字幕数据 (', currentVideoId, '):', {
+            英文: this.englishSubtitles.length,
+            中文: this.chineseSubtitles.length
+          });
+        } else if (videoSubtitles.subtitleData && videoSubtitles.subtitleData.length > 0) {
+          this.subtitleData = videoSubtitles.subtitleData;
+          console.log('已加载视频单语字幕数据 (', currentVideoId, '):', this.subtitleData.length, '条');
+        }
+      } else if (currentVideoId) {
+        console.log('当前视频 (', currentVideoId, ') 无字幕数据');
+      } else {
+        console.log('未找到视频ID，无法加载字幕');
       }
       
       if (result.subtitleEnabled !== undefined) {
@@ -772,6 +791,12 @@ class YouTubeSubtitleOverlay {
   async processAutoLoadedSubtitle(content, info) {
     try {
       const format = info.format.toLowerCase();
+      const currentVideoId = this.getVideoId();
+      
+      if (!currentVideoId) {
+        console.error('❌ 无法获取视频ID，跳过字幕保存');
+        return;
+      }
       
       if (format === '.ass') {
         // 使用现有的ASS解析逻辑
@@ -781,16 +806,17 @@ class YouTubeSubtitleOverlay {
           this.englishSubtitles = assResult.english;
           this.chineseSubtitles = assResult.chinese;
           
-          // 保存到本地存储
+          // 基于videoId保存到本地存储
           await chrome.runtime.sendMessage({
-            action: 'saveBilingualSubtitles',
+            action: 'saveVideoSubtitles',
+            videoId: currentVideoId,
             englishSubtitles: assResult.english,
             chineseSubtitles: assResult.chinese,
             englishFileName: info.filename + ' (英文)',
             chineseFileName: info.filename + ' (中文)'
           });
           
-          console.log('📊 自动加载双语字幕:', {
+          console.log('📊 自动加载双语字幕 (' + currentVideoId + '):', {
             英文: assResult.english.length,
             中文: assResult.chinese.length
           });
@@ -804,13 +830,15 @@ class YouTubeSubtitleOverlay {
         if (subtitleData.length > 0) {
           this.subtitleData = subtitleData;
           
-          // 保存到本地存储
+          // 基于videoId保存到本地存储
           await chrome.runtime.sendMessage({
-            action: 'saveSubtitleData',
-            data: subtitleData
+            action: 'saveVideoSubtitles',
+            videoId: currentVideoId,
+            subtitleData: subtitleData,
+            fileName: info.filename
           });
           
-          console.log('📊 自动加载单语字幕:', subtitleData.length, '条');
+          console.log('📊 自动加载单语字幕 (' + currentVideoId + '):', subtitleData.length, '条');
         }
       }
       
