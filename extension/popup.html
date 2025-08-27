@@ -46,11 +46,11 @@
                 <!-- 字幕上传方式选择 -->
                 <div class="upload-mode-tabs">
                     <div class="tab-selector">
-                        <button class="mode-tab" data-mode="auto">
+                        <button class="mode-tab active" data-mode="auto">
                             <span class="tab-icon">🤖</span>
                             <span class="tab-text">自动加载</span>
                         </button>
-                        <button class="mode-tab active" data-mode="bilingual">
+                        <button class="mode-tab" data-mode="bilingual">
                             <span class="tab-text">双语ASS</span>
                         </button>
                         <button class="mode-tab" data-mode="separate">
@@ -61,7 +61,7 @@
                 </div>
 
                 <!-- 自动加载模式 -->
-                <div class="upload-content" id="autoMode">
+                <div class="upload-content active" id="autoMode">
                     <div class="auto-load-card">
                         <!-- 状态指示卡片 -->
                         <div class="server-status-card" id="serverStatus">
@@ -142,7 +142,7 @@
                 </div>
 
                 <!-- ASS双语字幕上传区 -->
-                <div class="upload-content active" id="bilingualMode">
+                <div class="upload-content" id="bilingualMode">
                     <div class="ass-upload-card">
                         <div class="ass-card-header">
                             <div class="ass-title">
