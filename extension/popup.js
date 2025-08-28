@@ -92,8 +92,21 @@ class PopupController {
                 if (request.action === 'autoLoadSuccess') {
                     console.log('🎉 收到自动加载成功消息:', request);
                     this.updateAutoLoadStatus('成功: ' + request.filename, 'success');
-                    // 🔧 修复：避免重复调用，使用统一的刷新机制
-                    this.getCurrentVideoInfo(); // 这个方法内部已包含同步逻辑
+
+                    // 🔧 修复：如果消息包含字幕数据，直接使用，否则再同步
+                    if (request.englishSubtitles || request.chineseSubtitles || request.subtitleData) {
+                        console.log('📊 收到字幕数据，直接更新显示');
+                        this.englishSubtitles = request.englishSubtitles || [];
+                        this.chineseSubtitles = request.chineseSubtitles || [];
+                        this.subtitleData = request.subtitleData || [];
+                        this.englishFileName = request.englishFileName || '';
+                        this.chineseFileName = request.chineseFileName || '';
+                        this.currentFileName = request.fileName || '';
+                        this.updateSubtitleInfoWithRetry();
+                    } else {
+                        // 后备方案：从存储中同步数据
+                        this.getCurrentVideoInfo();
+                    }
                 } else if (request.action === 'autoLoadError') {
                     console.log('❌ 收到自动加载失败消息:', request);
                     this.updateAutoLoadStatus('失败: ' + request.error, 'error');
@@ -119,11 +132,49 @@ class PopupController {
             this.initAutoLoadMode();
         }
         
-        // 🔧 新增：主动检查当前视频的字幕状态，确保popup显示同步
-        // 使用setTimeout确保DOM完全初始化后执行
-        setTimeout(() => {
-            this.checkCurrentVideoSubtitleStatus();
-        }, 100);
+        // 主动检查一次当前视频的字幕状态，初始化计数
+        this.checkCurrentVideoSubtitleStatus();
+
+        // 监听存储变化，实时更新计数（基于当前视频ID）
+        this.observeSubtitleStorageChanges();
+    }
+
+    // 监听chrome.storage变化，保持计数同步与简化更新路径
+    observeSubtitleStorageChanges() {
+        if (this._storageObserved) return;
+        this._storageObserved = true;
+        chrome.storage.onChanged.addListener((changes, areaName) => {
+            if (areaName !== 'local') return;
+            // 获取当前视频ID后再判断对应键是否变化
+            this.getCurrentVideoId().then((videoId) => {
+                const videoKey = videoId ? `videoSubtitles_${videoId}` : null;
+                const keys = Object.keys(changes);
+                // 视频级别数据变化
+                if (videoKey && keys.includes(videoKey)) {
+                    const data = changes[videoKey].newValue || {};
+                    this.englishSubtitles = data.englishSubtitles || [];
+                    this.chineseSubtitles = data.chineseSubtitles || [];
+                    this.englishFileName = data.englishFileName || '';
+                    this.chineseFileName = data.chineseFileName || '';
+                    this.updateSubtitleInfo();
+                    return;
+                }
+                // 全局后备数据变化
+                if (keys.includes('englishSubtitles') || keys.includes('chineseSubtitles')) {
+                    chrome.runtime.sendMessage({ action: 'getBilingualSubtitleData' })
+                        .then((res) => {
+                            if (res && res.success && !videoKey) {
+                                this.englishSubtitles = res.data.englishSubtitles || [];
+                                this.chineseSubtitles = res.data.chineseSubtitles || [];
+                                this.englishFileName = res.data.englishFileName || '';
+                                this.chineseFileName = res.data.chineseFileName || '';
+                                this.updateSubtitleInfo();
+                            }
+                        })
+                        .catch(() => {});
+                }
+            });
+        });
     }
     
     // 确保默认设置存在于storage中
@@ -1011,14 +1062,11 @@ class PopupController {
         try {
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
             const currentTab = tabs[0];
-            
-            if (!currentTab || !this.isYouTubePage(currentTab.url)) {
-                return null;
-            }
+            if (!currentTab) return null;
 
-            return new Promise((resolve) => {
+            return await new Promise((resolve) => {
                 chrome.tabs.sendMessage(currentTab.id, { action: 'getVideoInfo' }, (response) => {
-                    if (chrome.runtime.lastError || !response) {
+                    if (chrome.runtime.lastError || !response || !response.videoId) {
                         resolve(null);
                     } else {
                         resolve(response.videoId);
@@ -1429,108 +1477,19 @@ class PopupController {
         this.showStatus(`已移除${language === 'english' ? '英文' : '中文'}字幕`, 'success');
     }
 
-    // 🔧 增强的字幕统计更新方法，包含重试机制和DOM就绪检查
-    async updateSubtitleInfoWithRetry(maxRetries = 5, retryCount = 0) {
-        const englishCount = document.getElementById('englishCount');
-        const chineseCount = document.getElementById('chineseCount');
-        
-        // 检查DOM就绪状态
-        const isDomReady = document.readyState === 'complete' || document.readyState === 'interactive';
-        
-        console.log(`📊 字幕统计更新尝试 ${retryCount + 1}/${maxRetries}:`, {
-            DOM就绪状态: document.readyState,
-            englishCount元素存在: !!englishCount,
-            chineseCount元素存在: !!chineseCount,
-            当前英文字幕数量: this.englishSubtitles.length,
-            当前中文字幕数量: this.chineseSubtitles.length
-        });
-        
-        // 如果DOM未就绪或元素不存在，且未达到最大重试次数
-        if ((!englishCount || !chineseCount || !isDomReady) && retryCount < maxRetries) {
-            console.warn(`⚠️ DOM元素未就绪，${100}ms后重试 (第${retryCount + 1}次)`);
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    this.updateSubtitleInfoWithRetry(maxRetries, retryCount + 1).then(resolve);
-                }, 100);
-            });
-        }
-        
-        // 如果达到最大重试次数仍未就绪，记录错误但继续执行
-        if (!englishCount || !chineseCount) {
-            console.error('❌ 达到最大重试次数，DOM元素仍未找到:', {
-                englishCount: !!englishCount,
-                chineseCount: !!chineseCount,
-                DOM状态: document.readyState
-            });
-            return;
-        }
-        
-        // 执行实际的统计信息更新
+    // 简化版：直接调用更新方法，避免复杂重试逻辑
+    async updateSubtitleInfoWithRetry() {
         this.updateSubtitleInfo();
-        console.log('✅ 字幕统计信息更新成功');
     }
 
     updateSubtitleInfo() {
-        // 更新计数显示 - DOM就绪性已在上层重试方法中处理
-        const englishCount = document.getElementById('englishCount');
-        const chineseCount = document.getElementById('chineseCount');
-        
-        console.log('🔄 更新字幕统计信息 - 详细调试:', {
-            英文字幕数量: this.englishSubtitles.length,
-            中文字幕数量: this.chineseSubtitles.length,
-            英文文件名: this.englishFileName,
-            中文文件名: this.chineseFileName,
-            englishCount元素存在: !!englishCount,
-            chineseCount元素存在: !!chineseCount,
-            DOM就绪状态: document.readyState,
-            当前时间: new Date().toISOString()
-        });
-
-        // 🔧 添加强制DOM检查
-        if (!englishCount) {
-            console.error('❌ 严重错误：找不到englishCount元素！');
-            console.log('📋 所有ID为englishCount的元素:', document.querySelectorAll('#englishCount'));
-            console.log('📋 所有class为status-count的元素:', document.querySelectorAll('.status-count'));
-        }
-        
-        if (!chineseCount) {
-            console.error('❌ 严重错误：找不到chineseCount元素！');
-            console.log('📋 所有ID为chineseCount的元素:', document.querySelectorAll('#chineseCount'));
-        }
-        
-        if (englishCount) {
-            const oldText = englishCount.textContent;
-            const newText = `${this.englishSubtitles.length}条`;
-            englishCount.textContent = newText;
-            
-            // 🔧 强制重绘确保显示更新
-            englishCount.style.display = 'none';
-            englishCount.offsetHeight; // 强制重排
-            englishCount.style.display = '';
-            
-            console.log(`✅ 英文计数已更新: "${oldText}" → "${newText}"`);
-        } else {
-            console.error('❌ 找不到englishCount元素，无法更新英文统计');
-        }
-        
-        if (chineseCount) {
-            const oldText = chineseCount.textContent;
-            const newText = `${this.chineseSubtitles.length}条`;
-            chineseCount.textContent = newText;
-            
-            // 🔧 强制重绘确保显示更新
-            chineseCount.style.display = 'none';
-            chineseCount.offsetHeight; // 强制重排
-            chineseCount.style.display = '';
-            
-            console.log(`✅ 中文计数已更新: "${oldText}" → "${newText}"`);
-        } else {
-            console.error('❌ 找不到chineseCount元素，无法更新中文统计');
-        }
-        
-        // 更新文件卡片状态 - 只有当对应的文件名存在时才显示为有文件状态
-        this.updateFileCardState('english', this.englishFileName && this.englishFileName.length > 0);
-        this.updateFileCardState('chinese', this.chineseFileName && this.chineseFileName.length > 0);
+        const englishCountEl = document.getElementById('englishCount');
+        const chineseCountEl = document.getElementById('chineseCount');
+        if (englishCountEl) englishCountEl.textContent = `${this.englishSubtitles.length}条`;
+        if (chineseCountEl) chineseCountEl.textContent = `${this.chineseSubtitles.length}条`;
+        // 同步文件卡片状态
+        this.updateFileCardState('english', !!this.englishFileName);
+        this.updateFileCardState('chinese', !!this.chineseFileName);
     }
 
     // ========================================
@@ -2197,42 +2156,22 @@ class PopupController {
             if (tabs.length === 0) return;
             
             const currentTab = tabs[0];
-            if (!currentTab.url || !currentTab.url.includes('youtube.com/watch')) {
-                this.updateVideoDisplay(null, '未在YouTube页面');
-                return;
-            }
-
-            // 向content script发送消息获取视频信息
+            // 向content script发送消息获取视频信息（不依赖读取tab.url权限）
             chrome.tabs.sendMessage(currentTab.id, { action: 'getVideoInfo' }, (response) => {
-                if (chrome.runtime.lastError) {
-                    console.log('无法连接到content script:', chrome.runtime.lastError);
-                    this.updateVideoDisplay(null, '页面未加载完成');
+                if (chrome.runtime.lastError || !response || !response.videoId) {
+                    this.updateVideoDisplay(null, '未在YouTube页面');
                     return;
                 }
-                
-                if (response && response.videoId) {
-                    this.updateVideoDisplay(response.videoId, response.subtitleLoaded ? '已加载字幕' : '无字幕');
-                    
-                    console.log('📹 获取到视频信息:', {
-                        视频ID: response.videoId,
-                        字幕已加载: response.subtitleLoaded,
-                        自动加载启用: response.autoLoadEnabled
-                    });
-                    
-                    // 🔧 修复：简化同步逻辑，避免竞态条件
-                    // 等待同步完成后再做进一步处理
-                    this.syncSubtitleDataFromContentScript().then(() => {
+                this.updateVideoDisplay(response.videoId, response.subtitleLoaded ? '已加载字幕' : '无字幕');
+                this.syncSubtitleDataFromContentScript()
+                    .then(() => {
                         console.log('📊 字幕数据同步完成，最终统计:', {
                             英文字幕: this.englishSubtitles.length,
                             中文字幕: this.chineseSubtitles.length,
                             字幕加载状态: response.subtitleLoaded
                         });
-                    }).catch(error => {
-                        console.error('❌ 字幕数据同步失败:', error);
-                    });
-                } else {
-                    this.updateVideoDisplay(null, '获取视频信息失败');
-                }
+                    })
+                    .catch(error => console.error('❌ 字幕数据同步失败:', error));
             });
         } catch (error) {
             console.error('获取视频信息失败:', error);
@@ -2461,37 +2400,19 @@ class PopupController {
         try {
             console.log('🔍 主动检查当前视频字幕状态...');
             
-            // 获取当前活动的YouTube标签页
+            // 获取当前活动的标签页并询问content script
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (tabs.length === 0 || !tabs[0].url?.includes('youtube.com/watch')) {
-                console.log('📺 不在YouTube视频页面，跳过检查');
-                return;
-            }
-            
-            // 向content script询问当前状态
+            if (tabs.length === 0) return;
             chrome.tabs.sendMessage(tabs[0].id, { action: 'getSubtitleStatus' }, (response) => {
-                if (chrome.runtime.lastError) {
+                if (chrome.runtime.lastError || !response) {
                     console.log('📺 无法连接到content script，可能页面未完全加载');
                     return;
                 }
-                
-                if (response) {
-                    console.log('📊 收到content script状态反馈:', response);
-                    
-                    // 如果content script有字幕数据，同步到popup
-                    if (response.hasSubtitles && (response.englishCount > 0 || response.chineseCount > 0)) {
-                        console.log('🔄 发现content script有字幕数据，触发同步');
-                        // 强制同步数据并等待完成
-                        this.syncSubtitleDataFromContentScript().then(() => {
-                            console.log('✅ 初始化字幕数据同步完成，强制更新统计显示');
-                            // 确保统计信息更新
-                            this.updateSubtitleInfoWithRetry(3);
-                        }).catch(error => {
-                            console.error('❌ 初始化字幕数据同步失败:', error);
-                        });
-                    } else {
-                        console.log('📋 content script无字幕数据，保持当前显示');
-                    }
+                console.log('📊 收到content script状态反馈:', response);
+                if (response.hasSubtitles && (response.englishCount > 0 || response.chineseCount > 0)) {
+                    this.syncSubtitleDataFromContentScript()
+                        .then(() => this.updateSubtitleInfoWithRetry())
+                        .catch(error => console.error('❌ 初始化字幕数据同步失败:', error));
                 }
             });
             
@@ -2503,63 +2424,6 @@ class PopupController {
 
 // 初始化popup控制器
 document.addEventListener('DOMContentLoaded', () => {
-    const controller = new PopupController();
-    
-    // 🚨 紧急修复：强制立即检查并更新字幕统计
-    console.log('🚨 开始强制字幕统计更新流程...');
-    
-    // 先直接检查所有存储的videoSubtitles数据
-    chrome.storage.local.get(null, (allData) => {
-        console.log('📊 所有存储数据:', allData);
-        const videoKeys = Object.keys(allData).filter(key => key.startsWith('videoSubtitles_'));
-        console.log('🎯 找到的视频字幕键:', videoKeys);
-    });
-    
-    setTimeout(() => {
-        console.log('🚨 强制执行字幕统计更新...');
-        
-        // 直接获取当前视频ID并从存储中读取数据
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs.length > 0 && tabs[0].url?.includes('youtube.com/watch')) {
-                const urlParams = new URLSearchParams(new URL(tabs[0].url).search);
-                const videoId = urlParams.get('v');
-                
-                if (videoId) {
-                    console.log('🎯 检测到视频ID:', videoId);
-                    
-                    chrome.storage.local.get([`videoSubtitles_${videoId}`], (result) => {
-                        const videoSubtitles = result[`videoSubtitles_${videoId}`];
-                        
-                        if (videoSubtitles) {
-                            console.log('📊 找到存储的字幕数据:', videoSubtitles);
-                            
-                            // 强制更新DOM显示
-                            const englishCount = document.getElementById('englishCount');
-                            const chineseCount = document.getElementById('chineseCount');
-                            
-                            if (englishCount && chineseCount) {
-                                const englishNum = videoSubtitles.englishSubtitles?.length || 0;
-                                const chineseNum = videoSubtitles.chineseSubtitles?.length || 0;
-                                
-                                englishCount.textContent = `${englishNum}条`;
-                                chineseCount.textContent = `${chineseNum}条`;
-                                
-                                console.log('✅ 强制更新完成:', { englishNum, chineseNum });
-                            } else {
-                                console.error('❌ 找不到DOM元素!');
-                            }
-                        } else {
-                            console.log('📋 没有找到存储的字幕数据');
-                        }
-                    });
-                }
-            }
-        });
-    }, 50);
-    
-    console.log('💡 调试提示：');
-    console.log('  - debugSubtitles(): 详细调试字幕统计功能');
-    console.log('  - forceRefreshStats(): 强制刷新统计信息');
-    console.log('  - testSubtitleUpdate(): 测试统计更新功能');
-    console.log('  - monitorStats(duration): 实时监控统计变化 (默认10秒)');
+    // 启动控制器；计数更新由控制器内部统一管理
+    new PopupController();
 });

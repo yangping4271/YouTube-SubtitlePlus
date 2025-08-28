@@ -836,12 +836,18 @@ class YouTubeSubtitleOverlay {
       if (result.success && result.content) {
         await this.processAutoLoadedSubtitle(result.content, result.info);
         console.log('✅ 自动加载字幕成功:', videoId);
-        
-        // 通知popup更新状态
+
+        // 通知popup更新状态，包含字幕数据
         chrome.runtime.sendMessage({
           action: 'autoLoadSuccess',
           videoId: videoId,
-          filename: result.info.filename
+          filename: result.info.filename,
+          englishSubtitles: this.englishSubtitles,
+          chineseSubtitles: this.chineseSubtitles,
+          subtitleData: this.subtitleData,
+          englishFileName: this.englishFileName || result.info.filename + ' (英文)',
+          chineseFileName: this.chineseFileName || result.info.filename + ' (中文)',
+          fileName: this.currentFileName || result.info.filename
         });
       }
 
