@@ -360,6 +360,13 @@ body {
     margin: 0 var(--spacing-lg);
 }
 
+/* 动作按钮组 */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .clear-all-btn {
     background: var(--error-bg);
     border: 2px solid transparent;
@@ -380,6 +387,42 @@ body {
     color: var(--text-white);
     transform: scale(1.05);
     box-shadow: var(--shadow-md);
+}
+
+/* 强制重置按钮 */
+.force-reset-btn {
+    background: var(--warning-bg, #fef3c7);
+    border: 2px solid transparent;
+    color: var(--warning-color, #d97706);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 16px;
+    position: relative;
+}
+
+.force-reset-btn:hover {
+    background: var(--warning-color, #d97706);
+    color: var(--text-white);
+    transform: scale(1.05) rotate(180deg);
+    box-shadow: var(--shadow-md);
+}
+
+/* 强制重置确认态 */
+.force-reset-btn.confirm {
+    background: var(--error-color);
+    color: var(--text-white);
+    animation: pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
 }
 
 /* 📂 字幕上传模式选择 */

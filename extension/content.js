@@ -61,6 +61,9 @@ class YouTubeSubtitleOverlay {
         case 'clearData':
           this.clearSubtitleData();
           break;
+        case 'forceReset':
+          this.forceReset();
+          break;
         case 'updateSettings':
           this.updateLanguageSettings(request.language, request.settings);
           break;
@@ -77,6 +80,22 @@ class YouTubeSubtitleOverlay {
             videoId: videoId, 
             subtitleLoaded: subtitleLoaded,
             autoLoadEnabled: this.autoLoadEnabled
+          });
+          break;
+        case 'getSubtitleStatus':
+          // 🔧 新增：返回详细的字幕状态信息
+          const currentVideoId = this.getVideoId();
+          const englishCount = this.englishSubtitles.length;
+          const chineseCount = this.chineseSubtitles.length;
+          const hasSubtitles = englishCount > 0 || chineseCount > 0;
+          
+          sendResponse({
+            videoId: currentVideoId,
+            hasSubtitles: hasSubtitles,
+            englishCount: englishCount,
+            chineseCount: chineseCount,
+            autoLoadEnabled: this.autoLoadEnabled,
+            subtitleEnabled: this.isEnabled
           });
           break;
       }
@@ -567,6 +586,55 @@ class YouTubeSubtitleOverlay {
     // 注意：不再清空设置和开关状态，保持用户的设置不变
     this.hideSubtitle();
     console.log('字幕数据已清除，设置和开关状态保持不变');
+  }
+
+  // 强制重置 - 重置所有状态和设置
+  forceReset() {
+    console.log('🔄 Content Script 执行强制重置...');
+    
+    // 清除所有字幕数据
+    this.subtitleData = [];
+    this.englishSubtitles = [];
+    this.chineseSubtitles = [];
+    this.currentVideo = null;
+    this.autoLoadAttempted = false;
+    
+    // 重置为默认设置
+    this.englishSettings = {
+      fontSize: 34,
+      fontColor: '#ffffff',
+      fontFamily: '"Noto Serif", Georgia, serif',
+      fontWeight: '700',
+      backgroundOpacity: 20,
+      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+      lineHeight: 1.3,
+      position: 'bottom'
+    };
+    
+    this.chineseSettings = {
+      fontSize: 32,
+      fontColor: '#ffffff',
+      fontFamily: 'SimSun, serif',
+      fontWeight: '900',
+      backgroundOpacity: 20,
+      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+      lineHeight: 1.4,
+      position: 'bottom'
+    };
+    
+    // 重置自动加载设置
+    this.autoLoadEnabled = false;
+    this.serverUrl = 'http://127.0.0.1:8888';
+    this.currentVideoId = null;
+    
+    // 重置显示状态
+    this.isEnabled = false;
+    this.hideSubtitle();
+    
+    // 重新应用默认样式
+    this.applyStyles();
+    
+    console.log('✅ Content Script 强制重置完成');
   }
 
   updateSettings(settings) {

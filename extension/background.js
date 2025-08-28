@@ -160,9 +160,27 @@ class SubtitleExtensionBackground {
           sendResponse({ success: true });
           break;
           
+        case 'forceReset':
+          await this.forceReset();
+          sendResponse({ success: true });
+          break;
+          
         case 'setSubtitleEnabled':
           await this.setSubtitleEnabled(request.enabled);
           sendResponse({ success: true });
+          break;
+
+        // 🔧 新增：处理来自content script的自动加载消息并转发给popup
+        case 'autoLoadSuccess':
+          console.log('🎉 Background收到自动加载成功消息:', request);
+          // 不需要sendResponse，这是来自content script的通知消息
+          // 消息会自动转发给所有监听的popup
+          break;
+          
+        case 'autoLoadError':  
+          console.log('❌ Background收到自动加载失败消息:', request);
+          // 不需要sendResponse，这是来自content script的通知消息
+          // 消息会自动转发给所有监听的popup
           break;
 
         default:
@@ -311,6 +329,11 @@ class SubtitleExtensionBackground {
   }
 
   async clearSubtitleData() {
+    // 获取所有存储的键，清除视频级别缓存
+    const allData = await chrome.storage.local.get(null);
+    const videoSubtitleKeys = Object.keys(allData).filter(key => key.startsWith('videoSubtitles_'));
+    
+    // 清除全局字幕数据
     await chrome.storage.local.set({ 
       subtitleData: [],
       englishSubtitles: [],
@@ -319,8 +342,64 @@ class SubtitleExtensionBackground {
       chineseFileName: ''
       // 注意：不再设置 subtitleEnabled: false，让用户手动控制开关状态
     });
+    
+    // 清除所有视频级别的字幕缓存
+    if (videoSubtitleKeys.length > 0) {
+      await chrome.storage.local.remove(videoSubtitleKeys);
+      console.log(`🧹 已清除 ${videoSubtitleKeys.length} 个视频缓存:`, videoSubtitleKeys);
+    }
+    
     await this.notifyContentScript('clearData');
-    console.log('字幕数据已清除，开关状态保持不变');
+    console.log('✅ 字幕数据和所有缓存已彻底清除，开关状态保持不变');
+  }
+
+  // 新增：强制重置所有扩展数据
+  async forceReset() {
+    console.log('🔄 执行强制重置...');
+    
+    // 完全清除所有存储数据
+    await chrome.storage.local.clear();
+    
+    // 重新初始化默认设置（复用安装时的逻辑）
+    await chrome.storage.local.set({
+      subtitleEnabled: false,
+      subtitleData: [],
+      englishSubtitles: [],
+      chineseSubtitles: [],
+      englishFileName: '',
+      chineseFileName: '',
+      // 英文字幕独立设置 - 基础32px字体，20%背景透明度
+      englishSettings: {
+        fontSize: 34,
+        fontColor: '#ffffff',
+        fontFamily: '"Noto Serif", Georgia, serif',
+        fontWeight: '700',
+        backgroundOpacity: 20,
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+        lineHeight: 1.3,
+        position: 'bottom'
+      },
+      // 中文字幕独立设置 - 针对中文优化的设置
+      chineseSettings: {
+        fontSize: 32,
+        fontColor: '#ffffff', 
+        fontFamily: 'SimSun, serif',
+        fontWeight: '900',
+        backgroundOpacity: 20,
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+        lineHeight: 1.4,
+        position: 'bottom'
+      },
+      // 同步设置选项
+      syncSettings: false,
+      // 自动加载设置
+      autoLoadEnabled: false,
+      serverUrl: 'http://127.0.0.1:8888'
+    });
+    
+    // 通知content script强制清除
+    await this.notifyContentScript('forceReset');
+    console.log('🎉 强制重置完成，所有数据已重置为默认状态');
   }
 
   async notifyContentScript(action, data = {}) {

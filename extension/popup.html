@@ -43,6 +43,29 @@
         <div class="main-content">
             <!-- 文件管理标签页 -->
             <div class="tab-content active" id="filesTab">
+                <!-- 字幕统计区域 -->
+                <div class="subtitle-stats">
+                    <div class="status-card">
+                        <div class="status-info">
+                            <span class="status-label">英文</span>
+                            <span class="status-count" id="englishCount">0条</span>
+                        </div>
+                        <div class="status-divider"></div>
+                        <div class="status-info">
+                            <span class="status-label">中文</span>
+                            <span class="status-count" id="chineseCount">0条</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="clear-all-btn" id="clearButton" title="清除所有字幕数据">
+                                <span>🗑️</span>
+                            </button>
+                            <button class="force-reset-btn" id="forceResetButton" title="强制重置所有扩展数据（包括设置）">
+                                <span>🔄</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 字幕上传方式选择 -->
                 <div class="upload-mode-tabs">
                     <div class="tab-selector">
@@ -229,24 +252,6 @@
                             <button class="file-remove" id="chineseRemove" style="display: none;" title="移除此文件">×</button>
                         </div>
                     </div>
-                    </div>
-                </div>
-
-                <!-- 字幕统计区域 -->
-                <div class="subtitle-stats">
-                    <div class="status-card">
-                        <div class="status-info">
-                            <span class="status-label">英文</span>
-                            <span class="status-count" id="englishCount">0条</span>
-                        </div>
-                        <div class="status-divider"></div>
-                        <div class="status-info">
-                            <span class="status-label">中文</span>
-                            <span class="status-count" id="chineseCount">0条</span>
-                        </div>
-                        <button class="clear-all-btn" id="clearButton" title="清除所有字幕">
-                            <span>🗑️</span>
-                        </button>
                     </div>
                 </div>
             </div>
