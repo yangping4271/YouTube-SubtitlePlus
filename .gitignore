@@ -66,6 +66,10 @@ backup/
 temp/
 tmp/
 
+# 日志目录和进程文件
+logs/
+*.pid
+
 # Chrome扩展打包文件
 *.crx
 *.pem
