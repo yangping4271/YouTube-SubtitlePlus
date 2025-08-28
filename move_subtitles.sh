@@ -8,8 +8,8 @@ set -e  # 遇到错误时退出
 # 定义目录路径
 DOWNLOADS_DIR="$HOME/Downloads"
 
-# 固定字幕目标目录为项目目录
-SUBTITLES_DIR="$HOME/YouTube-SubtitlePlus/subtitles"
+# 固定字幕目标目录为用户字幕目录
+SUBTITLES_DIR="$HOME/subtitles"
 
 # 确保目标目录存在
 if [ ! -d "$SUBTITLES_DIR" ]; then

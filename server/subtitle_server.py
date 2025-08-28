@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # 默认配置
 DEFAULT_CONFIG = {
-    "subtitle_dirs": ["../subtitles", "~/Downloads"],  # 支持多个字幕目录，按优先级排序
+    "subtitle_dirs": ["../subtitles", "~/Downloads", "~/subtitles"],  # 支持多个字幕目录，按优先级排序
     "subtitle_dir": "../subtitles",  # 保持向后兼容
     "server_port": 8888,
     "server_host": "127.0.0.1",
