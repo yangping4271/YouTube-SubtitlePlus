@@ -56,7 +56,7 @@ class SubtitleExtensionBackground {
         chineseSettings: {
           fontSize: 32,
           fontColor: '#ffffff', 
-          fontFamily: 'SimSun, serif',
+          fontFamily: '"Songti SC", serif',
           fontWeight: '900',
           backgroundOpacity: 20,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
@@ -294,13 +294,18 @@ class SubtitleExtensionBackground {
   }
 
   async updateSettings(settings) {
+    console.log('=== background updateSettings 调试 ===');
+    console.log('接收到的 settings 参数:', settings);
+    
     // 根据设置类型更新对应的语言设置
     if (settings.language === 'english') {
       const currentSettings = await chrome.storage.local.get(['englishSettings']);
+      console.log('英文当前存储设置:', currentSettings.englishSettings);
       const newSettings = {
         ...(currentSettings.englishSettings || {}),
         ...settings.data
       };
+      console.log('英文合并后设置:', newSettings);
       
       await chrome.storage.local.set({ englishSettings: newSettings });
       await this.notifyContentScript('updateSettings', { 
@@ -310,10 +315,13 @@ class SubtitleExtensionBackground {
       console.log('英文字幕设置已更新:', newSettings);
     } else if (settings.language === 'chinese') {
       const currentSettings = await chrome.storage.local.get(['chineseSettings']);
+      console.log('中文当前存储设置:', currentSettings.chineseSettings);
+      console.log('要更新的数据 settings.data:', settings.data);
       const newSettings = {
         ...(currentSettings.chineseSettings || {}),
         ...settings.data
       };
+      console.log('中文合并后设置:', newSettings);
       
       await chrome.storage.local.set({ chineseSettings: newSettings });
       await this.notifyContentScript('updateSettings', { 
@@ -383,7 +391,7 @@ class SubtitleExtensionBackground {
       chineseSettings: {
         fontSize: 32,
         fontColor: '#ffffff', 
-        fontFamily: 'SimSun, serif',
+        fontFamily: '"Songti SC", serif',
         fontWeight: '900',
         backgroundOpacity: 20,
         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',

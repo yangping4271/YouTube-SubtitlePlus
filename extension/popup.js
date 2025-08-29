@@ -34,7 +34,7 @@ class PopupController {
         this.chineseSettings = {
             fontSize: 32,
             fontColor: '#ffffff',
-            fontFamily: 'SimSun, serif',
+            fontFamily: '"Songti SC", serif',
             fontWeight: '900',
             backgroundOpacity: 20,
             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
@@ -711,7 +711,7 @@ class PopupController {
         // 字体类型
         const fontFamily = document.getElementById('fontFamily');
         if (fontFamily) {
-            // 去掉“系统默认”，优先提供 Noto Serif
+            // 去掉"系统默认"，优先提供 Noto Serif
             const fontOptions = [
                 { value: '"Noto Serif", Georgia, serif', text: 'Noto Serif' },
                 { value: 'Arial, sans-serif', text: 'Arial' },
@@ -719,20 +719,22 @@ class PopupController {
                 { value: '"Times New Roman", serif', text: 'Times New Roman' },
                 { value: '"Courier New", monospace', text: 'Courier New' },
                 { value: '"Helvetica Neue", sans-serif', text: 'Helvetica Neue' },
-                { value: 'SimSun, serif', text: '宋体' },
+                { value: '"Songti SC", serif', text: '宋体' },
                 { value: '"Microsoft YaHei", sans-serif', text: '微软雅黑' },
                 { value: '"PingFang SC", sans-serif', text: '苹方' }
             ];
             
             fontFamily.innerHTML = fontOptions.map(option => 
-                `<option value="${option.value}">${option.text}</option>`
+                `<option value='${option.value}'>${option.text}</option>`
             ).join('');
             
-            // 初始化时使用健壮方式设置选中项
-            const targetDefault = this.currentLanguage === 'english' 
+            // 初始化时使用当前设置的字体值
+            const currentSettings = this.currentLanguage === 'english' ? this.englishSettings : this.chineseSettings;
+            const currentFontFamily = currentSettings.fontFamily || (this.currentLanguage === 'english' 
                 ? '"Noto Serif", Georgia, serif' 
-                : 'SimSun, serif';
-            this.setSelectValue(fontFamily, targetDefault);
+                : '"Songti SC", serif');
+            
+            this.setSelectValue(fontFamily, currentFontFamily);
             
             fontFamily.addEventListener('change', (e) => {
                 this.updateCurrentLanguageSetting('fontFamily', e.target.value);
@@ -899,10 +901,15 @@ class PopupController {
             if (subtitlePosition) subtitlePosition.value = settings.position;
         }
         
-        // 高级设置
-        if (settings.fontFamily) {
-            const fontFamily = document.getElementById('fontFamily');
-            if (fontFamily) this.setSelectValue(fontFamily, settings.fontFamily);
+        // 高级设置 - 字体类型
+        const fontFamily = document.getElementById('fontFamily');
+        if (fontFamily) {
+            // 如果存储的 fontFamily 为空，使用默认值
+            const fontFamilyValue = settings.fontFamily || (language === 'english' 
+                ? '"Noto Serif", Georgia, serif' 
+                : '"Songti SC", serif');
+            
+            this.setSelectValue(fontFamily, fontFamilyValue);
         }
         
         if (settings.fontWeight) {
@@ -938,7 +945,7 @@ class PopupController {
             standard: {
                 fontSize: baseSize,
                 fontColor: '#ffffff',
-                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : 'SimSun, serif',
+                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : '"Songti SC", serif',
                 fontWeight: language === 'english' ? '700' : '900',
                 backgroundOpacity: 20,
                 textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
@@ -948,7 +955,7 @@ class PopupController {
             large: {
                 fontSize: baseSize + 8,
                 fontColor: '#ffffff',
-                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : 'SimSun, serif',
+                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : '"Songti SC", serif',
                 fontWeight: '800',
                 backgroundOpacity: 25,
                 textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)',
@@ -958,7 +965,7 @@ class PopupController {
             contrast: {
                 fontSize: baseSize,
                 fontColor: '#ffff00',
-                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : 'SimSun, serif',
+                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : '"Songti SC", serif',
                 fontWeight: '900',
                 backgroundOpacity: 40,
                 textShadow: '2px 2px 8px rgba(0, 0, 0, 1)',
@@ -968,7 +975,7 @@ class PopupController {
             cinema: {
                 fontSize: baseSize + 4,
                 fontColor: '#ffffff',
-                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : 'SimSun, serif',
+                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : '"Songti SC", serif',
                 fontWeight: '600',
                 backgroundOpacity: 15,
                 textShadow: '1px 1px 3px rgba(0, 0, 0, 0.7)',
@@ -1164,7 +1171,7 @@ class PopupController {
                 const defaultChineseSettings = {
                     fontSize: 32,
                     fontColor: '#ffffff',
-                    fontFamily: 'SimSun, serif',
+                    fontFamily: '"Songti SC", serif',
                     fontWeight: '900',
                     backgroundOpacity: 20,
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
@@ -1193,7 +1200,10 @@ class PopupController {
                     try {
                         // 持久化修正，避免下次仍显示系统默认
                         await this.updateSettings({ language: 'english', data: { fontFamily: this.englishSettings.fontFamily } });
-                        await this.updateSettings({ language: 'chinese', data: { fontWeight: this.chineseSettings.fontWeight } });
+                        await this.updateSettings({ language: 'chinese', data: { 
+                            fontWeight: this.chineseSettings.fontWeight,
+                            fontFamily: this.chineseSettings.fontFamily  // 确保也包含 fontFamily
+                        } });
                     } catch (e) {
                         console.warn('持久化默认字体修正失败，不影响前端显示:', e);
                     }
@@ -1770,7 +1780,7 @@ class PopupController {
                 this.chineseSettings = {
                     fontSize: 32,
                     fontColor: '#ffffff',
-                    fontFamily: 'SimSun, serif',
+                    fontFamily: '"Songti SC", serif',
                     fontWeight: '900',
                     backgroundOpacity: 20,
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
@@ -1856,7 +1866,7 @@ class PopupController {
         const defaultChineseSettings = {
             fontSize: 32,
             fontColor: '#ffffff',
-            fontFamily: 'SimSun, serif',
+            fontFamily: '"Songti SC", serif',
             fontWeight: '900',
             backgroundOpacity: 20,
             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',

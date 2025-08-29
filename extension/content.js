@@ -28,7 +28,7 @@ class YouTubeSubtitleOverlay {
     this.chineseSettings = {
       fontSize: 32,
       fontColor: '#ffffff',
-      fontFamily: 'SimSun, serif',
+      fontFamily: '"Songti SC", serif',
       fontWeight: '900',
       backgroundOpacity: 20,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
@@ -177,7 +177,8 @@ class YouTubeSubtitleOverlay {
       console.log(`${language === 'english' ? '英文' : '中文'}字幕样式已应用:`, {
         fontSize: settings.fontSize + 'px',
         backgroundOpacity: settings.backgroundOpacity + '%',
-        fontFamily: settings.fontFamily
+        fontFamily: settings.fontFamily,
+        完整设置对象: settings
       });
     }
   }
@@ -614,7 +615,7 @@ class YouTubeSubtitleOverlay {
     this.chineseSettings = {
       fontSize: 32,
       fontColor: '#ffffff',
-      fontFamily: 'SimSun, serif',
+      fontFamily: '"Songti SC", serif',
       fontWeight: '900',
       backgroundOpacity: 20,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
@@ -652,12 +653,18 @@ class YouTubeSubtitleOverlay {
 
   // 更新独立语言设置
   updateLanguageSettings(language, settings) {
+    console.log(`=== updateLanguageSettings 调试 ===`);
+    console.log('传入的 language:', language);
+    console.log('传入的 settings:', settings);
+    console.log('settings.fontFamily 值:', settings.fontFamily, '类型:', typeof settings.fontFamily);
+    
     if (language === 'english') {
       this.englishSettings = { ...this.englishSettings, ...settings };
       console.log('英文字幕设置已更新:', settings);
     } else if (language === 'chinese') {
       this.chineseSettings = { ...this.chineseSettings, ...settings };
       console.log('中文字幕设置已更新:', settings);
+      console.log('合并后的中文设置:', this.chineseSettings);
     }
     
     // 重新应用对应语言的样式
@@ -721,7 +728,19 @@ class YouTubeSubtitleOverlay {
       }
       
       if (result.chineseSettings) {
-        this.chineseSettings = { ...this.chineseSettings, ...result.chineseSettings };
+        console.log('存储中的中文设置:', result.chineseSettings);
+        console.log('合并前的中文设置:', this.chineseSettings);
+        
+        // 过滤掉空值，避免覆盖默认设置
+        const filteredSettings = {};
+        for (const [key, value] of Object.entries(result.chineseSettings)) {
+          if (value !== '' && value !== null && value !== undefined) {
+            filteredSettings[key] = value;
+          }
+        }
+        
+        this.chineseSettings = { ...this.chineseSettings, ...filteredSettings };
+        console.log('合并后的中文设置:', this.chineseSettings);
         console.log('中文字幕设置已加载:', this.chineseSettings);
       }
       
