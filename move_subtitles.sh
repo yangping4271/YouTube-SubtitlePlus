@@ -40,8 +40,8 @@ deleted_mp3_count=0
 
 echo "🔍 搜索.ass文件..."
 
-# 查找并处理所有.ass文件
-find "$DOWNLOADS_DIR" -name "*.ass" -type f | while read -r ass_file; do
+# 查找并处理所有.ass文件（使用NUL分隔避免空格/特殊字符问题，且避免管道导致子shell使计数失效）
+while IFS= read -r -d '' ass_file; do
     # 获取文件名（不含路径）
     filename=$(basename "$ass_file")
     # 获取文件名（不含扩展名）
@@ -81,7 +81,7 @@ find "$DOWNLOADS_DIR" -name "*.ass" -type f | while read -r ass_file; do
     fi
     
     echo ""
-done
+done < <(find "$DOWNLOADS_DIR" -type f -name "*.ass" -print0)
 
 echo "✨ 处理完成！"
 echo "📊 统计结果:"

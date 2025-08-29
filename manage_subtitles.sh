@@ -1,7 +1,8 @@
 #!/bin/bash
 # YouTube SubtitlePlus 字幕文件管理脚本
 
-SUBTITLE_DIR="/Users/yangping/YouTube-SubtitlePlus/subtitles"
+# 管理的字幕目录（使用用户家目录下的固定路径）
+SUBTITLE_DIR="$HOME/subtitles"
 
 show_help() {
     echo "YouTube SubtitlePlus 字幕管理工具"
