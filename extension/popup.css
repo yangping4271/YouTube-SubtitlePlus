@@ -86,7 +86,7 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     width: 380px; /* 稍微增加宽度 */
-    height: 450px; /* 固定高度 */
+    height: 520px; /* 增加高度，给内容更多空间 */
     background: var(--bg-secondary);
     color: var(--text-primary);
     font-size: 14px;
@@ -98,11 +98,11 @@ body {
 .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
     background: var(--bg-primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
-    margin: 8px;
+    margin: 0;
     overflow: hidden;
 }
 
@@ -274,7 +274,7 @@ body {
     transition: all var(--transition-normal);
     overflow-y: auto;
     overflow-x: hidden;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
 }
 
 .tab-content.active {
@@ -283,23 +283,41 @@ body {
     transform: translateX(0);
 }
 
-/* 自定义滚动条 */
+/* 自定义滚动条 - 全局统一 */
+::-webkit-scrollbar {
+    width: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(155, 155, 155, 0.4);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(155, 155, 155, 0.6);
+}
+
+/* 内容区域滚动条 */
 .tab-content::-webkit-scrollbar {
-    width: 4px;
+    width: 5px;
 }
 
 .tab-content::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-    border-radius: 2px;
+    background: transparent;
+    border-radius: 3px;
 }
 
 .tab-content::-webkit-scrollbar-thumb {
-    background: var(--text-light);
-    border-radius: 2px;
+    background: rgba(155, 155, 155, 0.4);
+    border-radius: 3px;
 }
 
 .tab-content::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+    background: rgba(155, 155, 155, 0.6);
 }
 
 /* ========================================
@@ -308,8 +326,8 @@ body {
 
 /* 💾 字幕统计区域 */
 .subtitle-stats {
-    margin-top: var(--spacing-xl);
-    margin-bottom: var(--spacing-3xl);
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
 }
 
 /* 📊 快捷操作区 */
@@ -324,8 +342,8 @@ body {
     background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
     border: 2px solid var(--bg-tertiary);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-xl) var(--spacing-2xl);
-    min-height: 70px;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    min-height: 60px;
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
 }
@@ -456,7 +474,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: var(--spacing-md);
-    padding: var(--spacing-lg) var(--spacing-xl); /* 增加内部间距 */
+    padding: var(--spacing-md) var(--spacing-lg); /* 减小内部间距 */
     border: none;
     border-radius: var(--radius-lg); /* 增加圆角 */
     background: transparent;
@@ -467,7 +485,7 @@ body {
     transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
-    min-height: 48px; /* 增加最小高度 */
+    min-height: 42px; /* 减小最小高度 */
 }
 
 /* 处理没有图标的标签按钮 */
