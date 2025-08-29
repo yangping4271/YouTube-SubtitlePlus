@@ -325,7 +325,7 @@ body {
     border: 2px solid var(--bg-tertiary);
     border-radius: var(--radius-xl);
     padding: var(--spacing-xl) var(--spacing-2xl);
-    min-height: 80px;
+    min-height: 70px;
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
 }
@@ -352,7 +352,7 @@ body {
 }
 
 .status-flag {
-    font-size: 24px;
+    font-size: 20px;
     margin-bottom: var(--spacing-xs);
 }
 
@@ -364,7 +364,7 @@ body {
 }
 
 .status-count {
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--primary-color);
     line-height: 1;
