@@ -39,6 +39,7 @@
     --spacing-lg: 16px;
     --spacing-xl: 20px;
     --spacing-2xl: 24px;
+    --spacing-3xl: 32px;
     
     /* 🎯 圆角系统 */
     --radius-sm: 6px;
@@ -308,6 +309,7 @@ body {
 /* 💾 字幕统计区域 */
 .subtitle-stats {
     margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-3xl);
 }
 
 /* 📊 快捷操作区 */
@@ -318,12 +320,21 @@ body {
 .status-card {
     display: flex;
     align-items: center;
-    background: var(--bg-secondary);
+    justify-content: space-between;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
     border: 2px solid var(--bg-tertiary);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    min-height: 80px;
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
+}
+
+.status-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: var(--spacing-2xl);
 }
 
 .status-card:hover {
@@ -333,96 +344,96 @@ body {
 }
 
 .status-info {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    gap: var(--spacing-sm);
+}
+
+.status-flag {
+    font-size: 24px;
+    margin-bottom: var(--spacing-xs);
 }
 
 .status-label {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-xs);
     font-weight: 500;
+    letter-spacing: 0.5px;
 }
 
 .status-count {
-    font-size: 18px;
+    font-size: 26px;
     font-weight: 700;
     color: var(--primary-color);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
 }
 
 .status-divider {
-    width: 2px;
-    height: 30px;
-    background: linear-gradient(to bottom, transparent, var(--bg-tertiary), transparent);
-    margin: 0 var(--spacing-lg);
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(
+        to bottom, 
+        transparent, 
+        var(--text-light) 20%, 
+        var(--text-light) 80%, 
+        transparent
+    );
+    opacity: 0.3;
 }
 
 /* 动作按钮组 */
 .action-buttons {
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-sm);
     align-items: center;
+    margin-left: var(--spacing-xl);
 }
 
-.clear-all-btn {
-    background: var(--error-bg);
-    border: 2px solid transparent;
-    color: var(--error-color);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all var(--transition-fast);
-    font-size: 16px;
-}
-
-.clear-all-btn:hover {
-    background: var(--error-color);
-    color: var(--text-white);
-    transform: scale(1.05);
-    box-shadow: var(--shadow-md);
-}
-
-/* 强制重置按钮 */
-.force-reset-btn {
-    background: var(--warning-bg, #fef3c7);
-    border: 2px solid transparent;
-    color: var(--warning-color, #d97706);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-size: 16px;
+    font-size: 14px;
     position: relative;
 }
 
-.force-reset-btn:hover {
-    background: var(--warning-color, #d97706);
-    color: var(--text-white);
-    transform: scale(1.05) rotate(180deg);
-    box-shadow: var(--shadow-md);
+.clear-btn {
+    background: var(--error-bg);
+    color: var(--error-color);
 }
 
-/* 强制重置确认态 */
-.force-reset-btn.confirm {
+.clear-btn:hover {
+    background: var(--error-color);
+    color: var(--text-white);
+    transform: scale(1.1);
+    box-shadow: var(--shadow-sm);
+}
+
+.reset-btn {
+    background: var(--warning-bg);
+    color: var(--warning-color);
+}
+
+.reset-btn:hover {
+    background: var(--warning-color);
+    color: var(--text-white);
+    transform: scale(1.1) rotate(180deg);
+    box-shadow: var(--shadow-sm);
+}
+
+.reset-btn.confirm {
     background: var(--error-color);
     color: var(--text-white);
     animation: pulse 0.6s ease-in-out infinite alternate;
-}
-
-@keyframes pulse {
-    from { transform: scale(1); }
-    to { transform: scale(1.1); }
 }
 
 /* 📂 字幕上传模式选择 */
