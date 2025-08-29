@@ -2,6 +2,72 @@
 // YouTube字幕助手 - 现代化弹窗控制器
 // ========================================
 
+// 轻量级Toast提示系统
+class Toast {
+    static show(message, type = 'info', duration = 2000) {
+        // 创建toast元素
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        
+        // 设置样式
+        const colors = {
+            success: { bg: 'rgba(16, 185, 129, 0.9)', color: '#ffffff' },
+            error: { bg: 'rgba(239, 68, 68, 0.9)', color: '#ffffff' },
+            warning: { bg: 'rgba(245, 158, 11, 0.9)', color: '#ffffff' },
+            info: { bg: 'rgba(59, 130, 246, 0.9)', color: '#ffffff' }
+        };
+        
+        const style = colors[type] || colors.info;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(60px);
+            padding: 10px 16px;
+            background: ${style.bg};
+            color: ${style.color};
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s ease-out;
+            max-width: 300px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(8px);
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // 动画显示
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
+        
+        // 自动隐藏
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(-60px)';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+    
+    static success(message, duration = 2000) {
+        this.show(message, 'success', duration);
+    }
+    
+    static error(message, duration = 3000) {
+        this.show(message, 'error', duration);
+    }
+    
+    static warning(message, duration = 2500) {
+        this.show(message, 'warning', duration);
+    }
+}
+
 class PopupController {
     constructor() {
         this.subtitleData = [];
@@ -469,7 +535,7 @@ class PopupController {
                 throw new Error('请选择ASS格式的字幕文件');
             }
 
-            this.showStatus('正在解析ASS双语字幕文件...', 'info');
+            Toast.show('正在解析ASS双语字幕文件...', 'info');
 
             // 读取文件内容
             const content = await this.readFileAsText(file);
@@ -518,7 +584,7 @@ class PopupController {
                 // 更新自动加载状态显示
                 this.getCurrentVideoInfo();
                 
-                this.showStatus(
+                Toast.success(
                     `成功加载ASS双语字幕: ${assResult.english.length} 条英文, ${assResult.chinese.length} 条中文`, 
                     'success'
                 );
@@ -534,7 +600,7 @@ class PopupController {
             }
         } catch (error) {
             console.error('处理ASS文件失败:', error);
-            this.showStatus('ASS文件处理失败: ' + error.message, 'error');
+            Toast.error('ASS文件处理失败: ' + error.message);
         }
     }
 
@@ -584,7 +650,7 @@ class PopupController {
         
         // 注意：不再自动关闭字幕开关，让用户手动控制
         
-        this.showStatus('ASS字幕已移除', 'success');
+        Toast.success('已移除ASS字幕');
     }
 
     bindSettingsEvents() {
@@ -831,7 +897,7 @@ class PopupController {
         }
         
         // 显示保存状态
-        this.showSaveStatus();
+        // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈
     }
 
     syncSettingsToOtherLanguage() {
@@ -1009,7 +1075,7 @@ class PopupController {
         this.updatePreview();
         
         // 显示保存状态
-        this.showSaveStatus();
+        // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈
     }
 
     updatePreview() {
@@ -1228,7 +1294,7 @@ class PopupController {
             }
         } catch (error) {
             console.error('加载当前状态失败:', error);
-            this.showStatus('加载设置失败', 'error');
+            Toast.error('加载设置失败');
         }
     }
 
@@ -1246,7 +1312,7 @@ class PopupController {
                 throw new Error('不支持的文件格式，请选择 SRT、VTT 或 ASS 文件');
             }
 
-            this.showStatus(`正在解析${language === 'english' ? '英文' : '中文'}字幕文件...`, 'info');
+            Toast.show(`正在解析${language === 'english' ? '英文' : '中文'}字幕文件...`, 'info');
 
             // 读取文件内容
             const content = await this.readFileAsText(file);
@@ -1327,7 +1393,7 @@ class PopupController {
                 // 更新自动加载状态显示
                 this.getCurrentVideoInfo();
                 
-                this.showStatus(`成功加载 ${subtitleData.length} 条${language === 'english' ? '英文' : '中文'}字幕`, 'success');
+                Toast.success(`成功加载 ${subtitleData.length} 条${language === 'english' ? '英文' : '中文'}字幕`);
                 
                 // 自动启用字幕显示
                 const subtitleToggle = document.getElementById('subtitleToggle');
@@ -1341,7 +1407,7 @@ class PopupController {
 
         } catch (error) {
             console.error('处理文件失败:', error);
-            this.showStatus('文件处理失败: ' + error.message, 'error');
+            Toast.error('文件处理失败: ' + error.message);
         }
     }
 
@@ -1484,7 +1550,7 @@ class PopupController {
             }
         });
         
-        this.showStatus(`已移除${language === 'english' ? '英文' : '中文'}字幕`, 'success');
+        Toast.success(`已移除${language === 'english' ? '英文' : '中文'}字幕`);
     }
 
     // 简化版：直接调用更新方法，避免复杂重试逻辑
@@ -1718,11 +1784,11 @@ class PopupController {
                 
                 // 注意：不再自动关闭字幕开关，让用户手动控制
                 
-                this.showStatus('字幕数据已清除', 'success');
+                Toast.success('字幕数据已清除');
             }
         } catch (error) {
             console.error('清除字幕失败:', error);
-            this.showStatus('清除失败: ' + error.message, 'error');
+            Toast.error('清除失败: ' + error.message);
         }
     }
 
@@ -1732,7 +1798,7 @@ class PopupController {
             // 第一次点击：进入确认状态
             button.classList.add('confirm');
             button.title = '再次点击确认重置 (3秒后取消)';
-            this.showStatus('⚠️ 再次点击确认重置所有数据', 'warning');
+            Toast.warning('⚠️ 再次点击确认重置所有数据');
             
             // 3秒后自动取消确认状态
             setTimeout(() => {
@@ -1750,7 +1816,7 @@ class PopupController {
             button.classList.remove('confirm');
             button.disabled = true;
             
-            this.showStatus('🔄 正在执行强制重置...', 'info');
+            Toast.show('🔄 正在执行强制重置...', 'info');
             console.log('🔄 用户确认执行强制重置');
             
             // 调用background服务的强制重置方法
@@ -1797,14 +1863,14 @@ class PopupController {
                 this.updateSubtitleInfo();
                 this.updateSettingsDisplay();
                 
-                this.showStatus('🎉 强制重置完成！所有数据已重置为默认状态', 'success');
+                Toast.success('🎉 强制重置完成！所有数据已重置为默认状态');
                 console.log('✅ 强制重置完成');
             } else {
                 throw new Error(response.error || '重置失败');
             }
         } catch (error) {
             console.error('强制重置失败:', error);
-            this.showStatus('重置失败: ' + error.message, 'error');
+            Toast.error('重置失败: ' + error.message);
         } finally {
             button.disabled = false;
             button.title = '强制重置所有扩展数据（包括设置）';
@@ -1819,13 +1885,13 @@ class PopupController {
             });
             
             if (response.success) {
-                this.showStatus(enabled ? '字幕显示已开启' : '字幕显示已关闭', 'success');
+                Toast.success(enabled ? '字幕显示已开启' : '字幕显示已关闭');
             } else {
                 throw new Error(response.error);
             }
         } catch (error) {
             console.error('切换字幕状态失败:', error);
-            this.showStatus('操作失败: ' + error.message, 'error');
+            Toast.error('操作失败: ' + error.message);
             
             // 恢复开关状态
             const subtitleToggle = document.getElementById('subtitleToggle');
@@ -1841,7 +1907,7 @@ class PopupController {
             });
             
             // 显示保存状态提示
-            this.showSaveStatus();
+            // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈
             
             console.log('设置已更新并保存:', settings);
         } catch (error) {
@@ -1897,40 +1963,17 @@ class PopupController {
         
         // 更新预览和显示状态
         this.updatePreview();
-        this.showSaveStatus();
-        this.showStatus('已恢复默认设置', 'success');
-    }
-
-    showSaveStatus() {
-        const saveStatus = document.getElementById('saveStatus');
-        if (saveStatus) {
-            saveStatus.classList.add('show');
-            setTimeout(() => {
-                saveStatus.classList.remove('show');
-            }, 2000);
-        }
-    }
-
-    showStatus(message, type = 'info') {
-        const statusElement = document.getElementById('statusMessage');
-        if (statusElement) {
-            statusElement.textContent = message;
-            statusElement.className = `status-message ${type}`;
-            
-            // 3秒后隐藏
-            setTimeout(() => {
-                statusElement.className = 'status-message';
-            }, 3000);
-        }
+        // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈
+        Toast.success('已恢复默认设置');
     }
 
     showHelp() {
-        this.showStatus('使用方法：分别选择英文和中文SRT/VTT字幕文件，在YouTube视频页面启用双语显示', 'info');
+        // Toast.show('使用方法：分别选择英文和中文SRT/VTT字幕文件，在YouTube视频页面启用双语显示', 'info'); // 在关于页面不需要toast提示
         this.switchTab('about'); // 自动切换到关于页面
     }
 
     showFeedback() {
-        this.showStatus('如有问题请通过Chrome扩展商店反馈', 'info');
+        // Toast.show('如有问题请通过Chrome扩展商店反馈', 'info'); // 不需要toast提示
         this.switchTab('about'); // 自动切换到关于页面
     }
 
@@ -2026,7 +2069,7 @@ class PopupController {
                 }
             });
 
-            this.showStatus(
+            Toast.show(
                 enabled ? '自动加载已启用' : '自动加载已禁用', 
                 enabled ? 'success' : 'info'
             );
@@ -2037,7 +2080,7 @@ class PopupController {
 
         } catch (error) {
             console.error('切换自动加载状态失败:', error);
-            this.showStatus('设置失败: ' + error.message, 'error');
+            Toast.error('设置失败: ' + error.message);
         }
     }
 
@@ -2145,9 +2188,9 @@ class PopupController {
 
         // 显示测试结果
         if (this.serverStatus === 'connected') {
-            this.showStatus('服务器连接正常', 'success');
+            Toast.success('服务器连接正常');
         } else {
-            this.showStatus('服务器连接失败，请检查服务器是否启动', 'error');
+            Toast.error('服务器连接失败，请检查服务器是否启动');
         }
     }
 
