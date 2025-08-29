@@ -198,32 +198,46 @@ class YouTubeSubtitleOverlay {
 
   onVideoChange() {
     const video = document.querySelector('video');
-    if (video && video !== this.currentVideo) {
+    const videoElementChanged = video && video !== this.currentVideo;
+    const newVideoId = this.getVideoId();
+    const videoIdChanged = newVideoId && newVideoId !== this.currentVideoId;
+
+    // 当 <video> 元素发生变化时，重新绑定监听与插入覆盖层
+    if (videoElementChanged) {
       this.currentVideo = video;
       this.setupVideoListeners();
       this.insertOverlayToPage();
       this.setupResizeListener();
-      
-      // 视频切换时重新加载对应的字幕数据
+    }
+
+    // 当视频ID发生变化（即使video元素未变）或元素变更时，刷新字幕缓存并触发自动加载
+    if (videoIdChanged || videoElementChanged) {
+      // 避免显示旧字幕
+      this.hideSubtitle();
+
+      // 清空旧数据，避免残留
+      this.subtitleData = [];
+      this.englishSubtitles = [];
+      this.chineseSubtitles = [];
+
+      // 根据新的视频ID从存储加载已缓存的字幕
       this.loadSubtitleData();
-      
-      // 重置自动加载状态，允许页面刷新时重新加载字幕
+
+      // 重置自动加载状态，允许重新拉取
       this.autoLoadAttempted = false;
-      
-      console.log('🔄 页面/视频切换检测到，当前状态:', {
-        视频ID: this.getVideoId(),
+
+      console.log('🔄 页面/视频切换检测到，准备刷新字幕:', {
+        新视频ID: newVideoId,
+        旧视频ID: this.currentVideoId,
         自动加载已启用: this.autoLoadEnabled,
-        已尝试加载: this.autoLoadAttempted,
-        英文字幕: this.englishSubtitles.length,
-        中文字幕: this.chineseSubtitles.length,
-        单语字幕: this.subtitleData.length
+        已尝试加载: this.autoLoadAttempted
       });
-      
-      // 检查并自动加载字幕
+
+      // 延迟尝试自动加载，确保页面元素稳定
       setTimeout(() => {
         console.log('🚀 准备尝试自动加载字幕...');
         this.attemptAutoLoad();
-      }, 500); // 延迟500ms确保页面完全加载
+      }, 500);
     }
   }
 
@@ -232,6 +246,9 @@ class YouTubeSubtitleOverlay {
     
     if (this.onTimeUpdate) {
       this.currentVideo.removeEventListener('timeupdate', this.onTimeUpdate);
+    }
+    if (this.onEnded) {
+      this.currentVideo.removeEventListener('ended', this.onEnded);
     }
     
     this.onTimeUpdate = () => {
@@ -242,7 +259,13 @@ class YouTubeSubtitleOverlay {
       }
     };
     
+    // 在一个视频播放结束且自动播放即将切换时，先隐藏当前字幕，避免残留
+    this.onEnded = () => {
+      this.hideSubtitle();
+    };
+    
     this.currentVideo.addEventListener('timeupdate', this.onTimeUpdate);
+    this.currentVideo.addEventListener('ended', this.onEnded);
     console.log('字幕监听器已绑定 - 双语支持');
     
     if (this.isEnabled) {
@@ -360,6 +383,15 @@ class YouTubeSubtitleOverlay {
 
   repositionSubtitle() {
     if (!this.overlayElement || !this.currentVideo) return;
+
+    // 若当前无任何字幕文本，保持容器隐藏，避免空容器被误显
+    const englishEl = this.overlayElement.querySelector('#englishSubtitle');
+    const chineseEl = this.overlayElement.querySelector('#chineseSubtitle');
+    const hasText = !!((englishEl && englishEl.textContent && englishEl.textContent.trim()) ||
+                       (chineseEl && chineseEl.textContent && chineseEl.textContent.trim()));
+    if (!hasText) {
+      this.overlayElement.style.display = 'none';
+    }
     
     const videoRect = this.currentVideo.getBoundingClientRect();
     const isFullscreen = document.fullscreenElement !== null;
@@ -507,7 +539,22 @@ class YouTubeSubtitleOverlay {
   }
 
   hideSubtitle() {
+    if (!this.overlayElement) return;
+    // 隐藏容器
     this.overlayElement.style.display = 'none';
+    this.overlayElement.style.visibility = 'hidden';
+    this.overlayElement.style.opacity = '0';
+    // 清空文本，避免下一次被误显示残留内容
+    const englishSubtitle = this.overlayElement.querySelector('#englishSubtitle');
+    const chineseSubtitle = this.overlayElement.querySelector('#chineseSubtitle');
+    if (englishSubtitle) {
+      englishSubtitle.textContent = '';
+      englishSubtitle.style.display = 'none';
+    }
+    if (chineseSubtitle) {
+      chineseSubtitle.textContent = '';
+      chineseSubtitle.style.display = 'none';
+    }
   }
 
   findCurrentSubtitle(currentTime, subtitles = null) {
