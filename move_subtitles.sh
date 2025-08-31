@@ -81,7 +81,7 @@ while IFS= read -r -d '' ass_file; do
     fi
     
     echo ""
-done < <(find "$DOWNLOADS_DIR" -type f -name "*.ass" -print0)
+done < <(find "$DOWNLOADS_DIR" -maxdepth 1 -type f -name "*.ass" -print0)
 
 echo "✨ 处理完成！"
 echo "📊 统计结果:"
