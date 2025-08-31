@@ -33,8 +33,9 @@ YouTube-SubtitlePlus/
 ├── subtitles/                  # 字幕文件存储
 ├── docs/                       # 项目文档
 ├── examples/                   # 示例文件
-├── start_server.sh            # 服务器启动脚本
-└── stop_server.sh             # 服务器停止脚本
+├── scripts/
+│   ├── server/              # 后台服务管理脚本
+│   └── subtitles/           # 字幕文件管理脚本
 ```
 
 ## 开发环境配置
@@ -72,7 +73,7 @@ uv sync  # uv 自动创建虚拟环境并安装依赖
 2. **扩展重载**：在 chrome://extensions/ 中点击刷新按钮
 3. **功能测试**：打开 YouTube 页面测试功能
 4. **调试分析**：使用浏览器开发者工具查看 Console 输出
-5. **服务器测试**：运行 `./start_server.sh` 测试自动加载功能
+5. **服务器测试**：运行 `./daemon_server.sh` 启动后台守护服务
 
 ## 核心模块架构
 
@@ -258,7 +259,7 @@ dependencies = [
 
 ### 智能启动系统
 ```bash
-# start_server.sh - 实际启动脚本特性
+# scripts/server/ - 精简的服务器管理脚本
 #!/bin/bash
 
 # 1. 自动检测 uv 并优雅降级到 pip
@@ -438,7 +439,8 @@ class PerformanceMonitor {
 #### 自动加载失败
 ```bash
 # 服务器诊断
-./start_server.sh  # 检查服务器是否正常启动
+./daemon_server.sh  # 启动后台守护服务
+./daemon_status.sh   # 检查服务状态
 curl http://127.0.0.1:8888/health  # 健康检查 (实际端口: 8888)
 ls subtitles/  # 确认字幕文件存在且命名正确
 ```
