@@ -87,18 +87,23 @@ show_info() {
 }
 
 delete_subtitle() {
-    local video_id="$1"
-    if [ -z "$video_id" ]; then
-        echo "❌ 请提供视频ID"
+    local search_pattern="$1"
+    if [ -z "$search_pattern" ]; then
+        echo "❌ 请提供视频ID或文件名模式"
         return 1
     fi
     
-    echo "🗑️  删除字幕: $video_id"
+    echo "🗑️  删除匹配文件: *${search_pattern}*"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
+    if [ ! -d "$SUBTITLE_DIR" ]; then
+        echo "❌ 字幕目录不存在: $SUBTITLE_DIR"
+        return 1
+    fi
+    
     local deleted=0
-    for ext in ass srt vtt; do
-        local file="$SUBTITLE_DIR/${video_id}.${ext}"
+    # 使用通配符匹配所有包含搜索模式的文件
+    for file in "$SUBTITLE_DIR"/*${search_pattern}*.{ass,srt,vtt,mp3}; do
         if [ -f "$file" ]; then
             echo "🔄 删除文件: $(basename "$file")"
             rm "$file"
@@ -111,8 +116,28 @@ delete_subtitle() {
         fi
     done
     
+    # 如果没有找到带扩展名的文件，也检查没有扩展名模式的匹配
     if [ $deleted -eq 0 ]; then
-        echo "❌ 未找到视频ID为 '$video_id' 的字幕文件"
+        for file in "$SUBTITLE_DIR"/*${search_pattern}*; do
+            if [ -f "$file" ]; then
+                local basename=$(basename "$file")
+                local ext="${basename##*.}"
+                if [[ "$ext" =~ ^(ass|srt|vtt|mp3)$ ]]; then
+                    echo "🔄 删除文件: $basename"
+                    rm "$file"
+                    if [ $? -eq 0 ]; then
+                        echo "✅ 删除成功: $basename"
+                        ((deleted++))
+                    else
+                        echo "❌ 删除失败: $basename"
+                    fi
+                fi
+            fi
+        done
+    fi
+    
+    if [ $deleted -eq 0 ]; then
+        echo "❌ 未找到包含 '$search_pattern' 的文件"
         return 1
     else
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -121,17 +146,17 @@ delete_subtitle() {
 }
 
 clean_all() {
-    echo "🧹 清理所有字幕文件"
+    echo "🧹 清理所有字幕和音频文件"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
-    read -p "⚠️  确定要删除所有字幕文件吗？(输入 'yes' 确认): " confirm
+    read -p "⚠️  确定要删除所有字幕和音频文件吗？(输入 'yes' 确认): " confirm
     if [ "$confirm" != "yes" ]; then
         echo "❌ 已取消操作"
         return 1
     fi
     
     local deleted=0
-    for ext in ass srt vtt; do
+    for ext in ass srt vtt mp3; do
         for file in "$SUBTITLE_DIR"/*.${ext}; do
             if [ -f "$file" ]; then
                 echo "🔄 删除: $(basename "$file")"
