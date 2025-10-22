@@ -93,8 +93,7 @@ class PopupController {
             fontWeight: '700',
             backgroundOpacity: 20,
             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-            lineHeight: 1.3,
-            position: 'bottom'
+            lineHeight: 1.3
         };
         
         this.chineseSettings = {
@@ -104,8 +103,7 @@ class PopupController {
             fontWeight: '900',
             backgroundOpacity: 20,
             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-            lineHeight: 1.4,
-            position: 'bottom'
+            lineHeight: 1.4
         };
         
         this.syncSettings = false;
@@ -761,14 +759,6 @@ class PopupController {
             });
         }
 
-        // 字幕位置
-        const subtitlePosition = document.getElementById('subtitlePosition');
-        if (subtitlePosition) {
-            subtitlePosition.addEventListener('change', (e) => {
-                this.updateCurrentLanguageSetting('position', e.target.value);
-            });
-        }
-
         // 高级设置控件
         this.bindAdvancedControls();
     }
@@ -960,13 +950,7 @@ class PopupController {
             if (bgOpacity) bgOpacity.value = settings.backgroundOpacity;
             if (bgOpacityValue) bgOpacityValue.textContent = settings.backgroundOpacity + '%';
         }
-        
-        // 字幕位置
-        if (settings.position) {
-            const subtitlePosition = document.getElementById('subtitlePosition');
-            if (subtitlePosition) subtitlePosition.value = settings.position;
-        }
-        
+
         // 高级设置 - 字体类型
         const fontFamily = document.getElementById('fontFamily');
         if (fontFamily) {
@@ -1015,8 +999,7 @@ class PopupController {
                 fontWeight: language === 'english' ? '700' : '900',
                 backgroundOpacity: 20,
                 textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                lineHeight: language === 'english' ? 1.3 : 1.4,
-                position: 'bottom'
+                lineHeight: language === 'english' ? 1.3 : 1.4
             },
             large: {
                 fontSize: baseSize + 8,
@@ -1025,8 +1008,7 @@ class PopupController {
                 fontWeight: '800',
                 backgroundOpacity: 25,
                 textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)',
-                lineHeight: language === 'english' ? 1.3 : 1.4,
-                position: 'bottom'
+                lineHeight: language === 'english' ? 1.3 : 1.4
             },
             contrast: {
                 fontSize: baseSize,
@@ -1035,8 +1017,7 @@ class PopupController {
                 fontWeight: '900',
                 backgroundOpacity: 40,
                 textShadow: '2px 2px 8px rgba(0, 0, 0, 1)',
-                lineHeight: language === 'english' ? 1.2 : 1.3,
-                position: 'bottom'
+                lineHeight: language === 'english' ? 1.2 : 1.3
             },
             cinema: {
                 fontSize: baseSize + 4,
@@ -1045,8 +1026,7 @@ class PopupController {
                 fontWeight: '600',
                 backgroundOpacity: 15,
                 textShadow: '1px 1px 3px rgba(0, 0, 0, 0.7)',
-                lineHeight: language === 'english' ? 1.4 : 1.5,
-                position: 'bottom'
+                lineHeight: language === 'english' ? 1.4 : 1.5
             }
         };
         
@@ -1230,8 +1210,7 @@ class PopupController {
                     fontWeight: '700',
                     backgroundOpacity: 20,
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.3,
-                    position: 'bottom'
+                    lineHeight: 1.3
                 };
                 
                 const defaultChineseSettings = {
@@ -1241,8 +1220,7 @@ class PopupController {
                     fontWeight: '900',
                     backgroundOpacity: 20,
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.4,
-                    position: 'bottom'
+                    lineHeight: 1.4
                 };
                 
                 // 使用默认设置作为后备：当对象为空时回退到默认
@@ -1839,8 +1817,7 @@ class PopupController {
                     fontWeight: '700',
                     backgroundOpacity: 20,
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.3,
-                    position: 'bottom'
+                    lineHeight: 1.3
                 };
                 
                 this.chineseSettings = {
@@ -1850,8 +1827,7 @@ class PopupController {
                     fontWeight: '900',
                     backgroundOpacity: 20,
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.4,
-                    position: 'bottom'
+                    lineHeight: 1.4
                 };
                 
                 this.syncSettings = false;
@@ -1924,8 +1900,7 @@ class PopupController {
             fontWeight: '700',
             backgroundOpacity: 20,
             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-            lineHeight: 1.3,
-            position: 'bottom'
+            lineHeight: 1.3
         };
         
         // 默认中文设置 (32px基础)
@@ -1936,8 +1911,7 @@ class PopupController {
             fontWeight: '900',
             backgroundOpacity: 20,
             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-            lineHeight: 1.4,
-            position: 'bottom'
+            lineHeight: 1.4
         };
         
         // 更新设置对象

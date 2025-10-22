@@ -49,8 +49,7 @@ class SubtitleExtensionBackground {
           fontWeight: '700',
           backgroundOpacity: 20,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-          lineHeight: 1.3,
-          position: 'bottom'
+          lineHeight: 1.3
         },
         // 中文字幕独立设置 - 针对中文优化的设置
         chineseSettings: {
@@ -60,8 +59,7 @@ class SubtitleExtensionBackground {
           fontWeight: '900',
           backgroundOpacity: 20,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-          lineHeight: 1.4,
-          position: 'bottom'
+          lineHeight: 1.4
         },
         // 同步设置选项
         syncSettings: false,
@@ -384,8 +382,7 @@ class SubtitleExtensionBackground {
         fontWeight: '700',
         backgroundOpacity: 20,
         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-        lineHeight: 1.3,
-        position: 'bottom'
+        lineHeight: 1.3
       },
       // 中文字幕独立设置 - 针对中文优化的设置
       chineseSettings: {
@@ -395,8 +392,7 @@ class SubtitleExtensionBackground {
         fontWeight: '900',
         backgroundOpacity: 20,
         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-        lineHeight: 1.4,
-        position: 'bottom'
+        lineHeight: 1.4
       },
       // 同步设置选项
       syncSettings: false,

@@ -21,8 +21,7 @@ class YouTubeSubtitleOverlay {
       fontWeight: '700',
       backgroundOpacity: 0,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.8,
-      position: 'bottom'
+      lineHeight: 1.8
     };
 
     this.chineseSettings = {
@@ -32,8 +31,7 @@ class YouTubeSubtitleOverlay {
       fontWeight: '900',
       backgroundOpacity: 0,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.6,
-      position: 'bottom'
+      lineHeight: 1.6
     };
     
     this.init();
@@ -719,8 +717,7 @@ class YouTubeSubtitleOverlay {
       fontWeight: '700',
       backgroundOpacity: 0,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.8,
-      position: 'bottom'
+      lineHeight: 1.8
     };
 
     this.chineseSettings = {
@@ -730,8 +727,7 @@ class YouTubeSubtitleOverlay {
       fontWeight: '900',
       backgroundOpacity: 0,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.6,
-      position: 'bottom'
+      lineHeight: 1.6
     };
     
     // 重置自动加载设置
