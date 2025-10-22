@@ -171,6 +171,7 @@ class YouTubeSubtitleOverlay {
         textAlign: 'center',
         whiteSpace: 'pre-wrap',
         wordBreak: 'normal',
+        textWrap: 'balance',
         maxWidth: '100%',
         boxSizing: 'border-box',
         margin: '0'
