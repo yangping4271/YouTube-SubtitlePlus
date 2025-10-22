@@ -136,7 +136,8 @@ class YouTubeSubtitleOverlay {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '2px'  // 适当间距
+        gap: '2px',
+        width: '100%'
       });
     }
     
@@ -154,7 +155,7 @@ class YouTubeSubtitleOverlay {
     const settings = language === 'english' ? this.englishSettings : this.chineseSettings;
     const elementId = language === 'english' ? '#englishSubtitle' : '#chineseSubtitle';
     const element = this.overlayElement.querySelector(elementId);
-    
+
     if (element && settings) {
       Object.assign(element.style, {
         fontSize: settings.fontSize + 'px',
@@ -169,16 +170,10 @@ class YouTubeSubtitleOverlay {
         display: 'inline-block',
         textAlign: 'center',
         whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word',
+        wordBreak: 'normal',
         maxWidth: '100%',
+        boxSizing: 'border-box',
         margin: '0'
-      });
-      
-      console.log(`${language === 'english' ? '英文' : '中文'}字幕样式已应用:`, {
-        fontSize: settings.fontSize + 'px',
-        backgroundOpacity: settings.backgroundOpacity + '%',
-        fontFamily: settings.fontFamily,
-        完整设置对象: settings
       });
     }
   }
@@ -384,6 +379,21 @@ class YouTubeSubtitleOverlay {
   repositionSubtitle() {
     if (!this.overlayElement || !this.currentVideo) return;
 
+    // 🔧 强制重新应用容器和语言样式，确保最新设置生效
+    const container = this.overlayElement.querySelector('.subtitle-container');
+    if (container) {
+      Object.assign(container.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '2px',
+        width: '100%'
+      });
+    }
+
+    this.applyLanguageStyles('english');
+    this.applyLanguageStyles('chinese');
+
     // 若当前无任何字幕文本，保持容器隐藏，避免空容器被误显
     const englishEl = this.overlayElement.querySelector('#englishSubtitle');
     const chineseEl = this.overlayElement.querySelector('#chineseSubtitle');
@@ -408,7 +418,8 @@ class YouTubeSubtitleOverlay {
       this.overlayElement.style.left = '50%';
       this.overlayElement.style.transform = 'translateX(-50%)';
       this.overlayElement.style.bottom = '80px';
-      this.overlayElement.style.maxWidth = '90%';
+      this.overlayElement.style.width = '80%';
+      this.overlayElement.style.maxWidth = 'none';
       this.overlayElement.style.zIndex = '9999';
     } else if (isMiniPlayer) {
       // 迷你播放器：隐藏字幕
@@ -431,7 +442,8 @@ class YouTubeSubtitleOverlay {
         this.overlayElement.style.left = '50%';
         this.overlayElement.style.transform = 'translateX(-50%)';
         this.overlayElement.style.bottom = isTheaterMode ? '70px' : '60px';
-        this.overlayElement.style.maxWidth = '90%';
+        this.overlayElement.style.width = '80%';
+        this.overlayElement.style.maxWidth = 'none';
         
         // 确保字幕容器在播放器内部
         if (!playerContainer.contains(this.overlayElement)) {
@@ -443,7 +455,8 @@ class YouTubeSubtitleOverlay {
         this.overlayElement.style.left = '50%';
         this.overlayElement.style.transform = 'translateX(-50%)';
         this.overlayElement.style.bottom = (window.innerHeight - videoRect.bottom + 60) + 'px';
-        this.overlayElement.style.maxWidth = Math.min(videoRect.width * 0.9, 800) + 'px';
+        this.overlayElement.style.width = Math.min(videoRect.width * 0.8, 800) + 'px';
+        this.overlayElement.style.maxWidth = 'none';
       }
     }
     
@@ -514,23 +527,23 @@ class YouTubeSubtitleOverlay {
   showBilingualSubtitle(englishText, chineseText) {
     const englishSubtitle = this.overlayElement.querySelector('#englishSubtitle');
     const chineseSubtitle = this.overlayElement.querySelector('#chineseSubtitle');
-    
+
     if (englishSubtitle) {
       englishSubtitle.textContent = englishText;
       englishSubtitle.style.display = englishText ? 'inline-block' : 'none';
     }
-    
+
     if (chineseSubtitle) {
-      chineseSubtitle.textContent = chineseText;  
+      chineseSubtitle.textContent = chineseText;
       chineseSubtitle.style.display = chineseText ? 'inline-block' : 'none';
     }
-    
+
     this.overlayElement.style.display = 'block';
     this.overlayElement.style.position = 'absolute';
     this.overlayElement.style.zIndex = '40'; // 精确的中等层级
     this.overlayElement.style.visibility = 'visible';
     this.overlayElement.style.opacity = '1';
-    
+
     this.repositionSubtitle();
   }
 
@@ -1068,6 +1081,113 @@ class YouTubeSubtitleOverlay {
                .replace(/\\n/g, '\n')
                .trim();
   }
+
+  // 📊 测量并记录字幕宽度占屏幕/视频的百分比
+  logSubtitleWidthPercentage(englishText, chineseText) {
+    if (!this.overlayElement || !this.currentVideo) return;
+
+    const englishEl = this.overlayElement.querySelector('#englishSubtitle');
+    const chineseEl = this.overlayElement.querySelector('#chineseSubtitle');
+    const container = this.overlayElement.querySelector('.subtitle-container');
+    const videoRect = this.currentVideo.getBoundingClientRect();
+    const playerContainer = document.querySelector('#movie_player');
+    const playerRect = playerContainer ? playerContainer.getBoundingClientRect() : videoRect;
+
+    // 获取实际计算后的样式
+    const overlayComputed = window.getComputedStyle(this.overlayElement);
+    const containerComputed = container ? window.getComputedStyle(container) : null;
+    const englishComputed = englishEl ? window.getComputedStyle(englishEl) : null;
+    const chineseComputed = chineseEl ? window.getComputedStyle(chineseEl) : null;
+
+    // 检查是否有多行显示（检测换行）
+    const hasMultilineEnglish = englishEl && englishText && englishText.length > 0 &&
+                                (englishEl.scrollHeight > englishEl.clientHeight ||
+                                 englishEl.innerHTML.includes('\n'));
+    const hasMultilineChinese = chineseEl && chineseText && chineseText.length > 0 &&
+                                (chineseEl.scrollHeight > chineseEl.clientHeight ||
+                                 chineseEl.innerHTML.includes('\n'));
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📊 字幕宽度占比分析');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // 视频和播放器尺寸
+    console.log('🎬 视频/播放器尺寸:');
+    console.log(`  视频宽度: ${Math.round(videoRect.width)}px`);
+    console.log(`  播放器宽度: ${Math.round(playerRect.width)}px`);
+    console.log(`  屏幕宽度: ${window.innerWidth}px`);
+
+    // 🔍 外层容器诊断
+    const overlayRect = this.overlayElement.getBoundingClientRect();
+    console.log('\n🔍 外层容器 (#youtube-local-subtitle-overlay):');
+    console.log(`  实际宽度: ${Math.round(overlayRect.width)}px`);
+    console.log(`  CSS maxWidth: ${this.overlayElement.style.maxWidth} (设置值)`);
+    console.log(`  计算后 maxWidth: ${overlayComputed.maxWidth}`);
+    console.log(`  计算后 width: ${overlayComputed.width}`);
+    console.log(`  占播放器: ${(overlayRect.width / playerRect.width * 100).toFixed(2)}%`);
+
+    // 字幕容器尺寸
+    if (container && containerComputed) {
+      const containerRect = container.getBoundingClientRect();
+      const containerWidthVsOverlay = (containerRect.width / overlayRect.width * 100).toFixed(2);
+      const containerWidthVsPlayer = (containerRect.width / playerRect.width * 100).toFixed(2);
+
+      console.log('\n📦 字幕容器 (.subtitle-container):');
+      console.log(`  实际宽度: ${Math.round(containerRect.width)}px`);
+      console.log(`  CSS width: ${container.style.width} (设置值)`);
+      console.log(`  计算后 width: ${containerComputed.width}`);
+      console.log(`  计算后 display: ${containerComputed.display}`);
+      console.log(`  占外层容器: ${containerWidthVsOverlay}%`);
+      console.log(`  占播放器: ${containerWidthVsPlayer}%`);
+    }
+
+    // 英文字幕详情
+    if (englishEl && englishText && englishComputed) {
+      const englishRect = englishEl.getBoundingClientRect();
+      const englishWidthVsVideo = (englishRect.width / videoRect.width * 100).toFixed(2);
+      const englishWidthVsPlayer = (englishRect.width / playerRect.width * 100).toFixed(2);
+
+      console.log('\n🇬🇧 英文字幕 (#englishSubtitle):');
+      console.log(`  文本: "${englishText.substring(0, 50)}${englishText.length > 50 ? '...' : ''}"`);
+      console.log(`  文本长度: ${englishText.length} 字符`);
+      console.log(`  实际宽度: ${Math.round(englishRect.width)}px`);
+      console.log(`  实际高度: ${Math.round(englishRect.height)}px`);
+      console.log(`  占视频宽度: ${englishWidthVsVideo}%`);
+      console.log(`  占播放器宽度: ${englishWidthVsPlayer}%`);
+      console.log(`  是否多行: ${hasMultilineEnglish ? '✅ 是' : '❌ 否'}`);
+      console.log(`  CSS display: ${englishEl.style.display} (设置) → ${englishComputed.display} (计算)`);
+      console.log(`  CSS width: ${englishEl.style.width} (设置) → ${englishComputed.width} (计算)`);
+      console.log(`  CSS maxWidth: ${englishEl.style.maxWidth || 'none'} (设置) → ${englishComputed.maxWidth} (计算)`);
+    }
+
+    // 中文字幕详情
+    if (chineseEl && chineseText && chineseComputed) {
+      const chineseRect = chineseEl.getBoundingClientRect();
+      const chineseWidthVsVideo = (chineseRect.width / videoRect.width * 100).toFixed(2);
+      const chineseWidthVsPlayer = (chineseRect.width / playerRect.width * 100).toFixed(2);
+
+      console.log('\n🇨🇳 中文字幕 (#chineseSubtitle):');
+      console.log(`  文本: "${chineseText.substring(0, 50)}${chineseText.length > 50 ? '...' : ''}"`);
+      console.log(`  文本长度: ${chineseText.length} 字符`);
+      console.log(`  实际宽度: ${Math.round(chineseRect.width)}px`);
+      console.log(`  实际高度: ${Math.round(chineseRect.height)}px`);
+      console.log(`  占视频宽度: ${chineseWidthVsVideo}%`);
+      console.log(`  占播放器宽度: ${chineseWidthVsPlayer}%`);
+      console.log(`  是否多行: ${hasMultilineChinese ? '✅ 是' : '❌ 否'}`);
+      console.log(`  CSS display: ${chineseEl.style.display} (设置) → ${chineseComputed.display} (计算)`);
+      console.log(`  CSS width: ${chineseEl.style.width} (设置) → ${chineseComputed.width} (计算)`);
+      console.log(`  CSS maxWidth: ${chineseEl.style.maxWidth || 'none'} (设置) → ${chineseComputed.maxWidth} (计算)`);
+    }
+
+    // 播放器模式检测
+    const isFullscreen = document.fullscreenElement !== null;
+    const isTheaterMode = document.querySelector('.ytp-size-large') !== null;
+    console.log('\n🎮 播放器模式:');
+    console.log(`  全屏: ${isFullscreen ? '✅' : '❌'}`);
+    console.log(`  剧场: ${isTheaterMode ? '✅' : '❌'}`);
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  }
 }
 
 // 字幕解析器
@@ -1570,6 +1690,29 @@ window.testSubtitleWindowResize = () => {
       console.log('🔄 测试完成，字幕已隐藏');
     }
   }, 10000);
-  
+
+  return true;
+};
+
+// 📊 手动查看字幕宽度分析（需要时在 Console 调用）
+window.logSubtitleWidth = () => {
+  if (!subtitleOverlayInstance) {
+    console.log('❌ 字幕实例不存在');
+    return false;
+  }
+
+  const instance = subtitleOverlayInstance;
+  const englishEl = instance.overlayElement?.querySelector('#englishSubtitle');
+  const chineseEl = instance.overlayElement?.querySelector('#chineseSubtitle');
+
+  const englishText = englishEl?.textContent || '';
+  const chineseText = chineseEl?.textContent || '';
+
+  if (!englishText && !chineseText) {
+    console.log('⚠️  当前没有显示字幕');
+    return false;
+  }
+
+  instance.logSubtitleWidthPercentage(englishText, chineseText);
   return true;
 };
