@@ -804,28 +804,6 @@ class PopupController {
                 this.updateCurrentLanguageSetting('fontWeight', e.target.value);
             });
         }
-
-        // 文字阴影
-        const textShadow = document.getElementById('textShadow');
-        const textShadowValue = document.getElementById('textShadowValue');
-        if (textShadow && textShadowValue) {
-            textShadow.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
-                textShadowValue.textContent = value + 'px';
-                this.updateCurrentLanguageSetting('textShadow', `${value}px ${value}px ${value * 2}px rgba(0, 0, 0, 0.8)`);
-            });
-        }
-
-        // 行高
-        const lineHeight = document.getElementById('lineHeight');
-        const lineHeightValue = document.getElementById('lineHeightValue');
-        if (lineHeight && lineHeightValue) {
-            lineHeight.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value);
-                lineHeightValue.textContent = value.toString();
-                this.updateCurrentLanguageSetting('lineHeight', value);
-            });
-        }
     }
 
     // ========================================
@@ -966,23 +944,7 @@ class PopupController {
             const fontWeight = document.getElementById('fontWeight');
             if (fontWeight) fontWeight.value = settings.fontWeight;
         }
-        
-        if (settings.textShadow) {
-            const match = settings.textShadow.match(/(\\d+)px/);
-            const shadowValue = match ? parseInt(match[1]) : 2;
-            const textShadow = document.getElementById('textShadow');
-            const textShadowValue = document.getElementById('textShadowValue');
-            if (textShadow) textShadow.value = shadowValue;
-            if (textShadowValue) textShadowValue.textContent = shadowValue + 'px';
-        }
-        
-        if (settings.lineHeight !== undefined) {
-            const lineHeight = document.getElementById('lineHeight');
-            const lineHeightValue = document.getElementById('lineHeightValue');
-            if (lineHeight) lineHeight.value = settings.lineHeight;
-            if (lineHeightValue) lineHeightValue.textContent = settings.lineHeight.toString();
-        }
-        
+
         // 更新预览
         this.updatePreview();
     }
