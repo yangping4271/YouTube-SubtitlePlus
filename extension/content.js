@@ -13,26 +13,26 @@ class YouTubeSubtitleOverlay {
     this.currentVideoId = null;
     this.autoLoadAttempted = false;
     
-    // 独立的语言设置 (32px基础，20%背景透明度)
+    // 独立的语言设置 (32px基础，0%背景透明度)
     this.englishSettings = {
       fontSize: 34,
       fontColor: '#ffffff',
       fontFamily: '"Noto Serif", Georgia, serif',
       fontWeight: '700',
-      backgroundOpacity: 20,
+      backgroundOpacity: 0,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.3,
+      lineHeight: 1.8,
       position: 'bottom'
     };
-    
+
     this.chineseSettings = {
       fontSize: 32,
       fontColor: '#ffffff',
       fontFamily: '"Songti SC", serif',
       fontWeight: '900',
-      backgroundOpacity: 20,
+      backgroundOpacity: 0,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.4,
+      lineHeight: 1.6,
       position: 'bottom'
     };
     
@@ -107,12 +107,16 @@ class YouTubeSubtitleOverlay {
     this.overlayElement.id = 'youtube-local-subtitle-overlay';
     this.overlayElement.innerHTML = `
       <div class="subtitle-container">
-        <div class="english-subtitle" id="englishSubtitle"></div>
-        <div class="chinese-subtitle" id="chineseSubtitle"></div>
+        <div class="english-wrapper">
+          <span class="english-subtitle" id="englishSubtitle"></span>
+        </div>
+        <div class="chinese-wrapper">
+          <span class="chinese-subtitle" id="chineseSubtitle"></span>
+        </div>
       </div>
     `;
     this.applyStyles();
-    console.log('双语字幕容器已创建');
+    console.log('双语字幕容器已创建 - 嵌套布局');
   }
 
   applyStyles() {
@@ -136,17 +140,39 @@ class YouTubeSubtitleOverlay {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '2px',
+        gap: '0px',
         width: '100%'
       });
     }
-    
+
+    // wrapper 样式 - 控制垂直布局和平衡换行
+    const englishWrapper = this.overlayElement.querySelector('.english-wrapper');
+    const chineseWrapper = this.overlayElement.querySelector('.chinese-wrapper');
+
+    if (englishWrapper) {
+      Object.assign(englishWrapper.style, {
+        display: 'block',
+        textAlign: 'center',
+        width: '100%',
+        textWrap: 'balance'
+      });
+    }
+
+    if (chineseWrapper) {
+      Object.assign(chineseWrapper.style, {
+        display: 'block',
+        textAlign: 'center',
+        width: '100%',
+        textWrap: 'balance'
+      });
+    }
+
     // 应用独立的英文字幕样式
     this.applyLanguageStyles('english');
-    
+
     // 应用独立的中文字幕样式
     this.applyLanguageStyles('chinese');
-    
+
     console.log('字幕样式已应用 - 独立语言样式，等待插入到播放器');
   }
 
@@ -165,13 +191,15 @@ class YouTubeSubtitleOverlay {
         textShadow: settings.textShadow,
         lineHeight: settings.lineHeight,
         background: `rgba(0, 0, 0, ${settings.backgroundOpacity / 100})`,
-        padding: '2px 6px',
+        padding: '0 6px',
         borderRadius: '3px',
-        display: 'inline-block',
+        display: 'inline',
         textAlign: 'center',
         whiteSpace: 'pre-wrap',
         wordBreak: 'normal',
         textWrap: 'balance',
+        boxDecorationBreak: 'clone',
+        WebkitBoxDecorationBreak: 'clone',
         maxWidth: '100%',
         boxSizing: 'border-box',
         margin: '0'
@@ -380,15 +408,37 @@ class YouTubeSubtitleOverlay {
   repositionSubtitle() {
     if (!this.overlayElement || !this.currentVideo) return;
 
-    // 🔧 强制重新应用容器和语言样式，确保最新设置生效
+    // 🔧 强制重新应用容器、wrapper 和语言样式，确保最新设置生效
     const container = this.overlayElement.querySelector('.subtitle-container');
     if (container) {
       Object.assign(container.style, {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '2px',
+        gap: '0px',
         width: '100%'
+      });
+    }
+
+    // 强制刷新 wrapper 样式
+    const englishWrapper = this.overlayElement.querySelector('.english-wrapper');
+    const chineseWrapper = this.overlayElement.querySelector('.chinese-wrapper');
+
+    if (englishWrapper) {
+      Object.assign(englishWrapper.style, {
+        display: 'block',
+        textAlign: 'center',
+        width: '100%',
+        textWrap: 'balance'
+      });
+    }
+
+    if (chineseWrapper) {
+      Object.assign(chineseWrapper.style, {
+        display: 'block',
+        textAlign: 'center',
+        width: '100%',
+        textWrap: 'balance'
       });
     }
 
@@ -531,12 +581,12 @@ class YouTubeSubtitleOverlay {
 
     if (englishSubtitle) {
       englishSubtitle.textContent = englishText;
-      englishSubtitle.style.display = englishText ? 'inline-block' : 'none';
+      englishSubtitle.style.display = englishText ? 'inline' : 'none';
     }
 
     if (chineseSubtitle) {
       chineseSubtitle.textContent = chineseText;
-      chineseSubtitle.style.display = chineseText ? 'inline-block' : 'none';
+      chineseSubtitle.style.display = chineseText ? 'inline' : 'none';
     }
 
     this.overlayElement.style.display = 'block';
@@ -667,20 +717,20 @@ class YouTubeSubtitleOverlay {
       fontColor: '#ffffff',
       fontFamily: '"Noto Serif", Georgia, serif',
       fontWeight: '700',
-      backgroundOpacity: 20,
+      backgroundOpacity: 0,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.3,
+      lineHeight: 1.8,
       position: 'bottom'
     };
-    
+
     this.chineseSettings = {
       fontSize: 32,
       fontColor: '#ffffff',
       fontFamily: '"Songti SC", serif',
       fontWeight: '900',
-      backgroundOpacity: 20,
+      backgroundOpacity: 0,
       textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.4,
+      lineHeight: 1.6,
       position: 'bottom'
     };
     
