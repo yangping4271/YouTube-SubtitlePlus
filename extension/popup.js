@@ -674,27 +674,6 @@ class PopupController {
             });
         }
 
-        // 预设按钮
-        document.querySelectorAll('.preset-item').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const preset = e.currentTarget.dataset.preset;
-                const lang = e.currentTarget.dataset.lang;
-                
-                if (preset && lang) {
-                    this.applyPreset(preset, lang);
-                    
-                    // 更新按钮状态
-                    const group = e.currentTarget.closest('.preset-group');
-                    if (group) {
-                        group.querySelectorAll('.preset-item').forEach(item => {
-                            item.classList.remove('active');
-                        });
-                        e.currentTarget.classList.add('active');
-                    }
-                }
-            });
-        });
-
         // 设置控件
         this.bindSettingControls();
         
@@ -842,10 +821,7 @@ class PopupController {
     updateCurrentLanguageSetting(key, value) {
         const settings = this.currentLanguage === 'english' ? this.englishSettings : this.chineseSettings;
         settings[key] = value;
-        
-        // 更新预览
-        this.updatePreview();
-        
+
         // 保存设置
         this.updateSettings({
             language: this.currentLanguage,
@@ -943,130 +919,6 @@ class PopupController {
         if (settings.fontWeight) {
             const fontWeight = document.getElementById('fontWeight');
             if (fontWeight) fontWeight.value = settings.fontWeight;
-        }
-
-        // 更新预览
-        this.updatePreview();
-    }
-
-    // 预设样式定义
-    getPresetSettings(preset, language) {
-        const baseSize = language === 'english' ? 34 : 32;
-        
-        const presets = {
-            standard: {
-                fontSize: baseSize,
-                fontColor: '#ffffff',
-                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : '"Songti SC", serif',
-                fontWeight: language === 'english' ? '700' : '900',
-                backgroundOpacity: 20,
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                lineHeight: language === 'english' ? 1.3 : 1.4
-            },
-            large: {
-                fontSize: baseSize + 8,
-                fontColor: '#ffffff',
-                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : '"Songti SC", serif',
-                fontWeight: '800',
-                backgroundOpacity: 25,
-                textShadow: '3px 3px 6px rgba(0, 0, 0, 0.9)',
-                lineHeight: language === 'english' ? 1.3 : 1.4
-            },
-            contrast: {
-                fontSize: baseSize,
-                fontColor: '#ffff00',
-                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : '"Songti SC", serif',
-                fontWeight: '900',
-                backgroundOpacity: 40,
-                textShadow: '2px 2px 8px rgba(0, 0, 0, 1)',
-                lineHeight: language === 'english' ? 1.2 : 1.3
-            },
-            cinema: {
-                fontSize: baseSize + 4,
-                fontColor: '#ffffff',
-                fontFamily: language === 'english' ? '"Noto Serif", Georgia, serif' : '"Songti SC", serif',
-                fontWeight: '600',
-                backgroundOpacity: 15,
-                textShadow: '1px 1px 3px rgba(0, 0, 0, 0.7)',
-                lineHeight: language === 'english' ? 1.4 : 1.5
-            }
-        };
-        
-        return presets[preset] || presets.standard;
-    }
-
-    applyPreset(preset, language) {
-        const presetSettings = this.getPresetSettings(preset, language);
-        
-        // 更新对应语言的设置
-        const targetSettings = language === 'english' ? this.englishSettings : this.chineseSettings;
-        Object.assign(targetSettings, presetSettings);
-        
-        // 如果是当前语言，更新UI
-        if (language === this.currentLanguage) {
-            this.loadLanguageSettingsToUI(language);
-        }
-        
-        // 保存设置
-        this.updateSettings({
-            language: language,
-            data: presetSettings
-        });
-        
-        // 更新预览
-        this.updatePreview();
-        
-        // 显示保存状态
-        // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈
-    }
-
-    updatePreview() {
-        // 更新英文字幕预览CSS变量
-        const englishSettings = this.englishSettings;
-        if (englishSettings.fontSize) {
-            document.documentElement.style.setProperty('--english-font-size', englishSettings.fontSize + 'px');
-        }
-        if (englishSettings.fontColor) {
-            document.documentElement.style.setProperty('--english-font-color', englishSettings.fontColor);
-        }
-        if (englishSettings.fontFamily) {
-            document.documentElement.style.setProperty('--english-font-family', englishSettings.fontFamily);
-        }
-        if (englishSettings.fontWeight) {
-            document.documentElement.style.setProperty('--english-font-weight', englishSettings.fontWeight);
-        }
-        if (englishSettings.backgroundOpacity !== undefined) {
-            document.documentElement.style.setProperty('--english-bg-opacity', (englishSettings.backgroundOpacity / 100));
-        }
-        if (englishSettings.textShadow) {
-            document.documentElement.style.setProperty('--english-text-shadow', englishSettings.textShadow);
-        }
-        if (englishSettings.lineHeight) {
-            document.documentElement.style.setProperty('--english-line-height', englishSettings.lineHeight);
-        }
-        
-        // 更新中文字幕预览CSS变量
-        const chineseSettings = this.chineseSettings;
-        if (chineseSettings.fontSize) {
-            document.documentElement.style.setProperty('--chinese-font-size', chineseSettings.fontSize + 'px');
-        }
-        if (chineseSettings.fontColor) {
-            document.documentElement.style.setProperty('--chinese-font-color', chineseSettings.fontColor);
-        }
-        if (chineseSettings.fontFamily) {
-            document.documentElement.style.setProperty('--chinese-font-family', chineseSettings.fontFamily);
-        }
-        if (chineseSettings.fontWeight) {
-            document.documentElement.style.setProperty('--chinese-font-weight', chineseSettings.fontWeight);
-        }
-        if (chineseSettings.backgroundOpacity !== undefined) {
-            document.documentElement.style.setProperty('--chinese-bg-opacity', (chineseSettings.backgroundOpacity / 100));
-        }
-        if (chineseSettings.textShadow) {
-            document.documentElement.style.setProperty('--chinese-text-shadow', chineseSettings.textShadow);
-        }
-        if (chineseSettings.lineHeight) {
-            document.documentElement.style.setProperty('--chinese-line-height', chineseSettings.lineHeight);
         }
     }
 
@@ -1228,9 +1080,6 @@ class PopupController {
                 
                 // 加载当前语言设置到UI
                 this.loadLanguageSettingsToUI(this.currentLanguage);
-                
-                // 更新预览
-                this.updatePreview();
             }
         } catch (error) {
             console.error('加载当前状态失败:', error);
@@ -1884,11 +1733,7 @@ class PopupController {
         // 更新UI
         const syncSettingsCheckbox = document.getElementById('syncSettings');
         if (syncSettingsCheckbox) syncSettingsCheckbox.checked = false;
-        
-        // 激活标准预设按钮
-        document.querySelectorAll('.preset-item').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('[data-preset=\"standard\"]').forEach(btn => btn.classList.add('active'));
-        
+
         // 加载当前语言设置到UI
         this.loadLanguageSettingsToUI(this.currentLanguage);
         
@@ -1896,9 +1741,8 @@ class PopupController {
         this.updateSettings({ language: 'english', data: defaultEnglishSettings });
         this.updateSettings({ language: 'chinese', data: defaultChineseSettings });
         this.updateSettings({ sync: false });
-        
-        // 更新预览和显示状态
-        this.updatePreview();
+
+        // 显示状态
         // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈
         Toast.success('已恢复默认设置');
     }
