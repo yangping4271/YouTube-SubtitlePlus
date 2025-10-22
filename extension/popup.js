@@ -419,24 +419,6 @@ class PopupController {
         // 设置控件事件
         this.bindSettingsEvents();
 
-        // 高级设置折叠
-        const advancedToggle = document.getElementById('advancedToggle');
-        const advancedSettings = document.getElementById('advancedSettings');
-        
-        if (advancedToggle && advancedSettings) {
-            advancedToggle.addEventListener('click', () => {
-                this.advancedExpanded = !this.advancedExpanded;
-                advancedToggle.classList.toggle('active', this.advancedExpanded);
-                advancedSettings.classList.toggle('active', this.advancedExpanded);
-                
-                // 更新箭头方向
-                const arrow = advancedToggle.querySelector('span:first-child');
-                if (arrow) {
-                    arrow.textContent = this.advancedExpanded ? '▼' : '▶';
-                }
-            });
-        }
-
         // 帮助链接
         const helpLink = document.getElementById('helpLink');
         const feedbackLink = document.getElementById('feedbackLink');
