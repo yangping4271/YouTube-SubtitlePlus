@@ -21,7 +21,7 @@ const DEFAULT_SUBTITLE_CONFIG = {
     fontColor: '#FFFF00',                          // 字体颜色（黄色）
     fontFamily: '"Noto Serif", Georgia, serif',   // 字体族（优先 Noto Serif）
     fontWeight: '700',                             // 字体粗细（粗体）
-    backgroundOpacity: 20,                         // 背景透明度（20% = 0.2）
+    backgroundOpacity: 0,                          // 背景透明度（0% = 完全透明）
     textStroke: '2px #000000',                     // 文字描边（2px 黑色）
     textShadow: 'none',                            // 文字阴影（已禁用）
     lineHeight: 1.3                                // 行高倍数
@@ -36,7 +36,7 @@ const DEFAULT_SUBTITLE_CONFIG = {
     fontColor: '#00FF00',                          // 字体颜色（绿色）
     fontFamily: '"Songti SC", serif',             // 字体族（宋体）
     fontWeight: '900',                             // 字体粗细（更粗）
-    backgroundOpacity: 20,                         // 背景透明度（20% = 0.2）
+    backgroundOpacity: 0,                          // 背景透明度（0% = 完全透明）
     textStroke: '2px #000000',                     // 文字描边（2px 黑色）
     textShadow: 'none',                            // 文字阴影（已禁用）
     lineHeight: 1.4                                // 行高倍数（中文略高）
@@ -66,7 +66,7 @@ const DEFAULT_SUBTITLE_CONFIG = {
    */
   ui: {
     fontSizeMin: 16,  // 字体大小滑块最小值
-    fontSizeMax: 72   // 字体大小滑块最大值
+    fontSizeMax: 48   // 字体大小滑块最大值
   },
 
   /**
