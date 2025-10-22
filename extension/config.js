@@ -18,7 +18,7 @@ const DEFAULT_SUBTITLE_CONFIG = {
    */
   english: {
     fontSize: 30,                                  // 字体大小(px)，会根据 DPR 自动补偿
-    fontColor: '#ffffff',                          // 字体颜色（白色）
+    fontColor: '#FFFF00',                          // 字体颜色（黄色）
     fontFamily: '"Noto Serif", Georgia, serif',   // 字体族（优先 Noto Serif）
     fontWeight: '700',                             // 字体粗细（粗体）
     backgroundOpacity: 20,                         // 背景透明度（20% = 0.2）
@@ -32,7 +32,7 @@ const DEFAULT_SUBTITLE_CONFIG = {
    */
   chinese: {
     fontSize: 28,                                  // 字体大小(px)，会根据 DPR 自动补偿
-    fontColor: '#ffffff',                          // 字体颜色（白色）
+    fontColor: '#00FF00',                          // 字体颜色（绿色）
     fontFamily: '"Songti SC", serif',             // 字体族（宋体）
     fontWeight: '900',                             // 字体粗细（更粗）
     backgroundOpacity: 20,                         // 背景透明度（20% = 0.2）
