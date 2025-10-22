@@ -22,7 +22,8 @@ const DEFAULT_SUBTITLE_CONFIG = {
     fontFamily: '"Noto Serif", Georgia, serif',   // 字体族（优先 Noto Serif）
     fontWeight: '700',                             // 字体粗细（粗体）
     backgroundOpacity: 20,                         // 背景透明度（20% = 0.2）
-    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', // 文字阴影
+    textStroke: '2px #000000',                     // 文字描边（2px 黑色）
+    textShadow: 'none',                            // 文字阴影（已禁用）
     lineHeight: 1.3                                // 行高倍数
   },
 
@@ -36,7 +37,8 @@ const DEFAULT_SUBTITLE_CONFIG = {
     fontFamily: '"Songti SC", serif',             // 字体族（宋体）
     fontWeight: '900',                             // 字体粗细（更粗）
     backgroundOpacity: 20,                         // 背景透明度（20% = 0.2）
-    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)', // 文字阴影
+    textStroke: '2px #000000',                     // 文字描边（2px 黑色）
+    textShadow: 'none',                            // 文字阴影（已禁用）
     lineHeight: 1.4                                // 行高倍数（中文略高）
   },
 

@@ -215,9 +215,12 @@ class YouTubeSubtitleOverlay {
       Object.assign(element.style, {
         fontSize: compensatedFontSize + 'px',
         color: settings.fontColor,
+        WebkitTextFillColor: settings.fontColor,
         fontFamily: settings.fontFamily,
         fontWeight: settings.fontWeight,
-        textShadow: settings.textShadow,
+        WebkitTextStroke: settings.textStroke || 'none',
+        paintOrder: 'stroke fill',
+        textShadow: settings.textShadow !== 'none' ? settings.textShadow : 'none',
         lineHeight: settings.lineHeight,
         background: `rgba(0, 0, 0, ${settings.backgroundOpacity / 100})`,
         padding: '0 6px',

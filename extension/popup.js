@@ -203,6 +203,7 @@ class PopupController {
         root.style.setProperty('--english-font-family', config.english.fontFamily);
         root.style.setProperty('--english-font-weight', config.english.fontWeight);
         root.style.setProperty('--english-bg-opacity', (config.english.backgroundOpacity / 100).toFixed(2));
+        root.style.setProperty('--english-text-stroke', config.english.textStroke || 'none');
         root.style.setProperty('--english-text-shadow', config.english.textShadow);
         root.style.setProperty('--english-line-height', config.english.lineHeight);
 
@@ -212,6 +213,7 @@ class PopupController {
         root.style.setProperty('--chinese-font-family', config.chinese.fontFamily);
         root.style.setProperty('--chinese-font-weight', config.chinese.fontWeight);
         root.style.setProperty('--chinese-bg-opacity', (config.chinese.backgroundOpacity / 100).toFixed(2));
+        root.style.setProperty('--chinese-text-stroke', config.chinese.textStroke || 'none');
         root.style.setProperty('--chinese-text-shadow', config.chinese.textShadow);
         root.style.setProperty('--chinese-line-height', config.chinese.lineHeight);
 
