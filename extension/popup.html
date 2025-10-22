@@ -299,9 +299,9 @@
                             <div class="setting-label">
                                 <span class="setting-icon">📏</span>
                                 <span class="setting-name">字体大小</span>
-                                <span class="setting-value" id="fontSizeValue">32px</span>
+                                <span class="setting-value" id="fontSizeValue">30px</span>
                             </div>
-                            <input type="range" id="fontSize" min="16" max="72" value="32" class="setting-slider">
+                            <input type="range" id="fontSize" min="16" max="72" value="30" class="setting-slider">
                         </div>
 
                         <!-- 字体颜色 -->
@@ -435,6 +435,8 @@
         </div>
     </div>
 
+    <!-- 配置必须在其他脚本之前加载 -->
+    <script src="config.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>

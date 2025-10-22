@@ -1,5 +1,8 @@
 // Background Service Worker for YouTube Subtitle Extension
 
+// 导入统一配置中心
+importScripts('config.js');
+
 class SubtitleExtensionBackground {
   constructor() {
     this.init();
@@ -41,26 +44,9 @@ class SubtitleExtensionBackground {
         chineseSubtitles: [],
         englishFileName: '',
         chineseFileName: '',
-        // 英文字幕独立设置 - 基础32px字体，20%背景透明度
-        englishSettings: {
-          fontSize: 34,
-          fontColor: '#ffffff',
-          fontFamily: '"Noto Serif", Georgia, serif',
-          fontWeight: '700',
-          backgroundOpacity: 20,
-          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-          lineHeight: 1.3
-        },
-        // 中文字幕独立设置 - 针对中文优化的设置
-        chineseSettings: {
-          fontSize: 32,
-          fontColor: '#ffffff', 
-          fontFamily: '"Songti SC", serif',
-          fontWeight: '900',
-          backgroundOpacity: 20,
-          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-          lineHeight: 1.4
-        },
+        // 英文和中文字幕独立设置（从统一配置中心加载）
+        englishSettings: getDefaultEnglishSettings(),  // Popup 和 background 不需要完全透明背景
+        chineseSettings: getDefaultChineseSettings(),
         // 同步设置选项
         syncSettings: false,
         // 自动加载设置
@@ -374,26 +360,9 @@ class SubtitleExtensionBackground {
       chineseSubtitles: [],
       englishFileName: '',
       chineseFileName: '',
-      // 英文字幕独立设置 - 基础32px字体，20%背景透明度
-      englishSettings: {
-        fontSize: 34,
-        fontColor: '#ffffff',
-        fontFamily: '"Noto Serif", Georgia, serif',
-        fontWeight: '700',
-        backgroundOpacity: 20,
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-        lineHeight: 1.3
-      },
-      // 中文字幕独立设置 - 针对中文优化的设置
-      chineseSettings: {
-        fontSize: 32,
-        fontColor: '#ffffff', 
-        fontFamily: '"Songti SC", serif',
-        fontWeight: '900',
-        backgroundOpacity: 20,
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-        lineHeight: 1.4
-      },
+      // 英文和中文字幕独立设置（从统一配置中心加载）
+      englishSettings: getDefaultEnglishSettings(),
+      chineseSettings: getDefaultChineseSettings(),
       // 同步设置选项
       syncSettings: false,
       // 自动加载设置

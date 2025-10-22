@@ -57,17 +57,19 @@
     --transition-fast: 150ms;
     --transition-normal: 250ms;
     --transition-slow: 350ms;
-    
+
     /* 字幕样式变量 */
-    --english-font-size: 34px;
+    /* ⚠️ 这些值会在 popup.js 初始化时从统一配置中心(config.js)动态设置 */
+    /* 以下是备用的静态值，如果 JS 未执行时使用 */
+    --english-font-size: 30px;
     --english-font-color: #ffffff;
     --english-font-family: 'Noto Serif', Georgia, serif;
     --english-font-weight: 700;
     --english-bg-opacity: 0.20;
     --english-text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     --english-line-height: 1.3;
-    
-    --chinese-font-size: 32px;
+
+    --chinese-font-size: 28px;
     --chinese-font-color: #ffffff;
     --chinese-font-family: "Songti SC", serif;
     --chinese-font-weight: 900;

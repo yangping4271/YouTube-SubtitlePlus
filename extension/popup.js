@@ -85,26 +85,9 @@ class PopupController {
         this.serverUrl = 'http://127.0.0.1:8888';
         this.serverStatus = 'unknown'; // unknown, connected, error
         
-        // 使用默认设置初始化，而不是空对象
-        this.englishSettings = {
-            fontSize: 34,
-            fontColor: '#ffffff',
-            fontFamily: '"Noto Serif", Georgia, serif',
-            fontWeight: '700',
-            backgroundOpacity: 20,
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-            lineHeight: 1.3
-        };
-        
-        this.chineseSettings = {
-            fontSize: 32,
-            fontColor: '#ffffff',
-            fontFamily: '"Songti SC", serif',
-            fontWeight: '900',
-            backgroundOpacity: 20,
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-            lineHeight: 1.4
-        };
+        // 使用默认设置初始化（从统一配置中心加载）
+        this.englishSettings = getDefaultEnglishSettings();
+        this.chineseSettings = getDefaultChineseSettings();
         
         this.syncSettings = false;
         
@@ -146,6 +129,9 @@ class PopupController {
     }
 
     async init() {
+        // 从统一配置中心初始化 CSS 变量
+        this.initCSSVariablesFromConfig();
+
         this.setupTabs();
         this.setupUploadModeSelection();
         this.bindEvents();
@@ -201,6 +187,35 @@ class PopupController {
 
         // 监听存储变化，实时更新计数（基于当前视频ID）
         this.observeSubtitleStorageChanges();
+    }
+
+    /**
+     * 从统一配置中心初始化 CSS 变量
+     * 确保 CSS 变量使用的默认值与 config.js 中定义的一致
+     */
+    initCSSVariablesFromConfig() {
+        const config = getDefaultConfig();
+        const root = document.documentElement;
+
+        // 英文字幕 CSS 变量
+        root.style.setProperty('--english-font-size', config.english.fontSize + 'px');
+        root.style.setProperty('--english-font-color', config.english.fontColor);
+        root.style.setProperty('--english-font-family', config.english.fontFamily);
+        root.style.setProperty('--english-font-weight', config.english.fontWeight);
+        root.style.setProperty('--english-bg-opacity', (config.english.backgroundOpacity / 100).toFixed(2));
+        root.style.setProperty('--english-text-shadow', config.english.textShadow);
+        root.style.setProperty('--english-line-height', config.english.lineHeight);
+
+        // 中文字幕 CSS 变量
+        root.style.setProperty('--chinese-font-size', config.chinese.fontSize + 'px');
+        root.style.setProperty('--chinese-font-color', config.chinese.fontColor);
+        root.style.setProperty('--chinese-font-family', config.chinese.fontFamily);
+        root.style.setProperty('--chinese-font-weight', config.chinese.fontWeight);
+        root.style.setProperty('--chinese-bg-opacity', (config.chinese.backgroundOpacity / 100).toFixed(2));
+        root.style.setProperty('--chinese-text-shadow', config.chinese.textShadow);
+        root.style.setProperty('--chinese-line-height', config.chinese.lineHeight);
+
+        console.log('✅ CSS 变量已从统一配置中心初始化');
     }
 
     // 监听chrome.storage变化，保持计数同步与简化更新路径
@@ -997,27 +1012,10 @@ class PopupController {
                     使用视频特定数据: !!videoSubtitles,
                     视频ID: currentVideoId
                 });
-                
-                // 定义默认设置，与构造函数保持一致
-                const defaultEnglishSettings = {
-                    fontSize: 34,
-                    fontColor: '#ffffff',
-                    fontFamily: '"Noto Serif", Georgia, serif',
-                    fontWeight: '700',
-                    backgroundOpacity: 20,
-                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.3
-                };
-                
-                const defaultChineseSettings = {
-                    fontSize: 32,
-                    fontColor: '#ffffff',
-                    fontFamily: '"Songti SC", serif',
-                    fontWeight: '900',
-                    backgroundOpacity: 20,
-                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.4
-                };
+
+                // 定义默认设置（从统一配置中心获取）
+                const defaultEnglishSettings = getDefaultEnglishSettings();
+                const defaultChineseSettings = getDefaultChineseSettings();
                 
                 // 使用默认设置作为后备：当对象为空时回退到默认
                 const isEmpty = (obj) => !obj || Object.keys(obj).length === 0;
@@ -1601,27 +1599,10 @@ class PopupController {
                 this.currentFileName = '';
                 this.englishFileName = '';
                 this.chineseFileName = '';
-                
-                // 重置设置为默认值
-                this.englishSettings = {
-                    fontSize: 34,
-                    fontColor: '#ffffff',
-                    fontFamily: '"Noto Serif", Georgia, serif',
-                    fontWeight: '700',
-                    backgroundOpacity: 20,
-                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.3
-                };
-                
-                this.chineseSettings = {
-                    fontSize: 32,
-                    fontColor: '#ffffff',
-                    fontFamily: '"Songti SC", serif',
-                    fontWeight: '900',
-                    backgroundOpacity: 20,
-                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.4
-                };
+
+                // 重置设置为默认值（从统一配置中心加载）
+                this.englishSettings = getDefaultEnglishSettings();
+                this.chineseSettings = getDefaultChineseSettings();
                 
                 this.syncSettings = false;
                 this.autoLoadEnabled = false;
@@ -1685,27 +1666,9 @@ class PopupController {
     }
 
     resetToDefault() {
-        // 默认英文设置 (34px基础)
-        const defaultEnglishSettings = {
-            fontSize: 34,
-            fontColor: '#ffffff',
-            fontFamily: '"Noto Serif", Georgia, serif',
-            fontWeight: '700',
-            backgroundOpacity: 20,
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-            lineHeight: 1.3
-        };
-        
-        // 默认中文设置 (32px基础)
-        const defaultChineseSettings = {
-            fontSize: 32,
-            fontColor: '#ffffff',
-            fontFamily: '"Songti SC", serif',
-            fontWeight: '900',
-            backgroundOpacity: 20,
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-            lineHeight: 1.4
-        };
+        // 获取默认设置（从统一配置中心）
+        const defaultEnglishSettings = getDefaultEnglishSettings();
+        const defaultChineseSettings = getDefaultChineseSettings();
         
         // 更新设置对象
         this.englishSettings = { ...defaultEnglishSettings };

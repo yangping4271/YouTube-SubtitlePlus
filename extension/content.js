@@ -12,29 +12,54 @@ class YouTubeSubtitleOverlay {
     this.serverUrl = 'http://127.0.0.1:8888';
     this.currentVideoId = null;
     this.autoLoadAttempted = false;
-    
-    // 独立的语言设置 (32px基础，0%背景透明度)
-    this.englishSettings = {
-      fontSize: 34,
-      fontColor: '#ffffff',
-      fontFamily: '"Noto Serif", Georgia, serif',
-      fontWeight: '700',
-      backgroundOpacity: 0,
-      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.8
-    };
 
-    this.chineseSettings = {
-      fontSize: 32,
-      fontColor: '#ffffff',
-      fontFamily: '"Songti SC", serif',
-      fontWeight: '900',
-      backgroundOpacity: 0,
-      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.6
-    };
-    
+    // 独立的语言设置（从统一配置中心加载）
+    // 注意：content script 使用特殊的背景透明度配置（完全透明）
+    this.englishSettings = getDefaultEnglishSettings(true);  // true 表示用于 content script
+    this.chineseSettings = getDefaultChineseSettings(true);
+
+    // DPR 自动补偿配置（从统一配置中心加载）
+    const config = getDefaultConfig();
+    this.enableDPRCompensation = config.dpr.enabled;
+    this.dprCompensationFactor = this.calculateDPRCompensation();
+
     this.init();
+  }
+
+  /**
+   * 计算设备像素比(DPR)补偿系数
+   * 在高分辨率屏幕上，相同的 CSS 像素会显得更小，需要适当放大
+   *
+   * @returns {number} 补偿系数
+   *
+   * 补偿公式：1 + (DPR - 1) * 0.4
+   * - DPR = 1 (普通屏幕): 补偿系数 = 1.0 (不补偿)
+   * - DPR = 2 (Retina): 补偿系数 = 1.4 (放大 40%)
+   * - DPR = 3 (高端屏): 补偿系数 = 1.8 (放大 80%)
+   *
+   * 示例效果：
+   * - 34px 在 DPR=2 屏幕 → 34 × 1.4 = 47.6px
+   * - 32px 在 DPR=2 屏幕 → 32 × 1.4 = 44.8px
+   */
+  calculateDPRCompensation() {
+    const dpr = window.devicePixelRatio || 1;
+
+    if (dpr <= 1) {
+      // 普通屏幕，不需要补偿
+      return 1.0;
+    }
+
+    // 使用公式计算补偿系数
+    // 系数 0.4 是经过测试的最佳值，可以根据实际效果调整
+    const compensationFactor = 1 + (dpr - 1) * 0.4;
+
+    console.log(`🔍 DPR 补偿计算:`, {
+      设备像素比: dpr,
+      补偿系数: compensationFactor.toFixed(2),
+      说明: dpr > 1 ? `高分辨率屏幕，字体将放大 ${((compensationFactor - 1) * 100).toFixed(0)}%` : '普通屏幕，不补偿'
+    });
+
+    return compensationFactor;
   }
 
   init() {
@@ -181,8 +206,14 @@ class YouTubeSubtitleOverlay {
     const element = this.overlayElement.querySelector(elementId);
 
     if (element && settings) {
+      // 计算应用 DPR 补偿后的字体大小
+      const baseFontSize = settings.fontSize;
+      const compensatedFontSize = this.enableDPRCompensation
+        ? Math.round(baseFontSize * this.dprCompensationFactor)
+        : baseFontSize;
+
       Object.assign(element.style, {
-        fontSize: settings.fontSize + 'px',
+        fontSize: compensatedFontSize + 'px',
         color: settings.fontColor,
         fontFamily: settings.fontFamily,
         fontWeight: settings.fontWeight,
@@ -201,6 +232,15 @@ class YouTubeSubtitleOverlay {
         maxWidth: '100%',
         boxSizing: 'border-box',
         margin: '0'
+      });
+
+      // 🔍 调试日志：字体大小设置
+      console.log(`[字体调试] ${language} 字幕样式已应用:`, {
+        设置的字体大小: baseFontSize + 'px',
+        DPR补偿后大小: compensatedFontSize + 'px',
+        补偿系数: this.dprCompensationFactor.toFixed(2),
+        字体族: settings.fontFamily,
+        字体粗细: settings.fontWeight
       });
     }
   }
@@ -517,24 +557,130 @@ class YouTubeSubtitleOverlay {
     if (existingOverlay) {
       existingOverlay.remove();
     }
-    
+
     // 优先插入到播放器容器内
     const moviePlayer = document.querySelector('#movie_player');
-    
+
     if (moviePlayer) {
       // 设置播放器容器为相对定位，确保字幕绝对定位相对于它
       if (moviePlayer.style.position !== 'relative') {
         moviePlayer.style.position = 'relative';
       }
-      
+
       moviePlayer.appendChild(this.overlayElement);
     } else {
       // 后备方案：插入到body
       document.body.appendChild(this.overlayElement);
     }
-    
+
     // 初始定位
     this.repositionSubtitle();
+
+    // 🔍 调试：插入后诊断字体渲染情况
+    this.debugFontRendering();
+  }
+
+  // 🔍 调试方法：诊断字体渲染情况
+  debugFontRendering() {
+    setTimeout(() => {
+      const englishEl = this.overlayElement.querySelector('#englishSubtitle');
+      const chineseEl = this.overlayElement.querySelector('#chineseSubtitle');
+      const moviePlayer = document.querySelector('#movie_player');
+      const video = this.currentVideo;
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🔍 字体大小诊断报告');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      // 1. 检查设备像素比和 DPR 补偿
+      console.log('📱 设备信息与 DPR 补偿:');
+      console.log('  - 设备像素比 (DPR):', window.devicePixelRatio);
+      console.log('  - 视口宽度:', window.innerWidth);
+      console.log('  - 实际宽度:', document.documentElement.clientWidth);
+      console.log('  - 页面缩放比:', (window.innerWidth / document.documentElement.clientWidth).toFixed(2));
+      console.log('  ┌─ DPR 自动补偿 ─────────────');
+      console.log('  │ 启用状态:', this.enableDPRCompensation ? '✅ 已启用' : '❌ 已禁用');
+      console.log('  │ 补偿系数:', this.dprCompensationFactor.toFixed(2) + 'x');
+      console.log('  │ 补偿幅度:', ((this.dprCompensationFactor - 1) * 100).toFixed(0) + '%');
+      console.log('  └────────────────────────────');
+
+      // 2. 检查播放器容器的变换
+      if (moviePlayer) {
+        const playerStyle = window.getComputedStyle(moviePlayer);
+        console.log('🎬 播放器容器 (#movie_player):');
+        console.log('  - Transform:', playerStyle.transform);
+        console.log('  - Zoom:', playerStyle.zoom);
+        console.log('  - Position:', playerStyle.position);
+        console.log('  - 容器尺寸:', {
+          width: playerStyle.width,
+          height: playerStyle.height
+        });
+      }
+
+      // 3. 检查英文字幕元素
+      if (englishEl) {
+        const engStyle = window.getComputedStyle(englishEl);
+        const baseSize = this.englishSettings.fontSize;
+        const compensatedSize = this.enableDPRCompensation
+          ? Math.round(baseSize * this.dprCompensationFactor)
+          : baseSize;
+
+        console.log('🔤 英文字幕元素 (#englishSubtitle):');
+        console.log('  - 原始设置大小:', baseSize + 'px');
+        console.log('  - DPR 补偿后:', compensatedSize + 'px',
+          this.enableDPRCompensation ? `(+${compensatedSize - baseSize}px)` : '');
+        console.log('  - 实际应用 (style):', englishEl.style.fontSize);
+        console.log('  - 计算后 (computed):', engStyle.fontSize);
+        console.log('  - 字体族:', engStyle.fontFamily);
+        console.log('  - 字体粗细:', engStyle.fontWeight);
+        console.log('  - Transform:', engStyle.transform);
+        console.log('  - Zoom:', engStyle.zoom);
+      }
+
+      // 4. 检查中文字幕元素
+      if (chineseEl) {
+        const chnStyle = window.getComputedStyle(chineseEl);
+        const baseSize = this.chineseSettings.fontSize;
+        const compensatedSize = this.enableDPRCompensation
+          ? Math.round(baseSize * this.dprCompensationFactor)
+          : baseSize;
+
+        console.log('🀄 中文字幕元素 (#chineseSubtitle):');
+        console.log('  - 原始设置大小:', baseSize + 'px');
+        console.log('  - DPR 补偿后:', compensatedSize + 'px',
+          this.enableDPRCompensation ? `(+${compensatedSize - baseSize}px)` : '');
+        console.log('  - 实际应用 (style):', chineseEl.style.fontSize);
+        console.log('  - 计算后 (computed):', chnStyle.fontSize);
+        console.log('  - 字体族:', chnStyle.fontFamily);
+        console.log('  - 字体粗细:', chnStyle.fontWeight);
+        console.log('  - Transform:', chnStyle.transform);
+        console.log('  - Zoom:', chnStyle.zoom);
+      }
+
+      // 5. 检查字幕容器
+      const overlayStyle = window.getComputedStyle(this.overlayElement);
+      console.log('📦 字幕容器 (#youtube-local-subtitle-overlay):');
+      console.log('  - Transform:', overlayStyle.transform);
+      console.log('  - Zoom:', overlayStyle.zoom);
+      console.log('  - Position:', overlayStyle.position);
+      console.log('  - Bottom:', overlayStyle.bottom);
+
+      // 6. 检查视频元素
+      if (video) {
+        const videoRect = video.getBoundingClientRect();
+        console.log('🎥 视频元素尺寸:');
+        console.log('  - 宽度:', videoRect.width.toFixed(2) + 'px');
+        console.log('  - 高度:', videoRect.height.toFixed(2) + 'px');
+      }
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('💡 DPR 补偿说明：');
+      console.log('   在高分辨率屏幕 (DPR > 1) 上，相同的 CSS 像素');
+      console.log('   会显得更小，DPR 补偿会自动放大字体以匹配');
+      console.log('   普通屏幕的视觉大小。你可以在设置中手动调整');
+      console.log('   字体大小，补偿会基于你的设置值计算。');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }, 500); // 延迟 500ms 确保 DOM 已完全渲染
   }
 
   updateSubtitle() {
@@ -709,26 +855,9 @@ class YouTubeSubtitleOverlay {
     this.currentVideo = null;
     this.autoLoadAttempted = false;
     
-    // 重置为默认设置
-    this.englishSettings = {
-      fontSize: 34,
-      fontColor: '#ffffff',
-      fontFamily: '"Noto Serif", Georgia, serif',
-      fontWeight: '700',
-      backgroundOpacity: 0,
-      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.8
-    };
-
-    this.chineseSettings = {
-      fontSize: 32,
-      fontColor: '#ffffff',
-      fontFamily: '"Songti SC", serif',
-      fontWeight: '900',
-      backgroundOpacity: 0,
-      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-      lineHeight: 1.6
-    };
+    // 重置为默认设置（从统一配置中心加载）
+    this.englishSettings = getDefaultEnglishSettings(true);
+    this.chineseSettings = getDefaultChineseSettings(true);
     
     // 重置自动加载设置
     this.autoLoadEnabled = false;
@@ -764,7 +893,7 @@ class YouTubeSubtitleOverlay {
     console.log('传入的 language:', language);
     console.log('传入的 settings:', settings);
     console.log('settings.fontFamily 值:', settings.fontFamily, '类型:', typeof settings.fontFamily);
-    
+
     if (language === 'english') {
       this.englishSettings = { ...this.englishSettings, ...settings };
       console.log('英文字幕设置已更新:', settings);
@@ -773,9 +902,15 @@ class YouTubeSubtitleOverlay {
       console.log('中文字幕设置已更新:', settings);
       console.log('合并后的中文设置:', this.chineseSettings);
     }
-    
+
     // 重新应用对应语言的样式
     this.applyLanguageStyles(language);
+
+    // 🔍 调试：如果是字体大小更改，输出诊断报告
+    if (settings.fontSize !== undefined) {
+      console.log(`🔄 检测到字体大小变更为 ${settings.fontSize}px，输出诊断报告...`);
+      this.debugFontRendering();
+    }
   }
 
   async loadSubtitleData() {
