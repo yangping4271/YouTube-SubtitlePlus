@@ -88,9 +88,7 @@ class PopupController {
         // 使用默认设置初始化（从统一配置中心加载）
         this.englishSettings = getDefaultEnglishSettings();
         this.chineseSettings = getDefaultChineseSettings();
-        
-        this.syncSettings = false;
-        
+
         // UI状态
         this.currentTab = 'files';
         this.advancedExpanded = false;
@@ -659,19 +657,6 @@ class PopupController {
             englishTab.addEventListener('click', () => this.switchLanguage('english'));
             chineseTab.addEventListener('click', () => this.switchLanguage('chinese'));
         }
-        
-        // 同步设置开关
-        const syncSettings = document.getElementById('syncSettings');
-        if (syncSettings) {
-            syncSettings.addEventListener('change', (e) => {
-                this.syncSettings = e.target.checked;
-                this.updateSettings({ sync: this.syncSettings });
-                
-                if (this.syncSettings) {
-                    this.syncSettingsToOtherLanguage();
-                }
-            });
-        }
 
         // 设置控件
         this.bindSettingControls();
@@ -826,36 +811,9 @@ class PopupController {
             language: this.currentLanguage,
             data: { [key]: value }
         });
-        
-        // 如果开启同步，同步到另一种语言
-        if (this.syncSettings) {
-            const otherLanguage = this.currentLanguage === 'english' ? 'chinese' : 'english';
-            const otherSettings = otherLanguage === 'english' ? this.englishSettings : this.chineseSettings;
-            otherSettings[key] = value;
-            
-            this.updateSettings({
-                language: otherLanguage,
-                data: { [key]: value }
-            });
-        }
-        
+
         // 显示保存状态
         // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈
-    }
-
-    syncSettingsToOtherLanguage() {
-        const currentSettings = this.currentLanguage === 'english' ? this.englishSettings : this.chineseSettings;
-        const otherLanguage = this.currentLanguage === 'english' ? 'chinese' : 'english';
-        const otherSettings = otherLanguage === 'english' ? this.englishSettings : this.chineseSettings;
-        
-        // 复制设置
-        Object.assign(otherSettings, currentSettings);
-        
-        // 保存
-        this.updateSettings({
-            language: otherLanguage,
-            data: currentSettings
-        });
     }
 
     loadLanguageSettingsToUI(language) {
@@ -963,11 +921,10 @@ class PopupController {
             }
             
             if (globalResponse.success) {
-                const { 
-                    subtitleEnabled, 
+                const {
+                    subtitleEnabled,
                     englishSettings,
-                    chineseSettings,
-                    syncSettings
+                    chineseSettings
                 } = globalResponse.data;
                 
                 // 更新UI状态
@@ -1048,12 +1005,7 @@ class PopupController {
                         console.warn('持久化默认字体修正失败，不影响前端显示:', e);
                     }
                 }
-                this.syncSettings = syncSettings || false;
-                
-                // 更新同步设置UI
-                const syncSettingsCheckbox = document.getElementById('syncSettings');
-                if (syncSettingsCheckbox) syncSettingsCheckbox.checked = this.syncSettings;
-                
+
                 // 🔧 修复：确保执行顺序，避免竞态条件
                 await this.loadAutoLoadSettings();
                 
@@ -1605,8 +1557,7 @@ class PopupController {
                 // 重置设置为默认值（从统一配置中心加载）
                 this.englishSettings = getDefaultEnglishSettings();
                 this.chineseSettings = getDefaultChineseSettings();
-                
-                this.syncSettings = false;
+
                 this.autoLoadEnabled = false;
                 this.serverUrl = 'http://127.0.0.1:8888';
                 
@@ -1675,11 +1626,6 @@ class PopupController {
         // 更新设置对象
         this.englishSettings = { ...defaultEnglishSettings };
         this.chineseSettings = { ...defaultChineseSettings };
-        this.syncSettings = false;
-        
-        // 更新UI
-        const syncSettingsCheckbox = document.getElementById('syncSettings');
-        if (syncSettingsCheckbox) syncSettingsCheckbox.checked = false;
 
         // 加载当前语言设置到UI
         this.loadLanguageSettingsToUI(this.currentLanguage);
@@ -1687,7 +1633,6 @@ class PopupController {
         // 保存设置
         this.updateSettings({ language: 'english', data: defaultEnglishSettings });
         this.updateSettings({ language: 'chinese', data: defaultChineseSettings });
-        this.updateSettings({ sync: false });
 
         // 显示状态
         // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈

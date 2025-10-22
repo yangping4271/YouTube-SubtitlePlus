@@ -47,8 +47,6 @@ class SubtitleExtensionBackground {
         // 英文和中文字幕独立设置（从统一配置中心加载）
         englishSettings: getDefaultEnglishSettings(),  // Popup 和 background 不需要完全透明背景
         chineseSettings: getDefaultChineseSettings(),
-        // 同步设置选项
-        syncSettings: false,
         // 自动加载设置
         autoLoadEnabled: false,
         serverUrl: 'http://127.0.0.1:8888'
@@ -181,10 +179,9 @@ class SubtitleExtensionBackground {
       'subtitleData',
       'englishSubtitles',
       'chineseSubtitles',
-      'subtitleEnabled', 
+      'subtitleEnabled',
       'englishSettings',
       'chineseSettings',
-      'syncSettings',
       'englishFileName',
       'chineseFileName'
     ]);
@@ -195,7 +192,6 @@ class SubtitleExtensionBackground {
       subtitleEnabled: result.subtitleEnabled || false,
       englishSettings: result.englishSettings || {},
       chineseSettings: result.chineseSettings || {},
-      syncSettings: result.syncSettings || false,
       englishFileName: result.englishFileName || '',
       chineseFileName: result.chineseFileName || ''
     };
@@ -313,10 +309,6 @@ class SubtitleExtensionBackground {
         settings: newSettings 
       });
       console.log('中文字幕设置已更新:', newSettings);
-    } else if (settings.sync !== undefined) {
-      // 更新同步设置
-      await chrome.storage.local.set({ syncSettings: settings.sync });
-      console.log('设置同步选项已更新:', settings.sync);
     }
   }
 
@@ -363,8 +355,6 @@ class SubtitleExtensionBackground {
       // 英文和中文字幕独立设置（从统一配置中心加载）
       englishSettings: getDefaultEnglishSettings(),
       chineseSettings: getDefaultChineseSettings(),
-      // 同步设置选项
-      syncSettings: false,
       // 自动加载设置
       autoLoadEnabled: false,
       serverUrl: 'http://127.0.0.1:8888'
