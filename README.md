@@ -45,14 +45,13 @@ YouTube-SubtitlePlus/
 │   └── README.md              # Server documentation and API reference
 ├── subtitles/                 # Local Subtitle Storage
 │   └── [VideoID].ass         # Subtitle files named by YouTube video ID
-├── docs/                      # Documentation Suite
-│   ├── AUTO_LOAD_GUIDE.md     # Comprehensive auto-loading guide
-│   ├── INSTALL.md             # Installation instructions
-│   └── README.md              # User manual
+├── scripts/                   # Management Scripts
+│   ├── server/               # Server daemon management
+│   └── subtitles/            # Subtitle file management
 ├── examples/                  # Sample Files
 │   └── example-subtitle.srt   # Example subtitle for testing
-├── start_server.sh           # Intelligent server startup script
-└── stop_server.sh            # Graceful server shutdown script
+├── daemon_server.sh          # Background server startup script (symlink)
+└── daemon_status.sh          # Server status check script (symlink)
 ```
 
 ## 🚀 Quick Installation & Setup
@@ -76,7 +75,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 #### Server Setup
 ```bash
 # 1. Start the auto-loading server
-./start_server.sh
+./daemon_server.sh
 
 # 2. Add subtitle files to subtitles/ directory
 # Format: [YouTube-Video-ID].[extension]
@@ -85,8 +84,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # 3. Enable auto-loading in extension popup
 # Open extension → "Auto Load" tab → Toggle "Enable Auto Load"
 
-# 4. Stop server when finished
-./stop_server.sh
+# 4. Check server status
+./daemon_status.sh
 ```
 
 ## 💡 Usage Guide
@@ -97,7 +96,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
    - Naming format: `[VideoID].ass` (e.g., `TnhCX0KkPqs.ass`)
    - Supported formats: ASS (bilingual), SRT, VTT
 
-2. **Start Server**: Run `./start_server.sh`
+2. **Start Server**: Run `./daemon_server.sh`
 
 3. **Enable Auto-Loading**: 
    - Click extension icon → "Auto Load" tab
@@ -170,10 +169,9 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ## 📖 Documentation
 
-- **[Installation Guide](./docs/INSTALL.md)**: Detailed setup instructions
-- **[Auto-Loading Guide](./docs/AUTO_LOAD_GUIDE.md)**: Complete auto-loading tutorial
 - **[Server Documentation](./server/README.md)**: API reference and troubleshooting
-- **[User Manual](./docs/README.md)**: Feature guide and best practices
+- **[Daemon Guide](./DAEMON_GUIDE.md)**: Background server management guide
+- **[Development Guide](./CLAUDE.md)**: Technical documentation for developers
 - **[Chinese Documentation](./README_zh.md)**: 中文版完整文档
 
 ## 🛠️ Development
@@ -188,7 +186,7 @@ cd YouTube-SubtitlePlus
 # Navigate to chrome://extensions/ → Enable Developer Mode → Load Unpacked → Select extension/
 
 # Start development server
-./start_server.sh
+./daemon_server.sh
 ```
 
 ### Code Architecture

@@ -31,7 +31,6 @@ YouTube-SubtitlePlus/
 │   ├── requirements.txt       # pip 依赖备份
 │   └── README.md              # 服务器文档
 ├── subtitles/                  # 字幕文件存储
-├── docs/                       # 项目文档
 ├── examples/                   # 示例文件
 ├── scripts/
 │   ├── server/              # 后台服务管理脚本
@@ -88,18 +87,18 @@ uv sync  # uv 自动创建虚拟环境并安装依赖
 
 #### 实际实现架构
 ```javascript
-// 静态方法类设计 - content.js:906 和 popup.js 中实现
+// 静态方法类设计 - subtitle-parser.js 中实现
 class SubtitleParser {
   static parseSRT(content)      // SRT 格式解析
-  static parseVTT(content)      // VTT 格式解析 
+  static parseVTT(content)      // VTT 格式解析
   static parseASS(content)      // ASS 格式解析，双语样式分离
   static parseASSTime(timeStr)  // ASS 时间戳转换
   static timeToSeconds(time)    // 通用时间转换
 }
 
-// 实例方法 - YouTubeSubtitleOverlay 中的专用解析
-parseASSContent(content)  // ASS 内容解析与双语分离
-parseASSTime(timeStr)     // ASS 时间格式处理
+// YouTubeSubtitleOverlay 中使用
+// content.js 中引入并使用 SubtitleParser
+parseASSContent(content)  // 调用 SubtitleParser.parseASS
 ```
 
 ### 2. 字幕显示系统 (YouTubeSubtitleOverlay)

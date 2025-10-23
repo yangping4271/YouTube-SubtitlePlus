@@ -45,14 +45,13 @@ YouTube-SubtitlePlus/
 │   └── README.md              # 服务器文档和 API 参考
 ├── subtitles/                 # 本地字幕存储
 │   └── [VideoID].ass         # 按 YouTube 视频 ID 命名的字幕文件
-├── docs/                      # 文档套件
-│   ├── AUTO_LOAD_GUIDE.md     # 详细自动加载指南
-│   ├── INSTALL.md             # 安装说明
-│   └── README.md              # 用户手册
+├── scripts/                   # 管理脚本
+│   ├── server/               # 服务器守护进程管理
+│   └── subtitles/            # 字幕文件管理
 ├── examples/                  # 示例文件
 │   └── example-subtitle.srt   # 测试用示例字幕
-├── start_server.sh           # 智能服务器启动脚本
-└── stop_server.sh            # 优雅服务器关闭脚本
+├── daemon_server.sh          # 后台服务器启动脚本（软链接）
+└── daemon_status.sh          # 服务器状态检查脚本（软链接）
 ```
 
 ## 🚀 快速安装和设置
@@ -76,7 +75,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 #### 服务器设置
 ```bash
 # 1. 启动自动加载服务器
-./start_server.sh
+./daemon_server.sh
 
 # 2. 添加字幕文件到 subtitles/ 目录
 # 格式：[YouTube-视频-ID].[扩展名]
@@ -85,8 +84,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # 3. 在扩展弹窗中启用自动加载
 # 打开扩展 → "自动加载"标签 → 开启"启用自动加载"
 
-# 4. 完成后停止服务器
-./stop_server.sh
+# 4. 检查服务器状态
+./daemon_status.sh
 ```
 
 ## 💡 使用指南
@@ -97,7 +96,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
    - 命名格式：`[视频ID].ass`（例如：`TnhCX0KkPqs.ass`）
    - 支持格式：ASS（双语）、SRT、VTT
 
-2. **启动服务器**：运行 `./start_server.sh`
+2. **启动服务器**：运行 `./daemon_server.sh`
 
 3. **启用自动加载**：
    - 点击扩展图标 → "自动加载"标签
@@ -170,10 +169,9 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ## 📖 文档
 
-- **[安装指南](./docs/INSTALL.md)**：详细设置说明
-- **[自动加载指南](./docs/AUTO_LOAD_GUIDE.md)**：完整自动加载教程
 - **[服务器文档](./server/README.md)**：API 参考和故障排除
-- **[用户手册](./docs/README.md)**：功能指南和最佳实践
+- **[守护进程指南](./DAEMON_GUIDE.md)**：后台服务器管理指南
+- **[开发指南](./CLAUDE.md)**：开发者技术文档
 - **[英文文档](./README.md)**：English documentation
 
 ## 🛠️ 开发
@@ -188,7 +186,7 @@ cd YouTube-SubtitlePlus
 # 访问 chrome://extensions/ → 开启开发者模式 → 加载已解压的扩展程序 → 选择 extension/
 
 # 启动开发服务器
-./start_server.sh
+./daemon_server.sh
 ```
 
 ### 代码架构
