@@ -47,7 +47,7 @@ class SubtitleExtensionBackground {
         chineseSettings: getDefaultChineseSettings(),
         // 自动加载设置
         autoLoadEnabled: false,
-        serverUrl: 'http://127.0.0.1:8888'
+        serverUrl: DEFAULT_SUBTITLE_CONFIG.server.defaultUrl
       });
     });
   }
@@ -323,7 +323,7 @@ class SubtitleExtensionBackground {
       chineseSettings: getDefaultChineseSettings(),
       // 自动加载设置
       autoLoadEnabled: false,
-      serverUrl: 'http://127.0.0.1:8888'
+      serverUrl: DEFAULT_SUBTITLE_CONFIG.server.defaultUrl
     });
 
     // 通知content script强制清除

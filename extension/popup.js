@@ -510,9 +510,9 @@ class PopupController {
 
             // 读取文件内容
             const content = await this.readFileAsText(file);
-            
-            // 解析ASS文件
-            const assResult = this.parseASS(content);
+
+            // 解析ASS文件，使用统一的 SubtitleParser
+            const assResult = SubtitleParser.parseASS(content);
             
             if (assResult.english.length === 0 && assResult.chinese.length === 0) {
                 throw new Error('ASS文件解析失败或未找到有效的双语字幕');

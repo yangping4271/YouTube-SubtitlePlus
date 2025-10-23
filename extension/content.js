@@ -887,11 +887,11 @@ class YouTubeSubtitleOverlay {
         console.error('❌ 无法获取视频ID，跳过字幕保存');
         return;
       }
-      
+
       if (format === '.ass') {
-        // 使用现有的ASS解析逻辑
-        const assResult = this.parseASSContent(content);
-        
+        // 使用 SubtitleParser 统一解析 ASS 格式
+        const assResult = SubtitleParser.parseASS(content);
+
         if (assResult.english.length > 0 || assResult.chinese.length > 0) {
           this.englishSubtitles = assResult.english;
           this.chineseSubtitles = assResult.chinese;
@@ -939,81 +939,13 @@ class YouTubeSubtitleOverlay {
           this.updateSubtitle();
         }
       }
-      
+
     } catch (error) {
       console.error('处理自动加载的字幕失败:', error);
     }
   }
-
-  parseASSContent(content) {
-    const result = { english: [], chinese: [] };
-    const lines = content.split('\n');
-    
-    let inEventsSection = false;
-    
-    lines.forEach(line => {
-      line = line.trim();
-      
-      if (line === '[Events]') {
-        inEventsSection = true;
-        return;
-      }
-      
-      if (line.startsWith('[') && line !== '[Events]') {
-        inEventsSection = false;
-        return;
-      }
-      
-      if (inEventsSection && line.startsWith('Dialogue:')) {
-        const parts = line.split(',');
-        if (parts.length >= 10) {
-          const style = parts[3];
-          const startTime = this.parseASSTime(parts[1]);
-          const endTime = this.parseASSTime(parts[2]);
-          
-          const textParts = parts.slice(9);
-          let text = textParts.join(',').trim();
-          text = this.cleanASSText(text);
-          
-          if (text && startTime !== null && endTime !== null) {
-            const subtitle = { startTime, endTime, text };
-            
-            // 根据Style分配到不同语言
-            if (style === 'Default') {
-              result.english.push(subtitle);
-            } else if (style === 'Secondary') {
-              result.chinese.push(subtitle);
-            }
-          }
-        }
-      }
-    });
-    
-    return result;
-  }
-
-  parseASSTime(timeStr) {
-    const match = timeStr.match(/(\d+):(\d{2}):(\d{2})\.(\d{2})/);
-    if (match) {
-      const hours = parseInt(match[1]);
-      const minutes = parseInt(match[2]);
-      const seconds = parseInt(match[3]);
-      const centiseconds = parseInt(match[4]);
-      
-      return hours * 3600 + minutes * 60 + seconds + centiseconds / 100;
-    }
-    return null;
-  }
-
-  cleanASSText(text) {
-    return text.replace(/\{[^}]*\}/g, '')
-               .replace(/\\N/g, '\n')
-               .replace(/\\n/g, '\n')
-               .trim();
-  }
 }
 
-// 字幕解析器
 // 初始化
 let subtitleOverlayInstance = null;
 

@@ -1457,6 +1457,30 @@ body {
     visibility: hidden !important;
 }
 
+/* 通用过渡效果类 */
+.transition-fast {
+    transition: all var(--transition-fast);
+}
+
+.transition-normal {
+    transition: all var(--transition-normal);
+}
+
+/* 通用 hover 提升效果 */
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+.hover-scale:hover {
+    transform: scale(1.1);
+}
+
+/* 通用阴影效果 */
+.hover-shadow:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* 动画效果类 */
 .fade-in {
     animation: fadeIn var(--transition-normal) ease-out;
 }

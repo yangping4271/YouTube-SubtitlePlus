@@ -169,77 +169,22 @@
   }
 }
 
-/* 
+/*
  * 淡出关键帧动画定义
  * 效果：从完全显示+正常位置 → 透明+向下偏移
- * 自定义选项：与淡入动画相同，但方向相反
  */
 @keyframes subtitleFadeOut {
   from {
-    opacity: 1;                            /* 起始：完全显示 */
-    transform: translateX(-50%) translateY(0);     /* 起始：正常位置 */
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
   to {
-    opacity: 0;                            /* 结束：完全透明 */
-    transform: translateX(-50%) translateY(10px);  /* 结束：向下偏移10px */
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
   }
 }
 
-/* 
- * ===============================================
- * 自定义样式指南
- * ===============================================
- * 
- * 🎨 快速自定义字幕样式
- * 
- * 1. 基础外观修改：
- *    - 字体大小：修改 font-size 值（建议：12px-32px）
- *    - 字体颜色：修改 color 值（如：#ffffff, #ffff00, #00ff00）
- *    - 背景色：修改 background-color 的 rgba 值
- *    - 透明度：调整 rgba 最后一个数值（0.0-1.0）
- * 
- * 2. 位置调整：
- *    - 底部距离：修改 bottom 值（建议：60px-120px）
- *    - 宽度限制：修改 max-width 值（建议：70%-90%）
- *    - 内边距：修改 padding 值（如：6px 12px）
- * 
- * 3. 文字效果：
- *    - 阴影强度：修改 text-shadow 值
- *    - 字体粗细：修改 font-weight（normal, bold, 600, 700）
- *    - 行高：修改 line-height（建议：1.2-1.6）
- * 
- * 4. 响应式调整：
- *    - 小屏幕：修改 @media (max-width: 768px) 中的值
- *    - 大屏幕：修改 @media (min-width: 1920px) 中的值
- * 
- * 5. 播放模式适配：
- *    - 全屏模式：修改 .ytp-fullscreen 中的值
- *    - 剧场模式：修改 .ytp-big-mode 中的值
- * 
- * 6. 主题切换：
- *    - 亮色主题：修改 .light-theme 类的样式
- *    - 高对比度：修改 .high-contrast 类的样式
- * 
- * 7. 动画效果：
- *    - 动画时长：修改 animation 中的时间值
- *    - 动画曲线：修改 ease-in-out 为其他值
- *    - 移动距离：修改 translateY 中的像素值
- * 
- * 💡 常用颜色值：
- *    - 白色：#ffffff 或 white
- *    - 黄色：#ffff00 或 yellow  
- *    - 绿色：#00ff00 或 lime
- *    - 红色：#ff0000 或 red
- *    - 蓝色：#0000ff 或 blue
- * 
- * 📐 常用尺寸值：
- *    - 字体：12px, 14px, 16px, 18px, 20px, 24px
- *    - 距离：40px, 60px, 80px, 100px, 120px
- *    - 透明度：0.5(50%), 0.7(70%), 0.9(90%)
- * 
- * ⚠️  修改注意事项：
- *    - 保持 z-index 和 pointer-events 不变
- *    - 不要删除 transform: translateX(-50%) 居中定位
- *    - 建议备份原文件再修改
- *    - 修改后需要在Chrome扩展页面重新加载扩展
+/*
+ * 💡 自定义说明
+ * 详细的样式自定义指南请参考：docs/STYLE_CUSTOMIZATION.md
  */
