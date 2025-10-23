@@ -99,3 +99,7 @@ subtitles/*.ass
 subtitles/*.srt
 subtitles/*.vtt
 !subtitles/QSqc6MMS6Fk.ass
+
+# 代码分析和合并工具输出
+repomix-output.xml
+*.repomix.xml
