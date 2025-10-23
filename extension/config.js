@@ -21,7 +21,6 @@ const DEFAULT_SUBTITLE_CONFIG = {
     fontColor: '#FFFF00',                          // 字体颜色（黄色）
     fontFamily: '"Noto Serif", Georgia, serif',   // 字体族（优先 Noto Serif）
     fontWeight: '700',                             // 字体粗细（粗体）
-    backgroundOpacity: 0,                          // 背景透明度（0% = 完全透明）
     textStroke: '2px #000000',                     // 文字描边（2px 黑色）
     textShadow: 'none',                            // 文字阴影（已禁用）
     lineHeight: 1.3                                // 行高倍数
@@ -36,7 +35,6 @@ const DEFAULT_SUBTITLE_CONFIG = {
     fontColor: '#00FF00',                          // 字体颜色（绿色）
     fontFamily: '"Songti SC", serif',             // 字体族（宋体）
     fontWeight: '900',                             // 字体粗细（更粗）
-    backgroundOpacity: 0,                          // 背景透明度（0% = 完全透明）
     textStroke: '2px #000000',                     // 文字描边（2px 黑色）
     textShadow: 'none',                            // 文字阴影（已禁用）
     lineHeight: 1.4                                // 行高倍数（中文略高）
@@ -67,62 +65,33 @@ const DEFAULT_SUBTITLE_CONFIG = {
   ui: {
     fontSizeMin: 16,  // 字体大小滑块最小值
     fontSizeMax: 48   // 字体大小滑块最大值
-  },
-
-  /**
-   * Content Script 特定配置
-   * 注意：content script 中的字幕默认背景透明度为 0
-   */
-  contentScript: {
-    english: {
-      backgroundOpacity: 0  // Content Script 中英文字幕背景完全透明
-    },
-    chinese: {
-      backgroundOpacity: 0  // Content Script 中中文字幕背景完全透明
-    }
   }
 };
 
 /**
  * 获取英文字幕默认配置的深拷贝
  *
- * @param {boolean} forContentScript - 是否用于 content script（会应用特定的覆盖配置）
  * @returns {Object} 英文字幕配置对象
  *
  * @example
  * const settings = getDefaultEnglishSettings();
  * settings.fontSize = 40; // 修改不会影响原始配置
  */
-function getDefaultEnglishSettings(forContentScript = false) {
-  const config = JSON.parse(JSON.stringify(DEFAULT_SUBTITLE_CONFIG.english));
-
-  // 如果是 content script，应用特定的覆盖配置
-  if (forContentScript && DEFAULT_SUBTITLE_CONFIG.contentScript.english) {
-    Object.assign(config, DEFAULT_SUBTITLE_CONFIG.contentScript.english);
-  }
-
-  return config;
+function getDefaultEnglishSettings() {
+  return JSON.parse(JSON.stringify(DEFAULT_SUBTITLE_CONFIG.english));
 }
 
 /**
  * 获取中文字幕默认配置的深拷贝
  *
- * @param {boolean} forContentScript - 是否用于 content script（会应用特定的覆盖配置）
  * @returns {Object} 中文字幕配置对象
  *
  * @example
  * const settings = getDefaultChineseSettings();
  * settings.fontSize = 35; // 修改不会影响原始配置
  */
-function getDefaultChineseSettings(forContentScript = false) {
-  const config = JSON.parse(JSON.stringify(DEFAULT_SUBTITLE_CONFIG.chinese));
-
-  // 如果是 content script，应用特定的覆盖配置
-  if (forContentScript && DEFAULT_SUBTITLE_CONFIG.contentScript.chinese) {
-    Object.assign(config, DEFAULT_SUBTITLE_CONFIG.contentScript.chinese);
-  }
-
-  return config;
+function getDefaultChineseSettings() {
+  return JSON.parse(JSON.stringify(DEFAULT_SUBTITLE_CONFIG.chinese));
 }
 
 /**
@@ -145,7 +114,6 @@ function getDefaultConfig() {
  *
  * @param {Object} settings - 要验证的设置对象
  * @param {string} type - 设置类型 ('english' 或 'chinese')
- * @param {boolean} forContentScript - 是否用于 content script
  * @returns {Object} 验证后的完整设置对象
  *
  * @example
@@ -153,10 +121,10 @@ function getDefaultConfig() {
  * const validated = validateSettings(userSettings, 'english');
  * // validated 包含所有属性，缺失的使用默认值
  */
-function validateSettings(settings, type, forContentScript = false) {
+function validateSettings(settings, type) {
   const defaults = type === 'english'
-    ? getDefaultEnglishSettings(forContentScript)
-    : getDefaultChineseSettings(forContentScript);
+    ? getDefaultEnglishSettings()
+    : getDefaultChineseSettings();
 
   const validated = {};
   for (const key in defaults) {
