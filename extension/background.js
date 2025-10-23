@@ -33,8 +33,6 @@ class SubtitleExtensionBackground {
   }
 
   onInstall() {
-    console.log('YouTube字幕扩展已安装');
-    
     // 清除可能存在的旧数据，设置默认配置
     chrome.storage.local.clear().then(() => {
       chrome.storage.local.set({
@@ -51,14 +49,11 @@ class SubtitleExtensionBackground {
         autoLoadEnabled: false,
         serverUrl: 'http://127.0.0.1:8888'
       });
-      console.log('默认双语独立设置已初始化 - 32px基础字体');
     });
   }
 
   onUpdate() {
-    console.log('YouTube字幕扩展已更新');
-
-    // 迁移修复：确保“标准预设”下英文字体为 Noto Serif 而非系统默认
+    // 迁移修复：确保"标准预设"下英文字体为 Noto Serif 而非系统默认
     // 针对老版本可能将 fontFamily 设为 'inherit' 或未设置的情况
     chrome.storage.local.get(['englishSettings']).then((res) => {
       const english = res.englishSettings || {};
@@ -69,7 +64,6 @@ class SubtitleExtensionBackground {
           fontFamily: '"Noto Serif", Georgia, serif'
         };
         chrome.storage.local.set({ englishSettings: fixed }).then(() => {
-          console.log('迁移修复：已将英文字体设为 Noto Serif（标准预设）');
           // 同步通知 content script 更新样式
           try {
             this.notifyContentScript('updateSettings', { language: 'english', settings: fixed });
@@ -154,13 +148,11 @@ class SubtitleExtensionBackground {
 
         // 🔧 新增：处理来自content script的自动加载消息并转发给popup
         case 'autoLoadSuccess':
-          console.log('🎉 Background收到自动加载成功消息:', request);
           // 不需要sendResponse，这是来自content script的通知消息
           // 消息会自动转发给所有监听的popup
           break;
-          
-        case 'autoLoadError':  
-          console.log('❌ Background收到自动加载失败消息:', request);
+
+        case 'autoLoadError':
           // 不需要sendResponse，这是来自content script的通知消息
           // 消息会自动转发给所有监听的popup
           break;
@@ -237,78 +229,56 @@ class SubtitleExtensionBackground {
     }
 
     await chrome.storage.local.set({ [subtitleKey]: videoSubtitleData });
-    console.log('视频字幕数据已保存 (' + videoId + '):', {
-      英文: (englishSubtitles || []).length,
-      中文: (chineseSubtitles || []).length,
-      单语: (subtitleData || []).length
-    });
   }
 
   async saveBilingualSubtitles(englishSubtitles, chineseSubtitles, englishFileName, chineseFileName) {
-    await chrome.storage.local.set({ 
+    await chrome.storage.local.set({
       englishSubtitles: englishSubtitles || [],
       chineseSubtitles: chineseSubtitles || [],
       englishFileName: englishFileName || '',
       chineseFileName: chineseFileName || ''
     });
-    console.log('双语字幕数据已保存:', {
-      英文: englishSubtitles?.length || 0,
-      中文: chineseSubtitles?.length || 0
-    });
   }
 
   async saveSubtitleData(data) {
     await chrome.storage.local.set({ subtitleData: data });
-    console.log('字幕数据已保存:', data.length, '条');
   }
 
   async toggleSubtitle(enabled) {
     await chrome.storage.local.set({ subtitleEnabled: enabled });
     await this.notifyContentScript('toggleSubtitle', { enabled });
-    console.log('字幕显示已', enabled ? '开启' : '关闭');
   }
-  
+
   async setSubtitleEnabled(enabled) {
     await chrome.storage.local.set({ subtitleEnabled: enabled });
-    console.log('字幕状态已设置为:', enabled ? '启用' : '禁用');
   }
 
   async updateSettings(settings) {
-    console.log('=== background updateSettings 调试 ===');
-    console.log('接收到的 settings 参数:', settings);
-    
     // 根据设置类型更新对应的语言设置
     if (settings.language === 'english') {
       const currentSettings = await chrome.storage.local.get(['englishSettings']);
-      console.log('英文当前存储设置:', currentSettings.englishSettings);
       const newSettings = {
         ...(currentSettings.englishSettings || {}),
         ...settings.data
       };
-      console.log('英文合并后设置:', newSettings);
-      
+
       await chrome.storage.local.set({ englishSettings: newSettings });
-      await this.notifyContentScript('updateSettings', { 
-        language: 'english', 
-        settings: newSettings 
+      await this.notifyContentScript('updateSettings', {
+        language: 'english',
+        settings: newSettings
       });
-      console.log('英文字幕设置已更新:', newSettings);
     } else if (settings.language === 'chinese') {
       const currentSettings = await chrome.storage.local.get(['chineseSettings']);
-      console.log('中文当前存储设置:', currentSettings.chineseSettings);
-      console.log('要更新的数据 settings.data:', settings.data);
       const newSettings = {
         ...(currentSettings.chineseSettings || {}),
         ...settings.data
       };
-      console.log('中文合并后设置:', newSettings);
-      
+
       await chrome.storage.local.set({ chineseSettings: newSettings });
-      await this.notifyContentScript('updateSettings', { 
-        language: 'chinese', 
-        settings: newSettings 
+      await this.notifyContentScript('updateSettings', {
+        language: 'chinese',
+        settings: newSettings
       });
-      console.log('中文字幕设置已更新:', newSettings);
     }
   }
 
@@ -330,17 +300,13 @@ class SubtitleExtensionBackground {
     // 清除所有视频级别的字幕缓存
     if (videoSubtitleKeys.length > 0) {
       await chrome.storage.local.remove(videoSubtitleKeys);
-      console.log(`🧹 已清除 ${videoSubtitleKeys.length} 个视频缓存:`, videoSubtitleKeys);
     }
-    
+
     await this.notifyContentScript('clearData');
-    console.log('✅ 字幕数据和所有缓存已彻底清除，开关状态保持不变');
   }
 
   // 新增：强制重置所有扩展数据
   async forceReset() {
-    console.log('🔄 执行强制重置...');
-    
     // 完全清除所有存储数据
     await chrome.storage.local.clear();
     
@@ -359,10 +325,9 @@ class SubtitleExtensionBackground {
       autoLoadEnabled: false,
       serverUrl: 'http://127.0.0.1:8888'
     });
-    
+
     // 通知content script强制清除
     await this.notifyContentScript('forceReset');
-    console.log('🎉 强制重置完成，所有数据已重置为默认状态');
   }
 
   async notifyContentScript(action, data = {}) {
@@ -387,7 +352,6 @@ class SubtitleExtensionBackground {
 
   onYouTubePageLoaded(tabId) {
     // YouTube页面加载完成后，可以进行一些初始化操作
-    console.log('YouTube页面已加载:', tabId);
   }
 }
 
