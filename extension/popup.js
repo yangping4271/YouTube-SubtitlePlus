@@ -92,22 +92,7 @@ class PopupController {
         // UI状态
         this.currentTab = 'files';
         this.advancedExpanded = false;
-        
-        // 🔧 添加调试功能到全局作用域
-        window.popupController = this;
-        window.debugSubtitles = () => this.debugSubtitles();
-        window.forceRefreshStats = () => this.forceRefreshStats();
-        window.monitorStats = () => this.monitorStats();
-        
-        // 🔧 添加简单的测试功能
-        window.testSubtitleUpdate = () => {
-            // 模拟一些字幕数据
-            this.englishSubtitles = [{text: 'Test 1'}, {text: 'Test 2'}];
-            this.chineseSubtitles = [{text: '测试 1'}, {text: '测试 2'}, {text: '测试 3'}];
-            this.updateSubtitleInfoWithRetry();
-            return `测试完成：英文 ${this.englishSubtitles.length} 条，中文 ${this.chineseSubtitles.length} 条`;
-        };
-        
+
         this.init();
     }
 
@@ -432,14 +417,14 @@ class PopupController {
         if (helpLink) {
             helpLink.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.showHelp();
+                this.switchTab('about');
             });
         }
 
         if (feedbackLink) {
             feedbackLink.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.showFeedback();
+                this.switchTab('about');
             });
         }
 
@@ -1261,14 +1246,14 @@ class PopupController {
 
     parseSubtitle(content, filename) {
         const extension = filename.split('.').pop().toLowerCase();
-        
+
         try {
             if (extension === 'srt') {
-                return this.parseSRT(content);
+                return SubtitleParser.parseSRT(content);
             } else if (extension === 'vtt') {
-                return this.parseVTT(content);
+                return SubtitleParser.parseVTT(content);
             } else if (extension === 'ass') {
-                return this.parseASS(content);
+                return SubtitleParser.parseASS(content);
             } else {
                 throw new Error('不支持的文件格式');
             }
@@ -1276,158 +1261,6 @@ class PopupController {
             console.error('解析字幕失败:', error);
             return [];
         }
-    }
-
-    parseSRT(content) {
-        const subtitles = [];
-        const blocks = content.trim().split(/\n\s*\n/);
-        
-        for (const block of blocks) {
-            const lines = block.trim().split('\n');
-            if (lines.length >= 3) {
-                const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,.]\d{3})/);
-                if (timeMatch) {
-                    const startTime = this.timeToSeconds(timeMatch[1]);
-                    const endTime = this.timeToSeconds(timeMatch[2]);
-                    const text = lines.slice(2).join(' ').replace(/<[^>]*>/g, '').trim();
-                    
-                    if (text) {
-                        subtitles.push({
-                            startTime,
-                            endTime,
-                            text
-                        });
-                    }
-                }
-            }
-        }
-        
-        return subtitles;
-    }
-
-    parseVTT(content) {
-        const subtitles = [];
-        const lines = content.split('\n');
-        let i = 0;
-        
-        // 跳过VTT头部
-        while (i < lines.length && !lines[i].includes('-->')) {
-            i++;
-        }
-        
-        while (i < lines.length) {
-            const line = lines[i].trim();
-            const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,.]\d{3})/);
-            
-            if (timeMatch) {
-                const startTime = this.timeToSeconds(timeMatch[1]);
-                const endTime = this.timeToSeconds(timeMatch[2]);
-                const textLines = [];
-                
-                i++;
-                while (i < lines.length && lines[i].trim() !== '') {
-                    textLines.push(lines[i].trim());
-                    i++;
-                }
-                
-                const text = textLines.join(' ').replace(/<[^>]*>/g, '').trim();
-                if (text) {
-                    subtitles.push({
-                        startTime,
-                        endTime,
-                        text
-                    });
-                }
-            }
-            i++;
-        }
-        
-        return subtitles;
-    }
-    
-    parseASS(content) {
-        const result = { english: [], chinese: [] };
-        const lines = content.split('\n');
-        
-        let inEventsSection = false;
-        
-        lines.forEach(line => {
-            line = line.trim();
-            
-            // 检测Events部分开始
-            if (line === '[Events]') {
-                inEventsSection = true;
-                return;
-            }
-            
-            // 检测到新的段落，停止解析Events
-            if (line.startsWith('[') && line !== '[Events]') {
-                inEventsSection = false;
-                return;
-            }
-            
-            // 解析Dialogue行
-            if (inEventsSection && line.startsWith('Dialogue:')) {
-                const parts = line.split(',');
-                if (parts.length >= 10) {
-                    const style = parts[3]; // Style name
-                    const startTime = this.parseASSTime(parts[1]); // Start time
-                    const endTime = this.parseASSTime(parts[2]); // End time
-                    
-                    // 提取文本内容，从第10个逗号后开始
-                    const textParts = parts.slice(9);
-                    let text = textParts.join(',').trim();
-                    
-                    // 清理ASS格式标签
-                    text = this.cleanASSText(text);
-                    
-                    if (text && startTime !== null && endTime !== null) {
-                        const subtitle = { startTime, endTime, text };
-                        
-                        // 根据Style分配到不同语言
-                        if (style === 'Default') {
-                            result.english.push(subtitle);
-                        } else if (style === 'Secondary') {
-                            result.chinese.push(subtitle);
-                        }
-                    }
-                }
-            }
-        });
-        
-        return result;
-    }
-    
-    parseASSTime(timeStr) {
-        // ASS时间格式: H:MM:SS.CC
-        const match = timeStr.match(/(\d+):(\d{2}):(\d{2})\.(\d{2})/);
-        if (match) {
-            const hours = parseInt(match[1]);
-            const minutes = parseInt(match[2]);
-            const seconds = parseInt(match[3]);
-            const centiseconds = parseInt(match[4]);
-            
-            return hours * 3600 + minutes * 60 + seconds + centiseconds / 100;
-        }
-        return null;
-    }
-    
-    cleanASSText(text) {
-        // 移除ASS样式标签，如 {\i1}、{\b1}、{\c&Hffffff&} 等
-        return text
-            .replace(/\{[^}]*\}/g, '') // 移除所有 {} 包围的标签
-            .replace(/\\N/g, '\n') // 转换换行符
-            .replace(/\\h/g, ' ') // 转换硬空格
-            .trim();
-    }
-
-    timeToSeconds(timeStr) {
-        const [time, ms] = timeStr.replace(',', '.').split('.');
-        const [hours, minutes, seconds] = time.split(':');
-        return parseInt(hours) * 3600 + 
-               parseInt(minutes) * 60 + 
-               parseInt(seconds) + 
-               parseInt(ms) / 1000;
     }
 
     async clearSubtitle() {
@@ -1581,16 +1414,6 @@ class PopupController {
         // 显示状态
         // Toast.success('设置已保存'); // 已保存反馈改为静默，UI变化已足够反馈
         Toast.success('已恢复默认设置');
-    }
-
-    showHelp() {
-        // Toast.show('使用方法：分别选择英文和中文SRT/VTT字幕文件，在YouTube视频页面启用双语显示', 'info'); // 在关于页面不需要toast提示
-        this.switchTab('about'); // 自动切换到关于页面
-    }
-
-    showFeedback() {
-        // Toast.show('如有问题请通过Chrome扩展商店反馈', 'info'); // 不需要toast提示
-        this.switchTab('about'); // 自动切换到关于页面
     }
 
     // ========================================
@@ -1908,54 +1731,6 @@ class PopupController {
         } catch (error) {
             console.error('❌ 同步字幕数据异常:', error);
         }
-    }
-
-    // 🔧 增强的调试功能
-    debugSubtitles() {
-        // 手动触发更新
-        this.updateSubtitleInfoWithRetry();
-        return '调试完成，请查看控制台日志';
-    }
-
-    // 🔧 新增：强制刷新统计信息的调试方法
-    forceRefreshStats() {
-        // 重新从存储加载数据
-        this.loadCurrentState().then(() => {
-            // 数据重新加载完成
-        }).catch(error => {
-            console.error('❌ 数据重新加载失败:', error);
-        });
-
-        return '强制刷新已启动';
-    }
-
-    // 🔧 新增：实时监控统计信息变化
-    monitorStats(duration = 10000) {
-        const startTime = Date.now();
-        let previousStats = {
-            english: this.englishSubtitles.length,
-            chinese: this.chineseSubtitles.length
-        };
-
-        const monitorInterval = setInterval(() => {
-            const currentStats = {
-                english: this.englishSubtitles.length,
-                chinese: this.chineseSubtitles.length
-            };
-
-            // 检测到数据变化时强制更新显示
-            if (JSON.stringify(currentStats) !== JSON.stringify(previousStats)) {
-                this.updateSubtitleInfoWithRetry();
-                previousStats = { ...currentStats };
-            }
-
-            // 检查是否需要停止监控
-            if (Date.now() - startTime >= duration) {
-                clearInterval(monitorInterval);
-            }
-        }, 1000);
-
-        return `监控已启动，将持续${duration/1000}秒`;
     }
 
     // 🔧 新增：主动检查当前视频的字幕状态

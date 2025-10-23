@@ -150,15 +150,7 @@ class YouTubeSubtitleOverlay {
 
     // 字幕容器样式
     const container = this.overlayElement.querySelector('.subtitle-container');
-    if (container) {
-      Object.assign(container.style, {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0px',
-        width: '100%'
-      });
-    }
+    this._applyContainerFlexStyles(container);
 
     // wrapper 样式 - 控制垂直布局和平衡换行
     const englishWrapper = this.overlayElement.querySelector('.english-wrapper');
@@ -187,6 +179,19 @@ class YouTubeSubtitleOverlay {
 
     // 应用独立的中文字幕样式
     this.applyLanguageStyles('chinese');
+  }
+
+  // 🔧 私有方法：应用容器 Flex 布局样式
+  _applyContainerFlexStyles(container) {
+    if (container) {
+      Object.assign(container.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0px',
+        width: '100%'
+      });
+    }
   }
 
   // 应用独立语言样式
@@ -420,15 +425,7 @@ class YouTubeSubtitleOverlay {
 
     // 🔧 强制重新应用容器、wrapper 和语言样式，确保最新设置生效
     const container = this.overlayElement.querySelector('.subtitle-container');
-    if (container) {
-      Object.assign(container.style, {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0px',
-        width: '100%'
-      });
-    }
+    this._applyContainerFlexStyles(container);
 
     // 强制刷新 wrapper 样式
     const englishWrapper = this.overlayElement.querySelector('.english-wrapper');
@@ -644,38 +641,13 @@ class YouTubeSubtitleOverlay {
     if (!enabled) {
       this.hideSubtitle();
     } else {
-      // 开启时总是先显示测试字幕，无论是否有真实字幕数据
-      this.testSubtitleDisplay();
-      
-      // 如果有真实字幕数据，在测试字幕消失后继续更新显示
+      // 开启时，如果有真实字幕数据则显示
       if (this.englishSubtitles.length > 0 || this.chineseSubtitles.length > 0 || this.subtitleData.length > 0) {
         if (this.currentVideo) {
-          // 4秒后开始显示真实字幕（确保测试字幕已消失）
-          setTimeout(() => {
-            if (this.isEnabled) {
-              this.updateSubtitle();
-            }
-          }, 4000);
+          this.updateSubtitle();
         }
       }
     }
-  }
-
-  testSubtitleDisplay() {
-    if (!this.overlayElement) return;
-    
-    this.showBilingualSubtitle('✅ Subtitle system working', '✅ 字幕功能正常 - 3秒后消失');
-    
-    setTimeout(() => {
-      // 只有在没有加载真实字幕数据的情况下才隐藏测试字幕
-      const hasRealSubtitles = this.englishSubtitles.length > 0 || 
-                               this.chineseSubtitles.length > 0 || 
-                               this.subtitleData.length > 0;
-
-      if (!hasRealSubtitles) {
-        this.hideSubtitle();
-      }
-    }, 3000);
   }
 
   loadBilingualSubtitles(englishSubtitles, chineseSubtitles) {
@@ -1039,153 +1011,9 @@ class YouTubeSubtitleOverlay {
                .replace(/\\n/g, '\n')
                .trim();
   }
-
-  // 📊 测量并记录字幕宽度占屏幕/视频的百分比
-  logSubtitleWidthPercentage(englishText, chineseText) {
-    // 方法保留用于调试，但移除了 console 输出
-  }
 }
 
 // 字幕解析器
-class SubtitleParser {
-  static parseSRT(content) {
-    const subtitles = [];
-    const blocks = content.trim().split(/\n\s*\n/);
-    
-    blocks.forEach(block => {
-      const lines = block.trim().split('\n');
-      if (lines.length >= 3) {
-        const timeMatch = lines[1].match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})/);
-        if (timeMatch) {
-          const startTime = this.parseTime(timeMatch[1], timeMatch[2], timeMatch[3], timeMatch[4]);
-          const endTime = this.parseTime(timeMatch[5], timeMatch[6], timeMatch[7], timeMatch[8]);
-          const text = lines.slice(2).join('\n').replace(/<[^>]*>/g, '');
-          
-          subtitles.push({ startTime, endTime, text });
-        }
-      }
-    });
-    
-    return subtitles;
-  }
-
-  static parseVTT(content) {
-    const subtitles = [];
-    const lines = content.split('\n');
-    let currentSubtitle = null;
-    
-    lines.forEach(line => {
-      line = line.trim();
-      
-      if (line === 'WEBVTT' || line === '') return;
-      
-      const timeMatch = line.match(/(\d{2}):(\d{2}):(\d{2})\.(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})\.(\d{3})/);
-      if (timeMatch) {
-        if (currentSubtitle) {
-          subtitles.push(currentSubtitle);
-        }
-        
-        currentSubtitle = {
-          startTime: this.parseTime(timeMatch[1], timeMatch[2], timeMatch[3], timeMatch[4]),
-          endTime: this.parseTime(timeMatch[5], timeMatch[6], timeMatch[7], timeMatch[8]),
-          text: ''
-        };
-      } else if (currentSubtitle && line) {
-        currentSubtitle.text += (currentSubtitle.text ? '\n' : '') + line.replace(/<[^>]*>/g, '');
-      }
-    });
-    
-    if (currentSubtitle) {
-      subtitles.push(currentSubtitle);
-    }
-    
-    return subtitles;
-  }
-
-  static parseASS(content) {
-    const result = { english: [], chinese: [] };
-    const lines = content.split('\n');
-    
-    let inEventsSection = false;
-    
-    lines.forEach(line => {
-      line = line.trim();
-      
-      // 检测Events部分开始
-      if (line === '[Events]') {
-        inEventsSection = true;
-        return;
-      }
-      
-      // 检测到新的段落，停止解析Events
-      if (line.startsWith('[') && line !== '[Events]') {
-        inEventsSection = false;
-        return;
-      }
-      
-      // 解析Dialogue行
-      if (inEventsSection && line.startsWith('Dialogue:')) {
-        const parts = line.split(',');
-        if (parts.length >= 10) {
-          const style = parts[3]; // Style name
-          const startTime = this.parseASSTime(parts[1]); // Start time
-          const endTime = this.parseASSTime(parts[2]); // End time
-          
-          // 提取文本内容，从第10个逗号后开始
-          const textParts = parts.slice(9);
-          let text = textParts.join(',').trim();
-          
-          // 清理ASS格式标签
-          text = this.cleanASSText(text);
-          
-          if (text && startTime !== null && endTime !== null) {
-            const subtitle = { startTime, endTime, text };
-            
-            // 根据Style分配到不同语言
-            if (style === 'Default') {
-              result.english.push(subtitle);
-            } else if (style === 'Secondary') {
-              result.chinese.push(subtitle);
-            }
-          }
-        }
-      }
-    });
-    
-    return result;
-  }
-
-  static parseASSTime(timeStr) {
-    // ASS时间格式: H:MM:SS.CC
-    const match = timeStr.match(/(\d+):(\d{2}):(\d{2})\.(\d{2})/);
-    if (match) {
-      const hours = parseInt(match[1]);
-      const minutes = parseInt(match[2]);
-      const seconds = parseInt(match[3]);
-      const centiseconds = parseInt(match[4]);
-      
-      return hours * 3600 + minutes * 60 + seconds + centiseconds / 100;
-    }
-    return null;
-  }
-
-  static cleanASSText(text) {
-    // 移除ASS样式标签，如 {\i1}、{\b1}、{\c&Hffffff&} 等
-    return text
-      .replace(/\{[^}]*\}/g, '') // 移除所有 {} 包围的标签
-      .replace(/\\N/g, '\n') // 转换换行符
-      .replace(/\\h/g, ' ') // 转换硬空格
-      .trim();
-  }
-
-  static parseTime(hours, minutes, seconds, milliseconds) {
-    return parseInt(hours) * 3600 + 
-           parseInt(minutes) * 60 + 
-           parseInt(seconds) + 
-           parseInt(milliseconds) / 1000;
-  }
-}
-
 // 初始化
 let subtitleOverlayInstance = null;
 
@@ -1203,161 +1031,3 @@ if (document.readyState === 'loading') {
 
 // 导出
 window.SubtitleParser = SubtitleParser;
-
-// 测试函数
-window.testSubtitleNow = () => {
-  if (subtitleOverlayInstance) {
-    subtitleOverlayInstance.isEnabled = true;
-    subtitleOverlayInstance.testSubtitleDisplay();
-    return true;
-  }
-  return false;
-};
-
-// 字幕定位和层级测试工具
-window.testSubtitlePositioning = () => {
-  if (!subtitleOverlayInstance) {
-    return false;
-  }
-
-  const instance = subtitleOverlayInstance;
-
-  // 强制启用字幕并显示测试内容
-  instance.isEnabled = true;
-  instance.showBilingualSubtitle(
-    '✅ Layer Test: Should appear BELOW YouTube controls',
-    '✅ 层级测试：应显示在YouTube控制栏下方'
-  );
-
-  // 5秒后隐藏测试字幕
-  setTimeout(() => {
-    const hasRealSubtitles = instance.englishSubtitles.length > 0 ||
-                             instance.chineseSubtitles.length > 0 ||
-                             instance.subtitleData.length > 0;
-
-    if (!hasRealSubtitles) {
-      instance.hideSubtitle();
-    }
-  }, 5000);
-
-  return true;
-};
-
-window.debugBilingualSubtitles = () => {
-  if (!subtitleOverlayInstance) {
-    return false;
-  }
-
-  const instance = subtitleOverlayInstance;
-  const currentTime = instance.currentVideo?.currentTime || 0;
-
-  const englishCurrent = instance.findCurrentSubtitle(currentTime, instance.englishSubtitles);
-  const chineseCurrent = instance.findCurrentSubtitle(currentTime, instance.chineseSubtitles);
-
-  instance.isEnabled = true;
-  if (englishCurrent || chineseCurrent) {
-    instance.showBilingualSubtitle(
-      englishCurrent?.text || '',
-      chineseCurrent?.text || ''
-    );
-  } else {
-    instance.showBilingualSubtitle('Test English', '测试中文');
-  }
-
-  return true;
-};
-
-// 完整的自动加载诊断工具
-window.diagnoseAutoLoad = async () => {
-  if (!subtitleOverlayInstance) {
-    return false;
-  }
-
-  const instance = subtitleOverlayInstance;
-
-  // 执行手动自动加载测试
-  instance.autoLoadAttempted = false;
-  instance.currentVideoId = null;
-
-  if (!instance.autoLoadEnabled) {
-    instance.autoLoadEnabled = true;
-  }
-
-  await instance.attemptAutoLoad();
-
-  return true;
-};
-
-// 测试自动加载功能
-window.testAutoLoadOnRefresh = () => {
-  if (!subtitleOverlayInstance) {
-    return false;
-  }
-
-  const instance = subtitleOverlayInstance;
-
-  // 清除现有字幕数据，模拟页面刷新状态
-  instance.clearSubtitleData();
-
-  // 重置自动加载状态
-  instance.autoLoadAttempted = false;
-  instance.currentVideoId = null;
-
-  // 启用自动加载
-  instance.autoLoadEnabled = true;
-
-  // 触发自动加载检查
-  instance.attemptAutoLoad();
-
-  return true;
-};
-
-// 新的窗口大小调整测试函数
-window.testSubtitleWindowResize = () => {
-  if (!subtitleOverlayInstance) {
-    return false;
-  }
-
-  const instance = subtitleOverlayInstance;
-
-  // 启用字幕并显示长测试文本
-  instance.isEnabled = true;
-  const longEnglishText = "This is a very long subtitle text that should wrap properly within video boundaries when the window is resized to different sizes";
-  const longChineseText = "这是一个非常长的中文字幕文本，当窗口调整为不同尺寸时，它应该在视频边界内正确换行显示，确保不会超出视频范围";
-
-  instance.showBilingualSubtitle(longEnglishText, longChineseText);
-
-  // 10秒后清除测试字幕
-  setTimeout(() => {
-    const hasRealSubtitles = instance.englishSubtitles.length > 0 ||
-                             instance.chineseSubtitles.length > 0 ||
-                             instance.subtitleData.length > 0;
-
-    if (!hasRealSubtitles) {
-      instance.hideSubtitle();
-    }
-  }, 10000);
-
-  return true;
-};
-
-// 📊 手动查看字幕宽度分析（需要时在 Console 调用）
-window.logSubtitleWidth = () => {
-  if (!subtitleOverlayInstance) {
-    return false;
-  }
-
-  const instance = subtitleOverlayInstance;
-  const englishEl = instance.overlayElement?.querySelector('#englishSubtitle');
-  const chineseEl = instance.overlayElement?.querySelector('#chineseSubtitle');
-
-  const englishText = englishEl?.textContent || '';
-  const chineseText = chineseEl?.textContent || '';
-
-  if (!englishText && !chineseText) {
-    return false;
-  }
-
-  instance.logSubtitleWidthPercentage(englishText, chineseText);
-  return true;
-};

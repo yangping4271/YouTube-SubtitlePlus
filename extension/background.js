@@ -357,28 +357,3 @@ class SubtitleExtensionBackground {
 
 // 初始化background服务
 const backgroundService = new SubtitleExtensionBackground();
-
-// 处理文件读取相关的工具函数
-class FileUtils {
-  static readFileAsText(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result);
-      reader.onerror = (e) => reject(new Error('文件读取失败'));
-      reader.readAsText(file, 'UTF-8');
-    });
-  }
-
-  static getFileExtension(filename) {
-    return filename.split('.').pop().toLowerCase();
-  }
-
-  static validateSubtitleFile(file) {
-    const validExtensions = ['srt', 'vtt', 'ass', 'ssa'];
-    const extension = this.getFileExtension(file.name);
-    return validExtensions.includes(extension);
-  }
-}
-
-// 导出工具函数供其他脚本使用
-self.FileUtils = FileUtils;
