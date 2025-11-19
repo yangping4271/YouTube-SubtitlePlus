@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube SubtitlePlus",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Display local subtitle files on YouTube videos with bilingual support and real-time style customization",
   "permissions": [
     "activeTab",
@@ -17,9 +17,29 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.youtube.com/*"],
-      "js": ["config.js", "subtitle-parser.js", "content.js"],
-      "css": ["subtitle-overlay.css"],
+      "matches": [
+        "*://www.youtube.com/*"
+      ],
+      "js": [
+        "config.js",
+        "subtitle-parser.js",
+        "transcript-core.js",
+        "content.js"
+      ],
+      "css": [
+        "subtitle-overlay.css",
+        "transcript-styles.css"
+      ],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "*://www.youtube.com/*"
+      ],
+      "js": [
+        "inject.js"
+      ],
+      "world": "MAIN",
       "run_at": "document_end"
     }
   ],

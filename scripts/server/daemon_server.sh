@@ -68,7 +68,7 @@ echo "🆔 PID文件: $PID_FILE"
 echo ""
 
 # 使用nohup启动服务，确保即使终端关闭也能继续运行
-nohup $PYTHON_CMD subtitle_server.py --subtitle-dir ../subtitles \
+nohup $PYTHON_CMD subtitle_server.py \
     > "$LOGS_DIR/subtitle_server.log" \
     2> "$LOGS_DIR/subtitle_server_error.log" &
 
